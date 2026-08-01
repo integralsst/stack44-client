@@ -28,56 +28,65 @@ export default function EvaluacionEmpresaHeader({
 }: Props) {
   const currentYear = new Date().getFullYear();
   const years = Array.from(
-    { length: 6 },
-    (_, index) => currentYear - 3 + index
+    { length: 8 },
+    (_, index) => currentYear - 4 + index
   );
 
+  const periodoAbierto = periodo?.estado === "ABIERTO";
+
   return (
-    <header className="rounded-2xl border border-neutral-800 bg-[#101112] p-4 shadow-xl sm:p-5">
+    <header className="rounded-2xl border border-neutral-800 bg-[#101112] p-3 shadow-xl sm:p-4">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex min-w-0 items-start gap-3">
+        <div className="flex min-w-0 items-start gap-2.5 sm:gap-3">
           <button
             type="button"
             onClick={onVolver}
-            className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-neutral-800 bg-[#08090a] text-neutral-400 transition hover:border-neutral-700 hover:text-white"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-neutral-800 bg-[#08090a] text-neutral-400 transition hover:border-neutral-700 hover:bg-neutral-900 hover:text-white sm:h-10 sm:w-10"
             title="Volver a empresas"
+            aria-label="Volver a empresas"
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={17} />
           </button>
 
-          <div className="flex min-w-0 items-start gap-3">
-            <div className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-300 sm:flex">
-              <Building2 size={20} />
-            </div>
+          <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-300 sm:flex">
+            <Building2 size={19} />
+          </div>
 
-            <div className="min-w-0">
-              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-400">
-                Evaluación SG-SST
-              </p>
-              <h1 className="mt-1 truncate text-xl font-bold text-white sm:text-2xl">
-                {empresa.nombre}
-              </h1>
-              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-neutral-400">
-                <span className="font-mono">NIT {empresa.nit}</span>
-                <span className="flex items-center gap-1.5">
-                  <MapPin size={13} />
-                  {empresa.ciudadPrincipal ?? "Sin ciudad"}
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <ShieldCheck size={13} />
-                  Riesgo {empresa.claseRiesgoPrincipal ?? "sin definir"}
-                </span>
-              </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-400">
+              Evaluación SG-SST
+            </p>
+
+            <h1
+              className="mt-1 truncate text-lg font-bold text-white sm:text-xl lg:text-2xl"
+              title={empresa.nombre}
+            >
+              {empresa.nombre}
+            </h1>
+
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-neutral-400 sm:text-xs">
+              <span className="font-mono">NIT {empresa.nit}</span>
+
+              <span className="flex items-center gap-1.5">
+                <MapPin size={12} />
+                {empresa.ciudadPrincipal ?? "Sin ciudad"}
+              </span>
+
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck size={12} />
+                Riesgo {empresa.claseRiesgoPrincipal ?? "sin definir"}
+              </span>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:min-w-[440px]">
+        <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 xl:w-auto xl:min-w-[430px]">
           <label className="rounded-xl border border-neutral-800 bg-[#08090a] px-3 py-2.5">
             <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-              <CalendarDays size={13} />
+              <CalendarDays size={12} />
               Periodo
             </span>
+
             <select
               value={anio}
               onChange={(event) =>
@@ -93,14 +102,15 @@ export default function EvaluacionEmpresaHeader({
             </select>
           </label>
 
-          <div className="rounded-xl border border-neutral-800 bg-[#08090a] px-3 py-2.5">
+          <div className="min-w-0 rounded-xl border border-neutral-800 bg-[#08090a] px-3 py-2.5">
             <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
               Estado del periodo
             </p>
-            <div className="mt-1 flex items-center justify-between gap-2">
+
+            <div className="mt-1 flex min-w-0 items-center gap-2">
               <span
-                className={`rounded-full px-2 py-1 text-[11px] font-bold ${
-                  periodo?.estado === "ABIERTO"
+                className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-bold ${
+                  periodoAbierto
                     ? "bg-emerald-500/10 text-emerald-300"
                     : periodo
                       ? "bg-neutral-700 text-neutral-300"
@@ -109,7 +119,14 @@ export default function EvaluacionEmpresaHeader({
               >
                 {periodo?.estado ?? "SIN ABRIR"}
               </span>
-              <span className="truncate text-xs text-neutral-500">
+
+              <span
+                className="min-w-0 truncate text-[11px] text-neutral-500"
+                title={
+                  periodo?.versionSupermatriz.nombre ??
+                  "Sin versión asignada"
+                }
+              >
                 {periodo?.versionSupermatriz.nombre ??
                   "Sin versión asignada"}
               </span>

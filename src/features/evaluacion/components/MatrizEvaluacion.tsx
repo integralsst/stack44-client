@@ -8,11 +8,15 @@ import {
 import {
   Check,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Filter,
   Loader2,
+  RotateCcw,
   Save,
   Search,
   Send,
+  SlidersHorizontal,
 } from "lucide-react";
 
 import type {
@@ -33,11 +37,11 @@ interface Props {
   onFinalizar: () => Promise<void>;
 }
 
-const selectClass =
-  "w-full min-w-[130px] rounded-lg border border-neutral-700 bg-[#090a0b] px-2 py-2 text-xs text-white outline-none [color-scheme:dark] focus:border-cyan-500/60 disabled:cursor-not-allowed disabled:opacity-50";
+const controlBaseClass =
+  "w-full rounded-lg border border-neutral-700 bg-[#090a0b] text-xs text-white outline-none transition [color-scheme:dark] placeholder:text-neutral-600 hover:border-neutral-600 focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:opacity-45";
 
-const inputClass =
-  "w-full rounded-lg border border-neutral-700 bg-[#090a0b] px-2 py-2 text-xs text-white outline-none [color-scheme:dark] placeholder:text-neutral-600 focus:border-cyan-500/60 disabled:cursor-not-allowed disabled:opacity-50";
+const selectClass = `${controlBaseClass} min-h-9 px-2 py-1.5`;
+const inputClass = `${controlBaseClass} min-h-9 px-2 py-1.5`;
 
 function toInputDate(value: string | null): string {
   return value ? value.slice(0, 10) : "";
@@ -79,6 +83,28 @@ function estadoCumplimientoLabel(
   return labels[estado];
 }
 
+function estadoSelectClass(
+  estado: EstadoCumplimientoAspecto | ""
+): string {
+  if (estado === "CUMPLIDO") {
+    return "border-emerald-500/40 text-emerald-200";
+  }
+
+  if (estado === "PARCIAL") {
+    return "border-amber-500/40 text-amber-200";
+  }
+
+  if (estado === "NO_CUMPLIDO") {
+    return "border-red-500/40 text-red-200";
+  }
+
+  if (estado === "NO_APLICA") {
+    return "border-cyan-500/40 text-cyan-200";
+  }
+
+  return "";
+}
+
 function VigenciaBadge({
   estado,
 }: {
@@ -114,7 +140,7 @@ function VigenciaBadge({
 
   return (
     <span
-      className={`inline-flex rounded-full px-2 py-1 text-[10px] font-bold ${current.className}`}
+      className={`inline-flex rounded-full px-2 py-1 text-[9px] font-bold whitespace-nowrap ${current.className}`}
     >
       {current.label}
     </span>
@@ -136,6 +162,8 @@ export default function MatrizEvaluacion({
   const [grupoMinisterial, setGrupoMinisterial] =
     useState("");
   const [vigencia, setVigencia] = useState("");
+  const [mostrarFiltros, setMostrarFiltros] =
+    useState(false);
   const [visibles, setVisibles] = useState(100);
   const [borradores, setBorradores] = useState<
     Record<number, BorradorEvaluacionAspecto>
@@ -161,9 +189,11 @@ export default function MatrizEvaluacion({
 
   const procesos = useMemo(() => {
     const map = new Map<number, string>();
+
     filas.forEach((fila) =>
       map.set(fila.proceso.id, fila.proceso.nombre)
     );
+
     return [...map.entries()].sort((a, b) =>
       a[1].localeCompare(b[1])
     );
@@ -171,13 +201,23 @@ export default function MatrizEvaluacion({
 
   const estandares = useMemo(() => {
     const map = new Map<number, string>();
+
     filas.forEach((fila) =>
       map.set(fila.estandar.id, fila.estandar.nombre)
     );
+
     return [...map.entries()].sort((a, b) =>
       a[1].localeCompare(b[1])
     );
   }, [filas]);
+
+  const filtrosActivos = [
+    procesoId,
+    estandarId,
+    categoriaGestion,
+    grupoMinisterial,
+    vigencia,
+  ].filter(Boolean).length;
 
   const filasFiltradas = useMemo(() => {
     const term = busqueda.trim().toLowerCase();
@@ -191,7 +231,9 @@ export default function MatrizEvaluacion({
           fila.estandar.nombre,
           fila.aspecto.nombre,
           fila.aspecto.planAccionEspecifico ?? "",
-        ].some((value) => value.toLowerCase().includes(term));
+        ].some((value) =>
+          value.toLowerCase().includes(term)
+        );
 
       const matchesProcess =
         !procesoId || fila.proceso.id === Number(procesoId);
@@ -252,7 +294,10 @@ export default function MatrizEvaluacion({
       (entries) => {
         if (entries[0]?.isIntersecting) {
           setVisibles((current) =>
-            Math.min(current + 100, filasFiltradas.length)
+            Math.min(
+              current + 100,
+              filasFiltradas.length
+            )
           );
         }
       },
@@ -265,12 +310,22 @@ export default function MatrizEvaluacion({
     return () => observer.disconnect();
   }, [filasFiltradas.length, visibles]);
 
+  const limpiarFiltros = () => {
+    setBusqueda("");
+    setProcesoId("");
+    setEstandarId("");
+    setCategoriaGestion("");
+    setGrupoMinisterial("");
+    setVigencia("");
+  };
+
   const updateDraft = (
     fila: FilaEvaluacion,
     patch: Partial<BorradorEvaluacionAspecto>
   ) => {
     setBorradores((current) => {
-      const base = current[fila.aspecto.id] ?? crearBorrador(fila);
+      const base =
+        current[fila.aspecto.id] ?? crearBorrador(fila);
       const next = {
         ...base,
         ...patch,
@@ -278,6 +333,13 @@ export default function MatrizEvaluacion({
 
       if (patch.estadoCumplimiento === "NO_APLICA") {
         next.calificacionAdministrativa = 5;
+      }
+
+      if (
+        patch.estadoCumplimiento &&
+        patch.estadoCumplimiento !== "NO_APLICA"
+      ) {
+        next.justificacionNoAplica = "";
       }
 
       return {
@@ -397,181 +459,257 @@ export default function MatrizEvaluacion({
   const rows = filasFiltradas.slice(0, visibles);
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-neutral-800 bg-[#101112] shadow-2xl">
+    <section className="min-w-0 overflow-hidden rounded-2xl border border-neutral-800 bg-[#101112] shadow-2xl">
       <div className="border-b border-neutral-800 bg-[#0b0c0d] p-3 sm:p-4">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-          <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-6">
-            <div className="relative sm:col-span-2 xl:col-span-2">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
-              <input
-                type="search"
-                value={busqueda}
-                onChange={(event) =>
-                  setBusqueda(event.target.value)
+        <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-start 2xl:justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-white sm:text-base">
+                  Matriz de evaluación
+                </h2>
+                <p className="mt-0.5 text-[11px] text-neutral-500">
+                  Orden y aspecto permanecen visibles; el resto de la tabla se desplaza horizontalmente.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setMostrarFiltros((current) => !current)
                 }
-                placeholder="Buscar aspecto, estándar, proceso..."
-                className={`${inputClass} py-2.5 pl-9`}
-              />
-            </div>
-
-            <FilterSelect
-              value={procesoId}
-              onChange={setProcesoId}
-              ariaLabel="Filtrar por proceso"
-            >
-              <option value="">Todos los procesos</option>
-              {procesos.map(([id, nombre]) => (
-                <option key={id} value={id}>
-                  {nombre}
-                </option>
-              ))}
-            </FilterSelect>
-
-            <FilterSelect
-              value={estandarId}
-              onChange={setEstandarId}
-              ariaLabel="Filtrar por estándar"
-            >
-              <option value="">Todos los estándares</option>
-              {estandares.map(([id, nombre]) => (
-                <option key={id} value={id}>
-                  {nombre}
-                </option>
-              ))}
-            </FilterSelect>
-
-            <FilterSelect
-              value={categoriaGestion}
-              onChange={setCategoriaGestion}
-              ariaLabel="Filtrar por categoría de gestión"
-            >
-              <option value="">Toda la gestión</option>
-              <option value="DOCUMENTAL">Documental</option>
-              <option value="INTERVENCION">Intervención</option>
-              <option value="EMERGENCIAS">Emergencias</option>
-            </FilterSelect>
-
-            <FilterSelect
-              value={grupoMinisterial}
-              onChange={setGrupoMinisterial}
-              ariaLabel="Filtrar por grupo ministerial"
-            >
-              <option value="">Grupos 7 / 21 / 60</option>
-              <option value="ESTANDARES_7">7 estándares</option>
-              <option value="ESTANDARES_21">21 estándares</option>
-              <option value="ESTANDARES_60">60 estándares</option>
-            </FilterSelect>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
-              <Filter
-                size={14}
-                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500"
-              />
-              <select
-                value={vigencia}
-                onChange={(event) =>
-                  setVigencia(event.target.value)
-                }
-                className={`${selectClass} min-w-[150px] pl-8`}
+                className="flex shrink-0 items-center gap-2 rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-xs font-semibold text-neutral-300 md:hidden"
               >
-                <option value="">Toda vigencia</option>
-                <option value="SIN_REVISION">Sin revisión</option>
-                <option value="VIGENTE">Vigente</option>
-                <option value="POR_VENCER">Por vencer</option>
-                <option value="VENCIDO">Vencido</option>
-                <option value="SIN_VENCIMIENTO">
-                  Sin vencimiento
-                </option>
-              </select>
+                <SlidersHorizontal size={14} />
+                Filtros
+                {filtrosActivos > 0 && (
+                  <span className="rounded-full bg-cyan-500/15 px-1.5 py-0.5 text-[9px] text-cyan-300">
+                    {filtrosActivos}
+                  </span>
+                )}
+                {mostrarFiltros ? (
+                  <ChevronUp size={14} />
+                ) : (
+                  <ChevronDown size={14} />
+                )}
+              </button>
             </div>
 
-            {gestionActiva && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => void guardarCambios()}
-                  disabled={procesando}
-                  className="flex items-center gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2.5 text-xs font-bold text-cyan-300 transition hover:bg-cyan-500/20 disabled:opacity-50"
-                >
-                  {procesando ? (
-                    <Loader2 size={15} className="animate-spin" />
-                  ) : (
-                    <Save size={15} />
-                  )}
-                  Guardar ({modificados.size})
-                </button>
+            <div
+              className={`mt-3 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 ${
+                mostrarFiltros ? "grid" : "hidden md:grid"
+              }`}
+            >
+              <div className="relative sm:col-span-2 xl:col-span-2">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+                <input
+                  type="search"
+                  value={busqueda}
+                  onChange={(event) =>
+                    setBusqueda(event.target.value)
+                  }
+                  placeholder="Buscar aspecto, estándar o proceso..."
+                  className={`${inputClass} pl-9`}
+                />
+              </div>
 
+              <FilterSelect
+                value={procesoId}
+                onChange={setProcesoId}
+                ariaLabel="Filtrar por proceso"
+              >
+                <option value="">Todos los procesos</option>
+                {procesos.map(([id, nombre]) => (
+                  <option key={id} value={id}>
+                    {nombre}
+                  </option>
+                ))}
+              </FilterSelect>
+
+              <FilterSelect
+                value={estandarId}
+                onChange={setEstandarId}
+                ariaLabel="Filtrar por estándar"
+              >
+                <option value="">Todos los estándares</option>
+                {estandares.map(([id, nombre]) => (
+                  <option key={id} value={id}>
+                    {nombre}
+                  </option>
+                ))}
+              </FilterSelect>
+
+              <FilterSelect
+                value={categoriaGestion}
+                onChange={setCategoriaGestion}
+                ariaLabel="Filtrar por categoría de gestión"
+              >
+                <option value="">Toda la gestión</option>
+                <option value="DOCUMENTAL">Documental</option>
+                <option value="INTERVENCION">Intervención</option>
+                <option value="EMERGENCIAS">Emergencias</option>
+              </FilterSelect>
+
+              <FilterSelect
+                value={grupoMinisterial}
+                onChange={setGrupoMinisterial}
+                ariaLabel="Filtrar por grupo ministerial"
+              >
+                <option value="">Grupos 7 / 21 / 60</option>
+                <option value="ESTANDARES_7">
+                  7 estándares
+                </option>
+                <option value="ESTANDARES_21">
+                  21 estándares
+                </option>
+                <option value="ESTANDARES_60">
+                  60 estándares
+                </option>
+              </FilterSelect>
+
+              <div className="relative">
+                <Filter
+                  size={14}
+                  className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500"
+                />
+                <select
+                  value={vigencia}
+                  onChange={(event) =>
+                    setVigencia(event.target.value)
+                  }
+                  className={`${selectClass} pl-8`}
+                  aria-label="Filtrar por vigencia"
+                >
+                  <option value="">Toda vigencia</option>
+                  <option value="SIN_REVISION">
+                    Sin revisión
+                  </option>
+                  <option value="VIGENTE">Vigente</option>
+                  <option value="POR_VENCER">
+                    Por vencer
+                  </option>
+                  <option value="VENCIDO">Vencido</option>
+                  <option value="SIN_VENCIMIENTO">
+                    Sin vencimiento
+                  </option>
+                </select>
+              </div>
+
+              {(filtrosActivos > 0 || busqueda) && (
                 <button
                   type="button"
-                  onClick={() => void finalizarGestion()}
-                  disabled={procesando}
-                  className="flex items-center gap-2 rounded-xl bg-white px-3 py-2.5 text-xs font-bold text-black transition hover:bg-neutral-200 disabled:opacity-50"
+                  onClick={limpiarFiltros}
+                  className="flex min-h-9 items-center justify-center gap-2 rounded-lg border border-neutral-700 bg-neutral-900 px-3 text-xs font-semibold text-neutral-300 transition hover:border-neutral-600 hover:text-white xl:col-start-6"
                 >
-                  <Send size={15} />
-                  Finalizar gestión
+                  <RotateCcw size={14} />
+                  Limpiar
                 </button>
-              </>
-            )}
+              )}
+            </div>
           </div>
+
+          {gestionActiva && (
+            <div className="grid w-full shrink-0 grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
+              <button
+                type="button"
+                onClick={() => void guardarCambios()}
+                disabled={
+                  procesando || modificados.size === 0
+                }
+                className="flex min-h-10 items-center justify-center gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 text-xs font-bold text-cyan-300 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {procesando ? (
+                  <Loader2
+                    size={15}
+                    className="animate-spin"
+                  />
+                ) : (
+                  <Save size={15} />
+                )}
+                Guardar ({modificados.size})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void finalizarGestion()}
+                disabled={procesando}
+                className="flex min-h-10 items-center justify-center gap-2 rounded-xl bg-white px-3 text-xs font-bold text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {procesando ? (
+                  <Loader2
+                    size={15}
+                    className="animate-spin"
+                  />
+                ) : (
+                  <Send size={15} />
+                )}
+                Finalizar
+              </button>
+            </div>
+          )}
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-500">
+        <div className="mt-3 flex flex-col gap-2 border-t border-neutral-800/80 pt-3 text-[11px] text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
           <span>
             Mostrando {Math.min(visibles, filasFiltradas.length)} de{" "}
             {filasFiltradas.length} filas filtradas
           </span>
+
           {mensaje && (
-            <span className="flex items-center gap-1.5 text-neutral-300">
-              <Check size={14} className="text-cyan-400" />
-              {mensaje}
+            <span className="flex min-w-0 items-start gap-1.5 text-neutral-300 sm:justify-end">
+              <Check
+                size={14}
+                className="mt-0.5 shrink-0 text-cyan-400"
+              />
+              <span className="min-w-0 break-words">
+                {mensaje}
+              </span>
             </span>
           )}
         </div>
       </div>
 
-      <div className="max-h-[68vh] overflow-auto">
-        <table className="min-w-[2450px] border-separate border-spacing-0 text-left text-xs">
-          <thead className="sticky top-0 z-40 bg-[#08090a] text-[10px] uppercase tracking-wider text-neutral-400">
+      <div className="max-h-[72vh] min-h-[420px] overflow-auto overscroll-contain [scrollbar-gutter:stable]">
+        <table className="min-w-[2030px] border-separate border-spacing-0 text-left text-[11px]">
+          <thead className="sticky top-0 z-40 bg-[#08090a] text-[9px] uppercase tracking-wider text-neutral-400">
             <tr>
-              <StickyHeader className="left-0 w-16 min-w-16 text-center">
+              <StickyHeader className="left-0 w-[52px] min-w-[52px] text-center">
                 Orden
               </StickyHeader>
-              <StickyHeader className="left-16 w-48 min-w-48">
-                Proceso
-              </StickyHeader>
-              <StickyHeader className="left-64 w-60 min-w-60">
-                Estándar
-              </StickyHeader>
-              <StickyHeader className="left-[496px] w-80 min-w-80 border-r border-neutral-700">
+              <StickyHeader className="left-[52px] w-[280px] min-w-[280px] border-r border-neutral-700">
                 Aspecto
               </StickyHeader>
-              <HeaderCell className="w-80 min-w-80">
+              <HeaderCell className="w-[140px] min-w-[140px]">
+                Proceso
+              </HeaderCell>
+              <HeaderCell className="w-[190px] min-w-[190px]">
+                Estándar
+              </HeaderCell>
+              <HeaderCell className="w-[240px] min-w-[240px]">
                 Plan de acción
               </HeaderCell>
-              <HeaderCell className="w-44 min-w-44">
+              <HeaderCell className="w-[120px] min-w-[120px]">
                 Último estado
               </HeaderCell>
-              <HeaderCell className="w-48 min-w-48">
+              <HeaderCell className="w-[150px] min-w-[150px]">
                 Estado actual
               </HeaderCell>
-              <HeaderCell className="w-36 min-w-36">
-                Calificación
+              <HeaderCell className="w-[92px] min-w-[92px]">
+                Nota
               </HeaderCell>
-              <HeaderCell className="w-72 min-w-72">
+              <HeaderCell className="w-[230px] min-w-[230px]">
                 Observación
               </HeaderCell>
-              <HeaderCell className="w-44 min-w-44">
+              <HeaderCell className="w-[132px] min-w-[132px]">
                 Fecha documento
               </HeaderCell>
-              <HeaderCell className="w-44 min-w-44">
+              <HeaderCell className="w-[130px] min-w-[130px]">
                 Vigencia
               </HeaderCell>
-              <HeaderCell className="w-72 min-w-72">
+              <HeaderCell className="w-[220px] min-w-[220px]">
                 Justificación No aplica
               </HeaderCell>
-              <HeaderCell className="w-36 min-w-36 text-center">
+              <HeaderCell className="w-[112px] min-w-[112px] text-center">
                 Revisión técnica
               </HeaderCell>
             </tr>
@@ -595,70 +733,119 @@ export default function MatrizEvaluacion({
                 const isChanged = modificados.has(
                   fila.aspecto.id
                 );
+                const stickyBackground = isChanged
+                  ? "bg-[#102126]"
+                  : "bg-[#101112]";
 
                 return (
                   <tr
                     key={fila.tareaId}
-                    className={`group ${
+                    className={`group transition-colors hover:bg-neutral-800/20 ${
                       isChanged ? "bg-cyan-500/[0.035]" : ""
                     }`}
                   >
-                    <StickyCell className="left-0 w-16 min-w-16 text-center font-mono text-neutral-500">
-                      {fila.orden}
+                    <StickyCell
+                      className={`left-0 w-[52px] min-w-[52px] text-center font-mono text-neutral-500 ${stickyBackground}`}
+                    >
+                      <div className="flex flex-col items-center gap-1">
+                        <span>{fila.orden}</span>
+                        {isChanged && (
+                          <span
+                            className="h-1.5 w-1.5 rounded-full bg-cyan-400"
+                            title="Cambios pendientes"
+                          />
+                        )}
+                      </div>
                     </StickyCell>
-                    <StickyCell className="left-16 w-48 min-w-48 font-medium text-neutral-300">
-                      <p className="line-clamp-3">
-                        {fila.proceso.nombre}
+
+                    <StickyCell
+                      className={`left-[52px] w-[280px] min-w-[280px] border-r border-neutral-700 ${stickyBackground}`}
+                    >
+                      <p
+                        className="line-clamp-3 whitespace-normal font-semibold leading-4 text-white"
+                        title={fila.aspecto.nombre}
+                      >
+                        {fila.aspecto.nombre}
                       </p>
-                    </StickyCell>
-                    <StickyCell className="left-64 w-60 min-w-60">
-                      <p className="line-clamp-3 font-medium text-neutral-300">
-                        {fila.estandar.nombre}
-                      </p>
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {fila.estandar.gruposMinisteriales.map(
-                          (grupo) => (
+
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                        {fila.codigo && (
+                          <span className="rounded bg-neutral-800 px-1.5 py-0.5 font-mono text-[8px] text-neutral-500">
+                            {fila.codigo}
+                          </span>
+                        )}
+
+                        {fila.categoriasGestion.map(
+                          (categoria) => (
                             <span
-                              key={grupo.id}
-                              className="rounded bg-neutral-800 px-1.5 py-0.5 text-[9px] text-neutral-500"
+                              key={categoria.id}
+                              className="rounded bg-cyan-500/10 px-1.5 py-0.5 text-[8px] text-cyan-300"
                             >
-                              {grupo.codigo.replace("ESTANDARES_", "")}
+                              {categoria.nombre}
                             </span>
                           )
                         )}
                       </div>
                     </StickyCell>
-                    <StickyCell className="left-[496px] w-80 min-w-80 border-r border-neutral-700">
-                      <p className="whitespace-normal font-semibold leading-5 text-white">
-                        {fila.aspecto.nombre}
-                      </p>
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {fila.categoriasGestion.map((categoria) => (
-                          <span
-                            key={categoria.id}
-                            className="rounded bg-cyan-500/10 px-1.5 py-0.5 text-[9px] text-cyan-300"
-                          >
-                            {categoria.nombre}
-                          </span>
-                        ))}
-                      </div>
-                    </StickyCell>
 
-                    <BodyCell className="w-80 min-w-80 whitespace-normal leading-5 text-neutral-400">
-                      {fila.aspecto.planAccionEspecifico ??
-                        "Sin plan de acción"}
+                    <BodyCell className="w-[140px] min-w-[140px]">
+                      <p
+                        className="line-clamp-3 font-medium leading-4 text-neutral-300"
+                        title={fila.proceso.nombre}
+                      >
+                        {fila.proceso.nombre}
+                      </p>
                     </BodyCell>
 
-                    <BodyCell className="w-44 min-w-44">
+                    <BodyCell className="w-[190px] min-w-[190px]">
+                      <p
+                        className="line-clamp-3 font-medium leading-4 text-neutral-300"
+                        title={fila.estandar.nombre}
+                      >
+                        {fila.estandar.nombre}
+                      </p>
+
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {fila.estandar.gruposMinisteriales.map(
+                          (grupo) => (
+                            <span
+                              key={grupo.id}
+                              className="rounded bg-neutral-800 px-1.5 py-0.5 text-[8px] text-neutral-500"
+                            >
+                              {grupo.codigo.replace(
+                                "ESTANDARES_",
+                                ""
+                              )}
+                            </span>
+                          )
+                        )}
+                      </div>
+                    </BodyCell>
+
+                    <BodyCell className="w-[240px] min-w-[240px] whitespace-normal text-neutral-400">
+                      <p
+                        className="line-clamp-4 leading-4"
+                        title={
+                          fila.aspecto.planAccionEspecifico ??
+                          "Sin plan de acción"
+                        }
+                      >
+                        {fila.aspecto.planAccionEspecifico ??
+                          "Sin plan de acción"}
+                      </p>
+                    </BodyCell>
+
+                    <BodyCell className="w-[120px] min-w-[120px]">
                       {fila.ultimaEvaluacion ? (
-                        <div className="space-y-1.5">
-                          <span className="inline-flex rounded-full bg-neutral-800 px-2 py-1 text-[10px] font-bold text-neutral-300">
+                        <div className="space-y-1">
+                          <span className="inline-flex rounded-full bg-neutral-800 px-2 py-1 text-[9px] font-bold text-neutral-300">
                             {estadoCumplimientoLabel(
                               fila.ultimaEvaluacion
                                 .estadoCumplimiento
                             )}
                           </span>
-                          <p className="text-[11px] text-neutral-500">
+
+                          <p className="text-[10px] text-neutral-500">
                             Nota{" "}
                             <strong className="text-neutral-300">
                               {
@@ -675,7 +862,7 @@ export default function MatrizEvaluacion({
                       )}
                     </BodyCell>
 
-                    <BodyCell className="w-48 min-w-48">
+                    <BodyCell className="w-[150px] min-w-[150px]">
                       <select
                         value={draft.estadoCumplimiento}
                         disabled={!gestionActiva || procesando}
@@ -687,10 +874,14 @@ export default function MatrizEvaluacion({
                                 | "",
                           })
                         }
-                        className={selectClass}
+                        className={`${selectClass} ${estadoSelectClass(
+                          draft.estadoCumplimiento
+                        )}`}
                       >
                         <option value="">Seleccionar</option>
-                        <option value="CUMPLIDO">Cumplido</option>
+                        <option value="CUMPLIDO">
+                          Cumplido
+                        </option>
                         <option value="PARCIAL">Parcial</option>
                         <option value="NO_CUMPLIDO">
                           No cumplido
@@ -704,7 +895,7 @@ export default function MatrizEvaluacion({
                       </select>
                     </BodyCell>
 
-                    <BodyCell className="w-36 min-w-36">
+                    <BodyCell className="w-[92px] min-w-[92px]">
                       <select
                         value={
                           draft.calificacionAdministrativa ?? ""
@@ -712,7 +903,8 @@ export default function MatrizEvaluacion({
                         disabled={
                           !gestionActiva ||
                           procesando ||
-                          draft.estadoCumplimiento === "NO_APLICA"
+                          draft.estadoCumplimiento ===
+                            "NO_APLICA"
                         }
                         onChange={(event) =>
                           updateDraft(fila, {
@@ -733,9 +925,9 @@ export default function MatrizEvaluacion({
                       </select>
                     </BodyCell>
 
-                    <BodyCell className="w-72 min-w-72">
+                    <BodyCell className="w-[230px] min-w-[230px]">
                       <textarea
-                        rows={3}
+                        rows={2}
                         value={draft.observacion}
                         disabled={!gestionActiva || procesando}
                         onChange={(event) =>
@@ -743,12 +935,12 @@ export default function MatrizEvaluacion({
                             observacion: event.target.value,
                           })
                         }
-                        placeholder="Describe lo encontrado y la orientación dada..."
-                        className={`${inputClass} resize-y`}
+                        placeholder="Hallazgo y orientación..."
+                        className={`${inputClass} min-h-[56px] max-h-32 resize-y leading-4`}
                       />
                     </BodyCell>
 
-                    <BodyCell className="w-44 min-w-44">
+                    <BodyCell className="w-[132px] min-w-[132px]">
                       <input
                         type="date"
                         value={draft.fechaDocumento}
@@ -762,14 +954,15 @@ export default function MatrizEvaluacion({
                       />
                     </BodyCell>
 
-                    <BodyCell className="w-44 min-w-44">
-                      <div className="space-y-2">
+                    <BodyCell className="w-[130px] min-w-[130px]">
+                      <div className="space-y-1.5">
                         <VigenciaBadge
                           estado={fila.estadoVigencia}
                         />
+
                         {fila.ultimaEvaluacion
                           ?.fechaVencimientoCalculada && (
-                          <p className="text-[10px] text-neutral-500">
+                          <p className="text-[9px] leading-4 text-neutral-500">
                             Vence{" "}
                             {new Date(
                               fila.ultimaEvaluacion
@@ -780,14 +973,15 @@ export default function MatrizEvaluacion({
                       </div>
                     </BodyCell>
 
-                    <BodyCell className="w-72 min-w-72">
+                    <BodyCell className="w-[220px] min-w-[220px]">
                       <textarea
-                        rows={3}
+                        rows={2}
                         value={draft.justificacionNoAplica}
                         disabled={
                           !gestionActiva ||
                           procesando ||
-                          draft.estadoCumplimiento !== "NO_APLICA"
+                          draft.estadoCumplimiento !==
+                            "NO_APLICA"
                         }
                         onChange={(event) =>
                           updateDraft(fila, {
@@ -798,35 +992,36 @@ export default function MatrizEvaluacion({
                         placeholder={
                           draft.estadoCumplimiento === "NO_APLICA"
                             ? "Justificación obligatoria..."
-                            : "Se habilita al seleccionar No aplica"
+                            : "Se habilita al marcar No aplica"
                         }
-                        className={`${inputClass} resize-y`}
+                        className={`${inputClass} min-h-[56px] max-h-32 resize-y leading-4`}
                       />
                     </BodyCell>
 
-                    <BodyCell className="w-36 min-w-36 text-center">
-                      <label className="inline-flex cursor-pointer flex-col items-center gap-2 text-[10px] text-neutral-500">
-                        <input
-                          type="checkbox"
-                          checked={draft.marcadaRevisionTecnica}
-                          disabled={!gestionActiva || procesando}
-                          onChange={(event) =>
-                            updateDraft(fila, {
-                              marcadaRevisionTecnica:
-                                event.target.checked,
-                            })
-                          }
-                          className="h-4 w-4 rounded border-neutral-700 bg-[#090a0b] accent-cyan-500"
-                        />
-                        {draft.marcadaRevisionTecnica ? (
-                          <span className="flex items-center gap-1 text-cyan-300">
-                            <CheckCircle2 size={12} />
-                            Marcada
-                          </span>
-                        ) : (
-                          "No"
-                        )}
-                      </label>
+                    <BodyCell className="w-[112px] min-w-[112px] text-center">
+                      <button
+                        type="button"
+                        disabled={!gestionActiva || procesando}
+                        aria-pressed={
+                          draft.marcadaRevisionTecnica
+                        }
+                        onClick={() =>
+                          updateDraft(fila, {
+                            marcadaRevisionTecnica:
+                              !draft.marcadaRevisionTecnica,
+                          })
+                        }
+                        className={`mx-auto flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg border px-2 text-[9px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-45 ${
+                          draft.marcadaRevisionTecnica
+                            ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-300"
+                            : "border-neutral-700 bg-[#090a0b] text-neutral-500 hover:text-neutral-300"
+                        }`}
+                      >
+                        <CheckCircle2 size={13} />
+                        {draft.marcadaRevisionTecnica
+                          ? "Marcada"
+                          : "Marcar"}
+                      </button>
                     </BodyCell>
                   </tr>
                 );
@@ -834,9 +1029,18 @@ export default function MatrizEvaluacion({
             )}
           </tbody>
         </table>
+
+        <div ref={sentinelRef} className="h-1" />
       </div>
 
-      <div ref={sentinelRef} className="h-1" />
+      <div className="flex flex-col gap-1 border-t border-neutral-800 bg-[#0b0c0d] px-3 py-2 text-[10px] text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
+        <span>
+          Desliza horizontalmente para ver todas las columnas.
+        </span>
+        <span>
+          Las filas se cargan progresivamente en bloques de 100.
+        </span>
+      </div>
     </section>
   );
 }
@@ -873,7 +1077,7 @@ function HeaderCell({
 }) {
   return (
     <th
-      className={`border-b border-r border-neutral-800 px-3 py-3 font-bold ${className}`}
+      className={`border-b border-r border-neutral-800 bg-[#08090a] px-2 py-2.5 font-bold ${className}`}
     >
       {children}
     </th>
@@ -889,7 +1093,7 @@ function StickyHeader({
 }) {
   return (
     <th
-      className={`sticky z-50 border-b border-r border-neutral-800 bg-[#08090a] px-3 py-3 font-bold ${className}`}
+      className={`sticky z-50 border-b border-r border-neutral-800 bg-[#08090a] px-2 py-2.5 font-bold ${className}`}
     >
       {children}
     </th>
@@ -905,7 +1109,7 @@ function BodyCell({
 }) {
   return (
     <td
-      className={`border-b border-r border-neutral-800/80 px-3 py-3 align-top ${className}`}
+      className={`border-b border-r border-neutral-800/80 px-2 py-2 align-top ${className}`}
     >
       {children}
     </td>
@@ -921,7 +1125,7 @@ function StickyCell({
 }) {
   return (
     <td
-      className={`sticky z-20 border-b border-r border-neutral-800 bg-[#101112] px-3 py-3 align-top group-hover:bg-[#141516] ${className}`}
+      className={`sticky z-20 border-b border-r border-neutral-800 px-2 py-2 align-top group-hover:bg-[#141516] ${className}`}
     >
       {children}
     </td>

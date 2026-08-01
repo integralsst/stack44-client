@@ -61,6 +61,7 @@ export default function EvaluacionEmpresaPage() {
       <div className="mx-auto max-w-3xl rounded-2xl border border-red-500/20 bg-red-500/10 p-6 text-red-200">
         <div className="flex items-start gap-3">
           <AlertCircle className="mt-0.5 shrink-0" />
+
           <div>
             <h1 className="font-bold">
               No fue posible abrir la evaluación
@@ -68,9 +69,12 @@ export default function EvaluacionEmpresaPage() {
             <p className="mt-1 text-sm text-red-200/80">
               {error ?? "La empresa no está disponible."}
             </p>
+
             <button
               type="button"
-              onClick={() => navigate("/dashboard/empresas")}
+              onClick={() =>
+                navigate("/dashboard/empresas")
+              }
               className="mt-4 rounded-xl bg-white px-4 py-2 text-sm font-bold text-black"
             >
               Volver a empresas
@@ -82,13 +86,15 @@ export default function EvaluacionEmpresaPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-full min-w-0 max-w-[1900px] flex-col gap-4 pb-8">
+    <div className="flex min-h-full w-full min-w-0 max-w-none flex-col gap-3 pb-6">
       <EvaluacionEmpresaHeader
         empresa={contexto.empresa}
         periodo={contexto.periodo}
         anio={anio}
         onAnioChange={setAnio}
-        onVolver={() => navigate("/dashboard/empresas")}
+        onVolver={() =>
+          navigate("/dashboard/empresas")
+        }
       />
 
       {error && (
@@ -100,16 +106,19 @@ export default function EvaluacionEmpresaPage() {
       <ResumenEvaluacion resumen={contexto.resumen} />
 
       {!contexto.periodo ? (
-        <section className="rounded-2xl border border-neutral-800 bg-[#101112] p-6 text-center shadow-xl">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-300">
-            <ClipboardCheck size={22} />
+        <section className="rounded-2xl border border-neutral-800 bg-[#101112] p-5 text-center shadow-xl sm:p-6">
+          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-300">
+            <ClipboardCheck size={21} />
           </div>
+
           <h2 className="mt-4 text-lg font-bold text-white">
             El periodo {anio} todavía no está abierto
           </h2>
+
           <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-neutral-400">
-            Al abrirlo se fijará la versión de la Supermatriz que se
-            utilizará para todas las evaluaciones históricas de este año.
+            Al abrirlo se fijará la versión de la Supermatriz
+            que se utilizará para todas las evaluaciones
+            históricas de este año.
           </p>
 
           {contexto.versionDisponible ? (
@@ -120,6 +129,7 @@ export default function EvaluacionEmpresaPage() {
                   {contexto.versionDisponible.nombre}
                 </strong>
               </p>
+
               {puedeEvaluar && (
                 <button
                   type="button"
@@ -128,7 +138,10 @@ export default function EvaluacionEmpresaPage() {
                   className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-black transition hover:bg-neutral-200 disabled:opacity-50"
                 >
                   {procesando ? (
-                    <Loader2 size={17} className="animate-spin" />
+                    <Loader2
+                      size={17}
+                      className="animate-spin"
+                    />
                   ) : (
                     <Plus size={17} />
                   )}
@@ -138,31 +151,41 @@ export default function EvaluacionEmpresaPage() {
             </div>
           ) : (
             <div className="mx-auto mt-5 max-w-xl rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-              No existe una versión vigente de la Supermatriz aplicable a
-              este año. Publícala primero desde el módulo Supermatriz.
+              No existe una versión vigente de la Supermatriz
+              aplicable a este año. Publícala primero desde el
+              módulo Supermatriz.
             </div>
           )}
         </section>
       ) : (
         <>
-          <section className="flex flex-col gap-3 rounded-2xl border border-neutral-800 bg-[#101112] p-4 shadow-xl lg:flex-row lg:items-center lg:justify-between">
+          <section className="flex flex-col gap-3 rounded-2xl border border-neutral-800 bg-[#101112] p-3 shadow-xl sm:p-4 lg:flex-row lg:items-center lg:justify-between">
             {contexto.gestionActiva ? (
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-cyan-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-300">
+                  <span className="rounded-full bg-cyan-500/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-cyan-300 sm:text-[10px]">
                     Gestión en borrador
                   </span>
-                  <span className="text-xs text-neutral-500">
+
+                  <span className="text-[11px] text-neutral-500 sm:text-xs">
                     {new Date(
                       contexto.gestionActiva.fechaGestion
                     ).toLocaleDateString("es-CO")}
                   </span>
                 </div>
-                <h2 className="mt-2 truncate font-semibold text-white">
+
+                <h2
+                  className="mt-1.5 truncate text-sm font-semibold text-white sm:text-base"
+                  title={contexto.gestionActiva.tipoActividad}
+                >
                   {contexto.gestionActiva.tipoActividad}
                 </h2>
-                <p className="mt-1 text-xs text-neutral-500">
-                  {contexto.gestionActiva.modalidad.replaceAll("_", " ")}
+
+                <p className="mt-1 text-[11px] text-neutral-500 sm:text-xs">
+                  {contexto.gestionActiva.modalidad.replaceAll(
+                    "_",
+                    " "
+                  )}
                   {contexto.gestionActiva.categoriaGestion
                     ? ` · ${contexto.gestionActiva.categoriaGestion.nombre}`
                     : ""}
@@ -170,12 +193,12 @@ export default function EvaluacionEmpresaPage() {
               </div>
             ) : (
               <div>
-                <h2 className="font-semibold text-white">
+                <h2 className="text-sm font-semibold text-white sm:text-base">
                   No tienes una gestión en borrador
                 </h2>
-                <p className="mt-1 text-sm text-neutral-500">
-                  Crea una visita, asesoría o jornada para registrar nuevas
-                  calificaciones.
+                <p className="mt-1 text-xs text-neutral-500 sm:text-sm">
+                  Crea una visita, asesoría o jornada para
+                  registrar nuevas calificaciones.
                 </p>
               </div>
             )}
@@ -184,7 +207,7 @@ export default function EvaluacionEmpresaPage() {
               <button
                 type="button"
                 onClick={() => setGestionModalOpen(true)}
-                className="flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black transition hover:bg-neutral-200"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black transition hover:bg-neutral-200 sm:w-auto"
               >
                 <Plus size={17} />
                 Nueva gestión
@@ -194,7 +217,9 @@ export default function EvaluacionEmpresaPage() {
 
           <MatrizEvaluacion
             filas={contexto.filas}
-            gestionActiva={Boolean(contexto.gestionActiva)}
+            gestionActiva={Boolean(
+              contexto.gestionActiva
+            )}
             procesando={procesando}
             onGuardar={guardar}
             onFinalizar={finalizar}

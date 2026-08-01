@@ -54,22 +54,24 @@ export default function ResumenEvaluacion({
   ];
 
   return (
-    <section className="grid grid-cols-2 gap-3 lg:grid-cols-3 2xl:grid-cols-6">
+    <section className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
       {cards.map(({ label, value, detail, icon: Icon }) => (
         <article
           key={label}
-          className="rounded-2xl border border-neutral-800 bg-[#101112] p-3.5 shadow-lg"
+          className="min-w-0 rounded-xl border border-neutral-800 bg-[#101112] p-3 shadow-lg"
         >
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+          <div className="flex items-center justify-between gap-2">
+            <p className="truncate text-[9px] font-bold uppercase tracking-wider text-neutral-500 sm:text-[10px]">
               {label}
             </p>
-            <Icon size={15} className="text-neutral-500" />
+            <Icon size={14} className="shrink-0 text-neutral-500" />
           </div>
-          <p className="mt-2 text-xl font-bold text-white">
+
+          <p className="mt-1.5 text-lg font-bold leading-none text-white sm:text-xl">
             {value}
           </p>
-          <p className="mt-0.5 truncate text-[11px] text-neutral-500">
+
+          <p className="mt-1 truncate text-[10px] text-neutral-500 sm:text-[11px]">
             {detail}
           </p>
         </article>
