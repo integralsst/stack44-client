@@ -1,0 +1,214 @@
+import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  AlertCircle,
+  ClipboardCheck,
+  Loader2,
+  Plus,
+} from "lucide-react";
+
+import { useAuth } from "../../auth/context/AuthContext";
+import EvaluacionEmpresaHeader from "../components/EvaluacionEmpresaHeader";
+import MatrizEvaluacion from "../components/MatrizEvaluacion";
+import NuevaGestionModal from "../components/NuevaGestionModal";
+import ResumenEvaluacion from "../components/ResumenEvaluacion";
+import { useEvaluacionEmpresa } from "../hooks/useEvaluacionEmpresa";
+
+export default function EvaluacionEmpresaPage() {
+  const { empresaId } = useParams<{ empresaId: string }>();
+  const navigate = useNavigate();
+  const { hasRole } = useAuth();
+
+  const [anio, setAnio] = useState(
+    new Date().getFullYear()
+  );
+  const [gestionModalOpen, setGestionModalOpen] =
+    useState(false);
+
+  const {
+    contexto,
+    cargando,
+    procesando,
+    error,
+    abrirPeriodo,
+    crearGestion,
+    guardar,
+    finalizar,
+  } = useEvaluacionEmpresa(empresaId, anio);
+
+  const puedeEvaluar = hasRole(
+    "PROFESSIONAL",
+    "ADMIN",
+    "OWNER",
+    "SUPERADMIN"
+  );
+
+  if (cargando && !contexto) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-neutral-500">
+          <Loader2 className="h-7 w-7 animate-spin" />
+          <p className="text-sm">
+            Preparando la matriz de evaluación...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!contexto) {
+    return (
+      <div className="mx-auto max-w-3xl rounded-2xl border border-red-500/20 bg-red-500/10 p-6 text-red-200">
+        <div className="flex items-start gap-3">
+          <AlertCircle className="mt-0.5 shrink-0" />
+          <div>
+            <h1 className="font-bold">
+              No fue posible abrir la evaluación
+            </h1>
+            <p className="mt-1 text-sm text-red-200/80">
+              {error ?? "La empresa no está disponible."}
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate("/dashboard/empresas")}
+              className="mt-4 rounded-xl bg-white px-4 py-2 text-sm font-bold text-black"
+            >
+              Volver a empresas
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto flex min-h-full min-w-0 max-w-[1900px] flex-col gap-4 pb-8">
+      <EvaluacionEmpresaHeader
+        empresa={contexto.empresa}
+        periodo={contexto.periodo}
+        anio={anio}
+        onAnioChange={setAnio}
+        onVolver={() => navigate("/dashboard/empresas")}
+      />
+
+      {error && (
+        <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          {error}
+        </div>
+      )}
+
+      <ResumenEvaluacion resumen={contexto.resumen} />
+
+      {!contexto.periodo ? (
+        <section className="rounded-2xl border border-neutral-800 bg-[#101112] p-6 text-center shadow-xl">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-300">
+            <ClipboardCheck size={22} />
+          </div>
+          <h2 className="mt-4 text-lg font-bold text-white">
+            El periodo {anio} todavía no está abierto
+          </h2>
+          <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-neutral-400">
+            Al abrirlo se fijará la versión de la Supermatriz que se
+            utilizará para todas las evaluaciones históricas de este año.
+          </p>
+
+          {contexto.versionDisponible ? (
+            <div className="mt-5">
+              <p className="mb-3 text-xs text-neutral-500">
+                Versión disponible:{" "}
+                <strong className="text-neutral-300">
+                  {contexto.versionDisponible.nombre}
+                </strong>
+              </p>
+              {puedeEvaluar && (
+                <button
+                  type="button"
+                  onClick={() => void abrirPeriodo()}
+                  disabled={procesando}
+                  className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-black transition hover:bg-neutral-200 disabled:opacity-50"
+                >
+                  {procesando ? (
+                    <Loader2 size={17} className="animate-spin" />
+                  ) : (
+                    <Plus size={17} />
+                  )}
+                  Abrir periodo {anio}
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="mx-auto mt-5 max-w-xl rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+              No existe una versión vigente de la Supermatriz aplicable a
+              este año. Publícala primero desde el módulo Supermatriz.
+            </div>
+          )}
+        </section>
+      ) : (
+        <>
+          <section className="flex flex-col gap-3 rounded-2xl border border-neutral-800 bg-[#101112] p-4 shadow-xl lg:flex-row lg:items-center lg:justify-between">
+            {contexto.gestionActiva ? (
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-cyan-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-300">
+                    Gestión en borrador
+                  </span>
+                  <span className="text-xs text-neutral-500">
+                    {new Date(
+                      contexto.gestionActiva.fechaGestion
+                    ).toLocaleDateString("es-CO")}
+                  </span>
+                </div>
+                <h2 className="mt-2 truncate font-semibold text-white">
+                  {contexto.gestionActiva.tipoActividad}
+                </h2>
+                <p className="mt-1 text-xs text-neutral-500">
+                  {contexto.gestionActiva.modalidad.replaceAll("_", " ")}
+                  {contexto.gestionActiva.categoriaGestion
+                    ? ` · ${contexto.gestionActiva.categoriaGestion.nombre}`
+                    : ""}
+                </p>
+              </div>
+            ) : (
+              <div>
+                <h2 className="font-semibold text-white">
+                  No tienes una gestión en borrador
+                </h2>
+                <p className="mt-1 text-sm text-neutral-500">
+                  Crea una visita, asesoría o jornada para registrar nuevas
+                  calificaciones.
+                </p>
+              </div>
+            )}
+
+            {!contexto.gestionActiva && puedeEvaluar && (
+              <button
+                type="button"
+                onClick={() => setGestionModalOpen(true)}
+                className="flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black transition hover:bg-neutral-200"
+              >
+                <Plus size={17} />
+                Nueva gestión
+              </button>
+            )}
+          </section>
+
+          <MatrizEvaluacion
+            filas={contexto.filas}
+            gestionActiva={Boolean(contexto.gestionActiva)}
+            procesando={procesando}
+            onGuardar={guardar}
+            onFinalizar={finalizar}
+          />
+        </>
+      )}
+
+      <NuevaGestionModal
+        open={gestionModalOpen}
+        busy={procesando}
+        categorias={contexto.categoriasGestion}
+        onClose={() => setGestionModalOpen(false)}
+        onSubmit={crearGestion}
+      />
+    </div>
+  );
+}

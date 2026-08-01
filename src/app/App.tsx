@@ -22,9 +22,6 @@ import LandingPage from "../features/landing/pages/Home";
 
 /* ======================================================
    CARGA DIFERIDA
-
-   Estas páginas no forman parte del JavaScript inicial de
-   la landing. Solo se descargan cuando se visita su ruta.
 ====================================================== */
 
 const LoginPage = lazy(
@@ -60,8 +57,7 @@ const Companies = lazy(
 );
 
 const Users = lazy(
-  () =>
-    import("../features/users/pages/Users")
+  () => import("../features/users/pages/Users")
 );
 
 const Professionals = lazy(
@@ -75,6 +71,13 @@ const Supermatriz = lazy(
   () =>
     import(
       "../features/supermatriz/pages/Supermatriz"
+    )
+);
+
+const EvaluacionEmpresaPage = lazy(
+  () =>
+    import(
+      "../features/evaluacion/pages/EvaluacionEmpresaPage"
     )
 );
 
@@ -102,6 +105,13 @@ const SUPERMATRIZ_ROLES: UserRole[] = [
   "SUPERADMIN",
 ];
 
+const EVALUACION_ROLES: UserRole[] = [
+  "PROFESSIONAL",
+  "ADMIN",
+  "OWNER",
+  "SUPERADMIN",
+];
+
 /* ======================================================
    ELEMENTOS AUXILIARES
 ====================================================== */
@@ -114,10 +124,6 @@ function RouteLoader() {
   );
 }
 
-/**
- * La autenticación solo bloquea las rutas privadas.
- * La landing pública ya no espera la petición /me.
- */
 function ProtectedDashboardLayout() {
   const { user, loading } = useAuth();
 
@@ -190,7 +196,6 @@ function AppRoutes() {
     <div className="flex min-h-screen flex-col bg-[#05080a] font-sans text-slate-200 selection:bg-cyan-500/30">
       <Suspense fallback={<RouteLoader />}>
         <Routes>
-          {/* La landing se muestra inmediatamente. */}
           <Route path="/" element={<PublicLanding />} />
 
           <Route
@@ -212,6 +217,17 @@ function AppRoutes() {
             <Route
               path="empresas"
               element={<Companies />}
+            />
+
+            <Route
+              path="empresas/:empresaId/evaluacion"
+              element={
+                <RoleGuard
+                  allowedRoles={EVALUACION_ROLES}
+                >
+                  <EvaluacionEmpresaPage />
+                </RoleGuard>
+              }
             />
 
             <Route

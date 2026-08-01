@@ -6,9 +6,11 @@ import {
   type InputHTMLAttributes,
   type ReactNode,
 } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Building2,
   Calendar,
+  ClipboardCheck,
   Edit2,
   Loader2,
   Mail,
@@ -106,7 +108,15 @@ function companyToForm(company: Company): CompanyForm {
 }
 
 export default function Companies() {
-  const { token, isInternalUser } = useAuth();
+  const navigate = useNavigate();
+  const { token, isInternalUser, hasRole } = useAuth();
+
+  const canOpenEvaluation = hasRole(
+    "PROFESSIONAL",
+    "ADMIN",
+    "OWNER",
+    "SUPERADMIN"
+  );
 
   const [companies, setCompanies] = useState<Company[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -124,6 +134,12 @@ export default function Companies() {
     useState<Company | null>(null);
   const [form, setForm] =
     useState<CompanyForm>(emptyForm);
+
+  const openEvaluation = (company: Company) => {
+    navigate(
+      `/dashboard/empresas/${company.id}/evaluacion`
+    );
+  };
 
   const fetchCompanies = async () => {
     if (!token) return;
@@ -406,11 +422,23 @@ export default function Companies() {
                     </td>
 
                     <td className="px-6 py-4 text-right">
-                      {isInternalUser && (
+                      {(canOpenEvaluation || isInternalUser) && (
                         <ActionButtons
-                          onEdit={() => openEdit(company)}
-                          onDelete={() =>
-                            void handleDeactivate(company)
+                          onEvaluate={
+                            canOpenEvaluation
+                              ? () => openEvaluation(company)
+                              : undefined
+                          }
+                          onEdit={
+                            isInternalUser
+                              ? () => openEdit(company)
+                              : undefined
+                          }
+                          onDelete={
+                            isInternalUser
+                              ? () =>
+                                  void handleDeactivate(company)
+                              : undefined
                           }
                         />
                       )}
@@ -493,6 +521,17 @@ export default function Companies() {
                     } profesionales`}
                   />
                 </div>
+
+                {canOpenEvaluation && (
+                  <button
+                    type="button"
+                    onClick={() => openEvaluation(company)}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3 text-sm font-bold text-cyan-300 transition hover:bg-cyan-500/20"
+                  >
+                    <ClipboardCheck size={17} />
+                    Abrir evaluación SG-SST
+                  </button>
+                )}
               </article>
             ))
           )}
@@ -907,36 +946,55 @@ function RelationSummary({
 }
 
 function ActionButtons({
+  onEvaluate,
   onEdit,
   onDelete,
   compact = false,
 }: {
-  onEdit: () => void;
-  onDelete: () => void;
+  onEvaluate?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   compact?: boolean;
 }) {
   return (
     <div
       className={`flex items-center ${
-        compact ? "gap-1" : "justify-end"
+        compact ? "gap-1" : "justify-end gap-1"
       }`}
     >
-      <button
-        type="button"
-        onClick={onEdit}
-        className="rounded-lg p-2 text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-white"
-        title="Editar empresa"
-      >
-        <Edit2 size={17} />
-      </button>
-      <button
-        type="button"
-        onClick={onDelete}
-        className="rounded-lg p-2 text-neutral-500 transition-colors hover:bg-red-500/10 hover:text-red-400"
-        title="Desactivar empresa"
-      >
-        <Trash2 size={17} />
-      </button>
+      {onEvaluate && (
+        <button
+          type="button"
+          onClick={onEvaluate}
+          className="inline-flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-bold text-cyan-300 transition-colors hover:bg-cyan-500/20"
+          title="Abrir evaluación SG-SST"
+        >
+          <ClipboardCheck size={16} />
+          {!compact && <span>Evaluar</span>}
+        </button>
+      )}
+
+      {onEdit && (
+        <button
+          type="button"
+          onClick={onEdit}
+          className="rounded-lg p-2 text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-white"
+          title="Editar empresa"
+        >
+          <Edit2 size={17} />
+        </button>
+      )}
+
+      {onDelete && (
+        <button
+          type="button"
+          onClick={onDelete}
+          className="rounded-lg p-2 text-neutral-500 transition-colors hover:bg-red-500/10 hover:text-red-400"
+          title="Desactivar empresa"
+        >
+          <Trash2 size={17} />
+        </button>
+      )}
     </div>
   );
 }
