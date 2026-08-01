@@ -1,0 +1,136 @@
+import type {
+  LucideIcon,
+} from "lucide-react";
+import type { ReactNode } from "react";
+
+export function DetailSection({
+  icon: Icon,
+  title,
+  description,
+  children,
+}: {
+  icon: LucideIcon;
+  title: string;
+  description?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-neutral-800 bg-[#101112] p-4 sm:p-5">
+      <div className="mb-4 flex items-start gap-3 border-b border-neutral-800 pb-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-neutral-800 bg-[#08090a] text-cyan-400">
+          <Icon size={18} />
+        </div>
+        <div className="min-w-0">
+          <h3 className="font-bold text-white">{title}</h3>
+          {description && (
+            <p className="mt-1 text-xs leading-5 text-neutral-500">
+              {description}
+            </p>
+          )}
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+export function InfoCard({
+  label,
+  value,
+  accent = false,
+}: {
+  label: string;
+  value: ReactNode;
+  accent?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-xl border p-3.5 ${
+        accent
+          ? "border-cyan-500/20 bg-cyan-500/5"
+          : "border-neutral-800 bg-[#090a0b]"
+      }`}
+    >
+      <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-neutral-600">
+        {label}
+      </p>
+      <div className="mt-2 text-sm leading-6 text-neutral-200">
+        {value}
+      </div>
+    </div>
+  );
+}
+
+export function BooleanCard({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: boolean;
+  detail?: string | null;
+}) {
+  return (
+    <div className="rounded-xl border border-neutral-800 bg-[#090a0b] p-3.5">
+      <div className="flex items-start gap-2.5">
+        <span
+          className={`mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full ${
+            value ? "bg-emerald-400" : "bg-neutral-700"
+          }`}
+        />
+        <div>
+          <p className="text-xs font-medium leading-5 text-neutral-300">
+            {label}
+          </p>
+          <p
+            className={`mt-1 text-xs ${
+              value ? "text-emerald-400" : "text-neutral-600"
+            }`}
+          >
+            {value ? "Sí" : "No"}
+            {detail ? ` · ${detail}` : ""}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function EmptyState({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-dashed border-neutral-800 bg-[#090a0b] px-5 py-10 text-center">
+      <p className="font-semibold text-neutral-300">{title}</p>
+      <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-neutral-600">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+export function formatDate(
+  value: string | null | undefined,
+  includeTime = false
+): string {
+  if (!value) return "No registrada";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Fecha no disponible";
+  }
+
+  return new Intl.DateTimeFormat("es-CO", {
+    dateStyle: "medium",
+    ...(includeTime
+      ? {
+          timeStyle: "short",
+        }
+      : {}),
+  }).format(date);
+}

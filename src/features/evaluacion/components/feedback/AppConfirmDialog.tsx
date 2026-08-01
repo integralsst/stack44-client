@@ -29,7 +29,7 @@ export default function AppConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[110] flex items-end justify-center bg-black/70 p-3 backdrop-blur-sm sm:items-center"
+      className="fixed inset-0 z-[10050] flex items-end justify-center bg-black/70 p-3 backdrop-blur-sm sm:items-center"
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-dialog-title"

@@ -10,6 +10,7 @@ import EvaluacionEmpresaHeader from "../components/EvaluacionEmpresaHeader";
 import MatrizEvaluacion from "../components/MatrizEvaluacion";
 import NuevaGestionModal from "../components/NuevaGestionModal";
 import ResumenEvaluacion from "../components/ResumenEvaluacion";
+import DetalleAspectoDrawer from "../components/detalle/DetalleAspectoDrawer";
 import AppAlert from "../components/feedback/AppAlert";
 import AppSpinner from "../components/feedback/AppSpinner";
 import EvaluacionPageSkeleton from "../components/feedback/EvaluacionPageSkeleton";
@@ -25,6 +26,8 @@ export default function EvaluacionEmpresaPage() {
   );
   const [gestionModalOpen, setGestionModalOpen] =
     useState(false);
+  const [tareaDetalleId, setTareaDetalleId] =
+    useState<number | null>(null);
 
   const {
     contexto,
@@ -224,6 +227,9 @@ export default function EvaluacionEmpresaPage() {
             procesando={procesando}
             onGuardar={guardar}
             onFinalizar={finalizar}
+            onAbrirDetalle={(fila) =>
+              setTareaDetalleId(fila.tareaId)
+            }
           />
         </>
       )}
@@ -234,6 +240,14 @@ export default function EvaluacionEmpresaPage() {
         categorias={contexto.categoriasGestion}
         onClose={() => setGestionModalOpen(false)}
         onSubmit={crearGestion}
+      />
+
+      <DetalleAspectoDrawer
+        open={tareaDetalleId !== null}
+        empresaId={empresaId}
+        tareaId={tareaDetalleId}
+        anio={anio}
+        onClose={() => setTareaDetalleId(null)}
       />
     </div>
   );

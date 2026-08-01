@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Eye,
   Filter,
   RotateCcw,
   Save,
@@ -45,6 +46,7 @@ interface Props {
     evaluaciones: GuardarEvaluacionInput[]
   ) => Promise<void>;
   onFinalizar: () => Promise<void>;
+  onAbrirDetalle: (fila: FilaEvaluacion) => void;
 }
 
 const controlBaseClass =
@@ -126,6 +128,7 @@ export default function MatrizEvaluacion({
   procesando,
   onGuardar,
   onFinalizar,
+  onAbrirDetalle,
 }: Props) {
   const [busqueda, setBusqueda] =
     useState("");
@@ -1028,20 +1031,20 @@ export default function MatrizEvaluacion({
                       <StickyCell
                         className={`left-[52px] w-[280px] min-w-[280px] border-r border-neutral-700 ${stickyBackground}`}
                       >
-                        <p
-                          className="line-clamp-3 whitespace-normal font-semibold leading-4 text-white"
-                          title={
-                            fila
-                              .aspecto
-                              .nombre
-                          }
+                        <button
+                          type="button"
+                          onClick={() => onAbrirDetalle(fila)}
+                          className="group/detail w-full text-left"
+                          title={`Abrir detalle de ${fila.aspecto.nombre}`}
                         >
-                          {
-                            fila
-                              .aspecto
-                              .nombre
-                          }
-                        </p>
+                          <span className="line-clamp-3 whitespace-normal font-semibold leading-4 text-white transition group-hover/detail:text-cyan-200">
+                            {fila.aspecto.nombre}
+                          </span>
+                          <span className="mt-1 inline-flex items-center gap-1 text-[8px] font-semibold uppercase tracking-wider text-neutral-600 transition group-hover/detail:text-cyan-400">
+                            <Eye size={10} />
+                            Ver detalle, historial y evidencias
+                          </span>
+                        </button>
 
                         <div className="mt-1.5 flex flex-wrap items-center gap-1">
                           {fila.codigo && (
