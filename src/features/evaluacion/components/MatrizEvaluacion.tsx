@@ -6,12 +6,10 @@ import {
   type ReactNode,
 } from "react";
 import {
-  Check,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
   Filter,
-  Loader2,
   RotateCcw,
   Save,
   Search,
@@ -22,10 +20,17 @@ import {
 import type {
   BorradorEvaluacionAspecto,
   EstadoCumplimientoAspecto,
-  EstadoVigenciaEvaluacion,
   FilaEvaluacion,
   GuardarEvaluacionInput,
 } from "../types/evaluacion.types";
+
+import AppConfirmDialog from "./feedback/AppConfirmDialog";
+import AppSpinner from "./feedback/AppSpinner";
+import AppToast, {
+  type ToastTone,
+} from "./feedback/AppToast";
+import VigenciaBadge from "./matriz/VigenciaBadge";
+import VigenciaResumenAlertas from "./matriz/VigenciaResumenAlertas";
 
 interface Props {
   filas: FilaEvaluacion[];
@@ -105,48 +110,6 @@ function estadoSelectClass(
   return "";
 }
 
-function VigenciaBadge({
-  estado,
-}: {
-  estado: EstadoVigenciaEvaluacion;
-}) {
-  const styles: Record<
-    EstadoVigenciaEvaluacion,
-    { label: string; className: string }
-  > = {
-    SIN_REVISION: {
-      label: "Sin revisión",
-      className: "bg-neutral-700/60 text-neutral-300",
-    },
-    VIGENTE: {
-      label: "Vigente",
-      className: "bg-emerald-500/10 text-emerald-300",
-    },
-    POR_VENCER: {
-      label: "Por vencer",
-      className: "bg-amber-500/10 text-amber-300",
-    },
-    VENCIDO: {
-      label: "Vencido",
-      className: "bg-red-500/10 text-red-300",
-    },
-    SIN_VENCIMIENTO: {
-      label: "Sin vencimiento",
-      className: "bg-cyan-500/10 text-cyan-300",
-    },
-  };
-
-  const current = styles[estado];
-
-  return (
-    <span
-      className={`inline-flex rounded-full px-2 py-1 text-[9px] font-bold whitespace-nowrap ${current.className}`}
-    >
-      {current.label}
-    </span>
-  );
-}
-
 export default function MatrizEvaluacion({
   filas,
   gestionActiva,
@@ -171,8 +134,17 @@ export default function MatrizEvaluacion({
   const [modificados, setModificados] = useState<Set<number>>(
     new Set()
   );
-  const [mensaje, setMensaje] = useState<string | null>(null);
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [toast, setToast] = useState<{
+    tone: ToastTone;
+    title: string;
+    description?: string;
+  } | null>(null);
+  const [
+    confirmFinalizarOpen,
+    setConfirmFinalizarOpen,
+  ] = useState(false);
+  const sentinelRef =
+    useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const next: Record<number, BorradorEvaluacionAspecto> = {};
@@ -354,7 +326,6 @@ export default function MatrizEvaluacion({
       return next;
     });
 
-    setMensaje(null);
   };
 
   const construirPayload = (): GuardarEvaluacionInput[] => {
@@ -405,56 +376,69 @@ export default function MatrizEvaluacion({
   };
 
   const guardarCambios = async () => {
-    setMensaje(null);
-
     try {
-      const payload = construirPayload();
+      const payload =
+        construirPayload();
 
       if (payload.length === 0) {
-        setMensaje("No hay cambios pendientes por guardar.");
+        setToast({
+          tone: "info",
+          title:
+            "No hay cambios pendientes",
+          description:
+            "Modifica al menos una fila antes de guardar.",
+        });
         return;
       }
 
       await onGuardar(payload);
       setModificados(new Set());
-      setMensaje(
-        `${payload.length} evaluación(es) guardada(s) correctamente.`
-      );
+      setToast({
+        tone: "success",
+        title:
+          "Evaluaciones guardadas",
+        description:
+          `${payload.length} evaluación(es) se guardaron correctamente.`,
+      });
     } catch (error) {
-      setMensaje(
-        error instanceof Error
-          ? error.message
-          : "No fue posible guardar los cambios."
-      );
+      setToast({
+        tone: "error",
+        title:
+          "No fue posible guardar",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Ocurrió un error inesperado.",
+      });
     }
   };
 
-  const finalizarGestion = async () => {
-    const confirmed = window.confirm(
-      "¿Finalizar esta gestión? Después de finalizarla sus evaluaciones pasarán al estado vigente de la empresa y ya no podrán editarse desde este borrador."
-    );
+  const confirmarFinalizacion =
+    async () => {
+      try {
+        const payload =
+          construirPayload();
 
-    if (!confirmed) return;
+        if (payload.length > 0) {
+          await onGuardar(payload);
+        }
 
-    setMensaje(null);
-
-    try {
-      const payload = construirPayload();
-
-      if (payload.length > 0) {
-        await onGuardar(payload);
+        await onFinalizar();
+        setModificados(new Set());
+        setConfirmFinalizarOpen(false);
+      } catch (error) {
+        setConfirmFinalizarOpen(false);
+        setToast({
+          tone: "error",
+          title:
+            "No fue posible finalizar",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Ocurrió un error inesperado.",
+        });
       }
-
-      await onFinalizar();
-      setModificados(new Set());
-    } catch (error) {
-      setMensaje(
-        error instanceof Error
-          ? error.message
-          : "No fue posible finalizar la gestión."
-      );
-    }
-  };
+    };
 
   const rows = filasFiltradas.slice(0, visibles);
 
@@ -589,8 +573,17 @@ export default function MatrizEvaluacion({
                     Por vencer
                   </option>
                   <option value="VENCIDO">Vencido</option>
-                  <option value="SIN_VENCIMIENTO">
-                    Sin vencimiento
+                  <option value="VIGENTE_PERMANENTE">
+                    Vigente permanente
+                  </option>
+                  <option value="FALTA_FECHA_DOCUMENTO">
+                    Falta fecha
+                  </option>
+                  <option value="PERIODICIDAD_NO_CONFIGURADA">
+                    Periodicidad pendiente
+                  </option>
+                  <option value="NO_APLICA">
+                    No aplica
                   </option>
                 </select>
               </div>
@@ -619,9 +612,14 @@ export default function MatrizEvaluacion({
                 className="flex min-h-10 items-center justify-center gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 text-xs font-bold text-cyan-300 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {procesando ? (
-                  <Loader2
-                    size={15}
-                    className="animate-spin"
+                  <AppSpinner
+                    size="sm"
+                    className={
+                      procesando &&
+                      modificados.size === 0
+                        ? "text-cyan-300"
+                        : "text-current"
+                    }
                   />
                 ) : (
                   <Save size={15} />
@@ -631,14 +629,21 @@ export default function MatrizEvaluacion({
 
               <button
                 type="button"
-                onClick={() => void finalizarGestion()}
+                onClick={() =>
+                  setConfirmFinalizarOpen(true)
+                }
                 disabled={procesando}
                 className="flex min-h-10 items-center justify-center gap-2 rounded-xl bg-white px-3 text-xs font-bold text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {procesando ? (
-                  <Loader2
-                    size={15}
-                    className="animate-spin"
+                  <AppSpinner
+                    size="sm"
+                    className={
+                      procesando &&
+                      modificados.size === 0
+                        ? "text-cyan-300"
+                        : "text-current"
+                    }
                   />
                 ) : (
                   <Send size={15} />
@@ -655,19 +660,17 @@ export default function MatrizEvaluacion({
             {filasFiltradas.length} filas filtradas
           </span>
 
-          {mensaje && (
-            <span className="flex min-w-0 items-start gap-1.5 text-neutral-300 sm:justify-end">
-              <Check
-                size={14}
-                className="mt-0.5 shrink-0 text-cyan-400"
-              />
-              <span className="min-w-0 break-words">
-                {mensaje}
-              </span>
-            </span>
-          )}
+          <span>
+            {modificados.size > 0
+              ? `${modificados.size} cambio(s) pendiente(s)`
+              : "Todo guardado"}
+          </span>
         </div>
       </div>
+
+      <VigenciaResumenAlertas
+        filas={filasFiltradas}
+      />
 
       <div className="max-h-[72vh] min-h-[420px] overflow-auto overscroll-contain [scrollbar-gutter:stable]">
         <table className="min-w-[2030px] border-separate border-spacing-0 text-left text-[11px]">
@@ -957,7 +960,9 @@ export default function MatrizEvaluacion({
                     <BodyCell className="w-[130px] min-w-[130px]">
                       <div className="space-y-1.5">
                         <VigenciaBadge
-                          estado={fila.estadoVigencia}
+                          detalle={
+                            fila.detalleVigencia
+                          }
                         />
 
                         {fila.ultimaEvaluacion
@@ -1041,6 +1046,32 @@ export default function MatrizEvaluacion({
           Las filas se cargan progresivamente en bloques de 100.
         </span>
       </div>
+
+      <AppToast
+        open={Boolean(toast)}
+        tone={toast?.tone}
+        title={toast?.title ?? ""}
+        description={toast?.description}
+        onClose={() => setToast(null)}
+      />
+
+      <AppConfirmDialog
+        open={confirmFinalizarOpen}
+        title="Finalizar gestión"
+        description={`Se consolidarán las evaluaciones de esta jornada. ${
+          modificados.size > 0
+            ? `También se guardarán ${modificados.size} cambio(s) pendiente(s). `
+            : ""
+        }Después de finalizar, la gestión ya no podrá editarse directamente.`}
+        confirmLabel="Finalizar gestión"
+        busy={procesando}
+        onCancel={() =>
+          setConfirmFinalizarOpen(false)
+        }
+        onConfirm={() =>
+          void confirmarFinalizacion()
+        }
+      />
     </section>
   );
 }

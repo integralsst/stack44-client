@@ -3,10 +3,10 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { Loader2 } from "lucide-react";
-
 import AppModal from "../../../components/ui/AppModal";
 import AppSelect from "../../../components/ui/AppSelect";
+import AppAlert from "./feedback/AppAlert";
+import AppSpinner from "./feedback/AppSpinner";
 import type {
   CategoriaGestionEvaluacion,
   CrearGestionInput,
@@ -116,7 +116,12 @@ export default function NuevaGestionModal({
             disabled={busy}
             className="flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-black transition hover:bg-neutral-200 disabled:opacity-50"
           >
-            {busy && <Loader2 size={16} className="animate-spin" />}
+            {busy && (
+              <AppSpinner
+                size="sm"
+                className="text-black"
+              />
+            )}
             Crear y comenzar
           </button>
         </div>
@@ -128,9 +133,12 @@ export default function NuevaGestionModal({
         className="grid grid-cols-1 gap-4 sm:grid-cols-2"
       >
         {error && (
-          <div className="sm:col-span-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-            {error}
-          </div>
+          <AppAlert
+            tone="error"
+            title="No fue posible crear la gestión"
+            description={error}
+            className="sm:col-span-2"
+          />
         )}
 
         <label>

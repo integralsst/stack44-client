@@ -30,7 +30,9 @@ export default function ResumenEvaluacion({
     {
       label: "Vigentes",
       value: resumen.vigentes,
-      detail: `${resumen.porVencer} por vencer`,
+      detail: `${resumen.porVencer} por vencer · ${
+        resumen.pendientesVigencia ?? 0
+      } por completar`,
       icon: CheckCircle2,
     },
     {

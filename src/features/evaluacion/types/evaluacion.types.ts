@@ -19,10 +19,23 @@ export type ModalidadGestion =
 
 export type EstadoVigenciaEvaluacion =
   | "SIN_REVISION"
+  | "NO_APLICA"
+  | "VIGENTE_PERMANENTE"
+  | "FALTA_FECHA_DOCUMENTO"
+  | "PERIODICIDAD_NO_CONFIGURADA"
   | "VIGENTE"
   | "POR_VENCER"
-  | "VENCIDO"
-  | "SIN_VENCIMIENTO";
+  | "VENCIDO";
+
+export interface DetalleVigenciaEvaluacion {
+  estado: EstadoVigenciaEvaluacion;
+  titulo: string;
+  descripcion: string;
+  fechaVencimiento: string | null;
+  diasRestantes: number | null;
+  requiereAccion: boolean;
+  provisional: boolean;
+}
 
 export interface EmpresaEvaluacion {
   id: string;
@@ -156,6 +169,8 @@ export interface FilaEvaluacion {
   ultimaEvaluacion: EvaluacionRegistrada | null;
   evaluacionGestionActiva: EvaluacionRegistrada | null;
   estadoVigencia: EstadoVigenciaEvaluacion;
+  detalleVigencia: DetalleVigenciaEvaluacion;
+  estadoVigenciaOficial: EstadoVigenciaEvaluacion;
 }
 
 export interface ResumenEvaluacion {
@@ -165,6 +180,7 @@ export interface ResumenEvaluacion {
   vigentes: number;
   porVencer: number;
   vencidos: number;
+  pendientesVigencia: number;
   cumplimientoAdministrativo: number;
   calificacionMinisterial: number;
   calificacionMinisterialMaxima: number;

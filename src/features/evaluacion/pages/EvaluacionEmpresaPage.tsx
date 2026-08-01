@@ -1,9 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  AlertCircle,
   ClipboardCheck,
-  Loader2,
   Plus,
 } from "lucide-react";
 
@@ -12,6 +10,9 @@ import EvaluacionEmpresaHeader from "../components/EvaluacionEmpresaHeader";
 import MatrizEvaluacion from "../components/MatrizEvaluacion";
 import NuevaGestionModal from "../components/NuevaGestionModal";
 import ResumenEvaluacion from "../components/ResumenEvaluacion";
+import AppAlert from "../components/feedback/AppAlert";
+import AppSpinner from "../components/feedback/AppSpinner";
+import EvaluacionPageSkeleton from "../components/feedback/EvaluacionPageSkeleton";
 import { useEvaluacionEmpresa } from "../hooks/useEvaluacionEmpresa";
 
 export default function EvaluacionEmpresaPage() {
@@ -45,42 +46,31 @@ export default function EvaluacionEmpresaPage() {
 
   if (cargando && !contexto) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="flex flex-col items-center gap-3 text-neutral-500">
-          <Loader2 className="h-7 w-7 animate-spin" />
-          <p className="text-sm">
-            Preparando la matriz de evaluación...
-          </p>
-        </div>
-      </div>
+      <EvaluacionPageSkeleton />
     );
   }
 
   if (!contexto) {
     return (
-      <div className="mx-auto max-w-3xl rounded-2xl border border-red-500/20 bg-red-500/10 p-6 text-red-200">
-        <div className="flex items-start gap-3">
-          <AlertCircle className="mt-0.5 shrink-0" />
-
-          <div>
-            <h1 className="font-bold">
-              No fue posible abrir la evaluación
-            </h1>
-            <p className="mt-1 text-sm text-red-200/80">
-              {error ?? "La empresa no está disponible."}
-            </p>
-
-            <button
-              type="button"
-              onClick={() =>
-                navigate("/dashboard/empresas")
-              }
-              className="mt-4 rounded-xl bg-white px-4 py-2 text-sm font-bold text-black"
-            >
-              Volver a empresas
-            </button>
-          </div>
-        </div>
+      <div className="mx-auto w-full max-w-3xl">
+        <AppAlert
+          tone="error"
+          title="No fue posible abrir la evaluación"
+          description={
+            error ??
+            "La empresa no está disponible."
+          }
+        >
+          <button
+            type="button"
+            onClick={() =>
+              navigate("/dashboard/empresas")
+            }
+            className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-black transition hover:bg-neutral-200"
+          >
+            Volver a empresas
+          </button>
+        </AppAlert>
       </div>
     );
   }
@@ -98,12 +88,23 @@ export default function EvaluacionEmpresaPage() {
       />
 
       {error && (
-        <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-          {error}
-        </div>
+        <AppAlert
+          tone="error"
+          title="No fue posible completar la operación"
+          description={error}
+        />
       )}
 
       <ResumenEvaluacion resumen={contexto.resumen} />
+
+      {(contexto.resumen.pendientesVigencia ?? 0) >
+        0 && (
+        <AppAlert
+          tone="warning"
+          title="Hay información pendiente para calcular vigencias"
+          description={`${contexto.resumen.pendientesVigencia} aspecto(s) finalizado(s) requieren fecha del documento o completar su periodicidad en la Supermatriz.`}
+        />
+      )}
 
       {!contexto.periodo ? (
         <section className="rounded-2xl border border-neutral-800 bg-[#101112] p-5 text-center shadow-xl sm:p-6">
@@ -138,9 +139,9 @@ export default function EvaluacionEmpresaPage() {
                   className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-black transition hover:bg-neutral-200 disabled:opacity-50"
                 >
                   {procesando ? (
-                    <Loader2
-                      size={17}
-                      className="animate-spin"
+                    <AppSpinner
+                      size="sm"
+                      className="text-black"
                     />
                   ) : (
                     <Plus size={17} />
