@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   Ban,
+  CalendarCheck2,
   CalendarClock,
   CalendarX2,
   CheckCircle2,
@@ -17,6 +18,8 @@ import type {
 interface Props {
   detalle: DetalleVigenciaEvaluacion;
   compact?: boolean;
+  fechaDocumentoPendiente?: boolean;
+  fechaDocumentoLocal?: string;
 }
 
 const config: Record<
@@ -79,7 +82,44 @@ function formatDate(
 export default function VigenciaBadge({
   detalle,
   compact = false,
+  fechaDocumentoPendiente = false,
+  fechaDocumentoLocal = "",
 }: Props) {
+  if (fechaDocumentoPendiente) {
+    const tieneFecha = Boolean(
+      fechaDocumentoLocal
+    );
+
+    return (
+      <div
+        className="min-w-0"
+        title={
+          tieneFecha
+            ? "La fecha todavía no se ha guardado. El backend calculará la vigencia al guardar."
+            : "Se quitó la fecha del documento. El cambio todavía no se ha guardado."
+        }
+      >
+        <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-1 text-[9px] font-bold text-cyan-200">
+          <CalendarCheck2
+            size={11}
+            className="shrink-0"
+          />
+          <span className="truncate">
+            {tieneFecha
+              ? "Fecha por guardar"
+              : "Fecha eliminada"}
+          </span>
+        </span>
+
+        {!compact && (
+          <p className="mt-1.5 text-[8px] font-semibold uppercase tracking-wider text-cyan-400">
+            Vigencia pendiente de recalcular
+          </p>
+        )}
+      </div>
+    );
+  }
+
   const current = config[detalle.estado];
   const Icon = current.icon;
 

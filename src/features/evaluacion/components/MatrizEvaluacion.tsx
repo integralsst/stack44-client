@@ -24,11 +24,16 @@ import type {
   GuardarEvaluacionInput,
 } from "../types/evaluacion.types";
 
+import {
+  existeCambioFechaDocumento,
+  normalizarFechaInput,
+} from "../utils/fecha-documento.utils";
 import AppConfirmDialog from "./feedback/AppConfirmDialog";
 import AppSpinner from "./feedback/AppSpinner";
 import AppToast, {
   type ToastTone,
 } from "./feedback/AppToast";
+import AppDateField from "./form/AppDateField";
 import VigenciaBadge from "./matriz/VigenciaBadge";
 import VigenciaResumenAlertas from "./matriz/VigenciaResumenAlertas";
 
@@ -48,14 +53,11 @@ const controlBaseClass =
 const selectClass = `${controlBaseClass} min-h-9 px-2 py-1.5`;
 const inputClass = `${controlBaseClass} min-h-9 px-2 py-1.5`;
 
-function toInputDate(value: string | null): string {
-  return value ? value.slice(0, 10) : "";
-}
-
 function crearBorrador(
   fila: FilaEvaluacion
 ): BorradorEvaluacionAspecto {
-  const evaluacion = fila.evaluacionGestionActiva;
+  const evaluacion =
+    fila.evaluacionGestionActiva;
 
   return {
     aspectoId: fila.aspecto.id,
@@ -63,22 +65,28 @@ function crearBorrador(
     estadoCumplimiento:
       evaluacion?.estadoCumplimiento ?? "",
     calificacionAdministrativa:
-      evaluacion?.calificacionAdministrativa ?? null,
-    observacion: evaluacion?.observacion ?? "",
-    fechaDocumento: toInputDate(
-      evaluacion?.fechaDocumento ?? null
+      evaluacion?.calificacionAdministrativa ??
+      null,
+    observacion:
+      evaluacion?.observacion ?? "",
+    fechaDocumento: normalizarFechaInput(
+      evaluacion?.fechaDocumento
     ),
     justificacionNoAplica:
       evaluacion?.justificacionNoAplica ?? "",
     marcadaRevisionTecnica:
-      evaluacion?.marcadaRevisionTecnica ?? false,
+      evaluacion?.marcadaRevisionTecnica ??
+      false,
   };
 }
 
 function estadoCumplimientoLabel(
   estado: EstadoCumplimientoAspecto
 ): string {
-  const labels: Record<EstadoCumplimientoAspecto, string> = {
+  const labels: Record<
+    EstadoCumplimientoAspecto,
+    string
+  > = {
     CUMPLIDO: "Cumplido",
     PARCIAL: "Parcial",
     NO_CUMPLIDO: "No cumplido",
@@ -89,7 +97,9 @@ function estadoCumplimientoLabel(
 }
 
 function estadoSelectClass(
-  estado: EstadoCumplimientoAspecto | ""
+  estado:
+    | EstadoCumplimientoAspecto
+    | ""
 ): string {
   if (estado === "CUMPLIDO") {
     return "border-emerald-500/40 text-emerald-200";
@@ -117,21 +127,41 @@ export default function MatrizEvaluacion({
   onGuardar,
   onFinalizar,
 }: Props) {
-  const [busqueda, setBusqueda] = useState("");
-  const [procesoId, setProcesoId] = useState("");
-  const [estandarId, setEstandarId] = useState("");
-  const [categoriaGestion, setCategoriaGestion] =
+  const [busqueda, setBusqueda] =
     useState("");
-  const [grupoMinisterial, setGrupoMinisterial] =
+  const [procesoId, setProcesoId] =
     useState("");
-  const [vigencia, setVigencia] = useState("");
-  const [mostrarFiltros, setMostrarFiltros] =
-    useState(false);
-  const [visibles, setVisibles] = useState(100);
-  const [borradores, setBorradores] = useState<
-    Record<number, BorradorEvaluacionAspecto>
+  const [estandarId, setEstandarId] =
+    useState("");
+  const [
+    categoriaGestion,
+    setCategoriaGestion,
+  ] = useState("");
+  const [
+    grupoMinisterial,
+    setGrupoMinisterial,
+  ] = useState("");
+  const [vigencia, setVigencia] =
+    useState("");
+  const [
+    mostrarFiltros,
+    setMostrarFiltros,
+  ] = useState(false);
+  const [visibles, setVisibles] =
+    useState(100);
+  const [
+    borradores,
+    setBorradores,
+  ] = useState<
+    Record<
+      number,
+      BorradorEvaluacionAspecto
+    >
   >({});
-  const [modificados, setModificados] = useState<Set<number>>(
+  const [
+    modificados,
+    setModificados,
+  ] = useState<Set<number>>(
     new Set()
   );
   const [toast, setToast] = useState<{
@@ -144,14 +174,20 @@ export default function MatrizEvaluacion({
     setConfirmFinalizarOpen,
   ] = useState(false);
   const sentinelRef =
-    useRef<HTMLDivElement | null>(null);
+    useRef<HTMLDivElement | null>(
+      null
+    );
 
   useEffect(() => {
-    const next: Record<number, BorradorEvaluacionAspecto> = {};
+    const next: Record<
+      number,
+      BorradorEvaluacionAspecto
+    > = {};
 
     for (const fila of filas) {
       if (!next[fila.aspecto.id]) {
-        next[fila.aspecto.id] = crearBorrador(fila);
+        next[fila.aspecto.id] =
+          crearBorrador(fila);
       }
     }
 
@@ -160,26 +196,36 @@ export default function MatrizEvaluacion({
   }, [filas]);
 
   const procesos = useMemo(() => {
-    const map = new Map<number, string>();
+    const map =
+      new Map<number, string>();
 
     filas.forEach((fila) =>
-      map.set(fila.proceso.id, fila.proceso.nombre)
+      map.set(
+        fila.proceso.id,
+        fila.proceso.nombre
+      )
     );
 
-    return [...map.entries()].sort((a, b) =>
-      a[1].localeCompare(b[1])
+    return [...map.entries()].sort(
+      (a, b) =>
+        a[1].localeCompare(b[1])
     );
   }, [filas]);
 
   const estandares = useMemo(() => {
-    const map = new Map<number, string>();
+    const map =
+      new Map<number, string>();
 
     filas.forEach((fila) =>
-      map.set(fila.estandar.id, fila.estandar.nombre)
+      map.set(
+        fila.estandar.id,
+        fila.estandar.nombre
+      )
     );
 
-    return [...map.entries()].sort((a, b) =>
-      a[1].localeCompare(b[1])
+    return [...map.entries()].sort(
+      (a, b) =>
+        a[1].localeCompare(b[1])
     );
   }, [filas]);
 
@@ -192,7 +238,9 @@ export default function MatrizEvaluacion({
   ].filter(Boolean).length;
 
   const filasFiltradas = useMemo(() => {
-    const term = busqueda.trim().toLowerCase();
+    const term = busqueda
+      .trim()
+      .toLowerCase();
 
     return filas.filter((fila) => {
       const matchesSearch =
@@ -202,28 +250,41 @@ export default function MatrizEvaluacion({
           fila.proceso.nombre,
           fila.estandar.nombre,
           fila.aspecto.nombre,
-          fila.aspecto.planAccionEspecifico ?? "",
+          fila.aspecto
+            .planAccionEspecifico ?? "",
         ].some((value) =>
-          value.toLowerCase().includes(term)
+          value
+            .toLowerCase()
+            .includes(term)
         );
 
       const matchesProcess =
-        !procesoId || fila.proceso.id === Number(procesoId);
+        !procesoId ||
+        fila.proceso.id ===
+          Number(procesoId);
       const matchesStandard =
-        !estandarId || fila.estandar.id === Number(estandarId);
+        !estandarId ||
+        fila.estandar.id ===
+          Number(estandarId);
       const matchesCategory =
         !categoriaGestion ||
         fila.categoriasGestion.some(
           (categoria) =>
-            categoria.codigo === categoriaGestion
+            categoria.codigo ===
+            categoriaGestion
         );
       const matchesGroup =
         !grupoMinisterial ||
-        fila.estandar.gruposMinisteriales.some(
-          (grupo) => grupo.codigo === grupoMinisterial
-        );
+        fila.estandar
+          .gruposMinisteriales.some(
+            (grupo) =>
+              grupo.codigo ===
+              grupoMinisterial
+          );
       const matchesValidity =
-        !vigencia || fila.estadoVigencia === vigencia;
+        !vigencia ||
+        fila.estadoVigencia ===
+          vigencia;
 
       return (
         matchesSearch &&
@@ -256,31 +317,44 @@ export default function MatrizEvaluacion({
   ]);
 
   useEffect(() => {
-    const sentinel = sentinelRef.current;
+    const sentinel =
+      sentinelRef.current;
 
-    if (!sentinel || visibles >= filasFiltradas.length) {
+    if (
+      !sentinel ||
+      visibles >=
+        filasFiltradas.length
+    ) {
       return;
     }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          setVisibles((current) =>
-            Math.min(
-              current + 100,
-              filasFiltradas.length
-            )
-          );
+    const observer =
+      new IntersectionObserver(
+        (entries) => {
+          if (
+            entries[0]?.isIntersecting
+          ) {
+            setVisibles((current) =>
+              Math.min(
+                current + 100,
+                filasFiltradas.length
+              )
+            );
+          }
+        },
+        {
+          rootMargin: "400px",
         }
-      },
-      {
-        rootMargin: "400px",
-      }
-    );
+      );
 
     observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [filasFiltradas.length, visibles]);
+
+    return () =>
+      observer.disconnect();
+  }, [
+    filasFiltradas.length,
+    visibles,
+  ]);
 
   const limpiarFiltros = () => {
     setBusqueda("");
@@ -297,21 +371,29 @@ export default function MatrizEvaluacion({
   ) => {
     setBorradores((current) => {
       const base =
-        current[fila.aspecto.id] ?? crearBorrador(fila);
+        current[fila.aspecto.id] ??
+        crearBorrador(fila);
+
       const next = {
         ...base,
         ...patch,
       };
 
-      if (patch.estadoCumplimiento === "NO_APLICA") {
-        next.calificacionAdministrativa = 5;
+      if (
+        patch.estadoCumplimiento ===
+        "NO_APLICA"
+      ) {
+        next.calificacionAdministrativa =
+          5;
       }
 
       if (
         patch.estadoCumplimiento &&
-        patch.estadoCumplimiento !== "NO_APLICA"
+        patch.estadoCumplimiento !==
+          "NO_APLICA"
       ) {
-        next.justificacionNoAplica = "";
+        next.justificacionNoAplica =
+          "";
       }
 
       return {
@@ -321,97 +403,126 @@ export default function MatrizEvaluacion({
     });
 
     setModificados((current) => {
-      const next = new Set(current);
-      next.add(fila.aspecto.id);
+      const next =
+        new Set(current);
+
+      next.add(
+        fila.aspecto.id
+      );
+
       return next;
     });
-
   };
 
-  const construirPayload = (): GuardarEvaluacionInput[] => {
-    const payload: GuardarEvaluacionInput[] = [];
+  const construirPayload =
+    (): GuardarEvaluacionInput[] => {
+      const payload: GuardarEvaluacionInput[] =
+        [];
 
-    for (const aspectoId of modificados) {
-      const draft = borradores[aspectoId];
+      for (const aspectoId of modificados) {
+        const draft =
+          borradores[aspectoId];
 
-      if (!draft?.estadoCumplimiento) {
-        throw new Error(
-          "Todas las filas modificadas deben tener un estado de cumplimiento."
-        );
-      }
+        if (
+          !draft?.estadoCumplimiento
+        ) {
+          throw new Error(
+            "Todas las filas modificadas deben tener un estado de cumplimiento."
+          );
+        }
 
-      if (draft.calificacionAdministrativa == null) {
-        throw new Error(
-          "Todas las filas modificadas deben tener una calificación administrativa."
-        );
-      }
+        if (
+          draft.calificacionAdministrativa ==
+          null
+        ) {
+          throw new Error(
+            "Todas las filas modificadas deben tener una calificación administrativa."
+          );
+        }
 
-      if (
-        draft.estadoCumplimiento === "NO_APLICA" &&
-        !draft.justificacionNoAplica.trim()
-      ) {
-        throw new Error(
-          "Las filas marcadas como No aplica requieren una justificación."
-        );
-      }
+        if (
+          draft.estadoCumplimiento ===
+            "NO_APLICA" &&
+          !draft.justificacionNoAplica.trim()
+        ) {
+          throw new Error(
+            "Las filas marcadas como No aplica requieren una justificación."
+          );
+        }
 
-      payload.push({
-        aspectoId: draft.aspectoId,
-        supermatrizTareaId: draft.supermatrizTareaId,
-        estadoCumplimiento: draft.estadoCumplimiento,
-        calificacionAdministrativa:
-          draft.calificacionAdministrativa,
-        observacion: draft.observacion.trim() || null,
-        fechaDocumento: draft.fechaDocumento || null,
-        justificacionNoAplica:
-          draft.estadoCumplimiento === "NO_APLICA"
-            ? draft.justificacionNoAplica.trim()
-            : null,
-        marcadaRevisionTecnica:
-          draft.marcadaRevisionTecnica,
-      });
-    }
-
-    return payload;
-  };
-
-  const guardarCambios = async () => {
-    try {
-      const payload =
-        construirPayload();
-
-      if (payload.length === 0) {
-        setToast({
-          tone: "info",
-          title:
-            "No hay cambios pendientes",
-          description:
-            "Modifica al menos una fila antes de guardar.",
+        payload.push({
+          aspectoId:
+            draft.aspectoId,
+          supermatrizTareaId:
+            draft.supermatrizTareaId,
+          estadoCumplimiento:
+            draft.estadoCumplimiento,
+          calificacionAdministrativa:
+            draft.calificacionAdministrativa,
+          observacion:
+            draft.observacion.trim() ||
+            null,
+          fechaDocumento:
+            draft.estadoCumplimiento ===
+            "NO_APLICA"
+              ? null
+              : draft.fechaDocumento ||
+                null,
+          justificacionNoAplica:
+            draft.estadoCumplimiento ===
+            "NO_APLICA"
+              ? draft.justificacionNoAplica.trim()
+              : null,
+          marcadaRevisionTecnica:
+            draft.marcadaRevisionTecnica,
         });
-        return;
       }
 
-      await onGuardar(payload);
-      setModificados(new Set());
-      setToast({
-        tone: "success",
-        title:
-          "Evaluaciones guardadas",
-        description:
-          `${payload.length} evaluación(es) se guardaron correctamente.`,
-      });
-    } catch (error) {
-      setToast({
-        tone: "error",
-        title:
-          "No fue posible guardar",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Ocurrió un error inesperado.",
-      });
-    }
-  };
+      return payload;
+    };
+
+  const guardarCambios =
+    async () => {
+      try {
+        const payload =
+          construirPayload();
+
+        if (
+          payload.length === 0
+        ) {
+          setToast({
+            tone: "info",
+            title:
+              "No hay cambios pendientes",
+            description:
+              "Modifica al menos una fila antes de guardar.",
+          });
+          return;
+        }
+
+        await onGuardar(payload);
+        setModificados(
+          new Set()
+        );
+        setToast({
+          tone: "success",
+          title:
+            "Evaluaciones guardadas",
+          description:
+            `${payload.length} evaluación(es) se guardaron correctamente.`,
+        });
+      } catch (error) {
+        setToast({
+          tone: "error",
+          title:
+            "No fue posible guardar",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Ocurrió un error inesperado.",
+        });
+      }
+    };
 
   const confirmarFinalizacion =
     async () => {
@@ -419,15 +530,25 @@ export default function MatrizEvaluacion({
         const payload =
           construirPayload();
 
-        if (payload.length > 0) {
-          await onGuardar(payload);
+        if (
+          payload.length > 0
+        ) {
+          await onGuardar(
+            payload
+          );
         }
 
         await onFinalizar();
-        setModificados(new Set());
-        setConfirmFinalizarOpen(false);
+        setModificados(
+          new Set()
+        );
+        setConfirmFinalizarOpen(
+          false
+        );
       } catch (error) {
-        setConfirmFinalizarOpen(false);
+        setConfirmFinalizarOpen(
+          false
+        );
         setToast({
           tone: "error",
           title:
@@ -440,7 +561,11 @@ export default function MatrizEvaluacion({
       }
     };
 
-  const rows = filasFiltradas.slice(0, visibles);
+  const rows =
+    filasFiltradas.slice(
+      0,
+      visibles
+    );
 
   return (
     <section className="min-w-0 overflow-hidden rounded-2xl border border-neutral-800 bg-[#101112] shadow-2xl">
@@ -453,35 +578,49 @@ export default function MatrizEvaluacion({
                   Matriz de evaluación
                 </h2>
                 <p className="mt-0.5 text-[11px] text-neutral-500">
-                  Orden y aspecto permanecen visibles; el resto de la tabla se desplaza horizontalmente.
+                  La periodicidad se define en la Supermatriz. Aquí solo se registra la fecha real del documento y el sistema calcula su vencimiento.
                 </p>
               </div>
 
               <button
                 type="button"
                 onClick={() =>
-                  setMostrarFiltros((current) => !current)
+                  setMostrarFiltros(
+                    (current) =>
+                      !current
+                  )
                 }
                 className="flex shrink-0 items-center gap-2 rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-xs font-semibold text-neutral-300 md:hidden"
               >
-                <SlidersHorizontal size={14} />
+                <SlidersHorizontal
+                  size={14}
+                />
                 Filtros
-                {filtrosActivos > 0 && (
+                {filtrosActivos >
+                  0 && (
                   <span className="rounded-full bg-cyan-500/15 px-1.5 py-0.5 text-[9px] text-cyan-300">
-                    {filtrosActivos}
+                    {
+                      filtrosActivos
+                    }
                   </span>
                 )}
                 {mostrarFiltros ? (
-                  <ChevronUp size={14} />
+                  <ChevronUp
+                    size={14}
+                  />
                 ) : (
-                  <ChevronDown size={14} />
+                  <ChevronDown
+                    size={14}
+                  />
                 )}
               </button>
             </div>
 
             <div
               className={`mt-3 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 ${
-                mostrarFiltros ? "grid" : "hidden md:grid"
+                mostrarFiltros
+                  ? "grid"
+                  : "hidden md:grid"
               }`}
             >
               <div className="relative sm:col-span-2 xl:col-span-2">
@@ -489,8 +628,13 @@ export default function MatrizEvaluacion({
                 <input
                   type="search"
                   value={busqueda}
-                  onChange={(event) =>
-                    setBusqueda(event.target.value)
+                  onChange={(
+                    event
+                  ) =>
+                    setBusqueda(
+                      event.target
+                        .value
+                    )
                   }
                   placeholder="Buscar aspecto, estándar o proceso..."
                   className={`${inputClass} pl-9`}
@@ -499,47 +643,89 @@ export default function MatrizEvaluacion({
 
               <FilterSelect
                 value={procesoId}
-                onChange={setProcesoId}
+                onChange={
+                  setProcesoId
+                }
                 ariaLabel="Filtrar por proceso"
               >
-                <option value="">Todos los procesos</option>
-                {procesos.map(([id, nombre]) => (
-                  <option key={id} value={id}>
-                    {nombre}
-                  </option>
-                ))}
+                <option value="">
+                  Todos los procesos
+                </option>
+                {procesos.map(
+                  ([
+                    id,
+                    nombre,
+                  ]) => (
+                    <option
+                      key={id}
+                      value={id}
+                    >
+                      {nombre}
+                    </option>
+                  )
+                )}
               </FilterSelect>
 
               <FilterSelect
                 value={estandarId}
-                onChange={setEstandarId}
+                onChange={
+                  setEstandarId
+                }
                 ariaLabel="Filtrar por estándar"
               >
-                <option value="">Todos los estándares</option>
-                {estandares.map(([id, nombre]) => (
-                  <option key={id} value={id}>
-                    {nombre}
-                  </option>
-                ))}
+                <option value="">
+                  Todos los estándares
+                </option>
+                {estandares.map(
+                  ([
+                    id,
+                    nombre,
+                  ]) => (
+                    <option
+                      key={id}
+                      value={id}
+                    >
+                      {nombre}
+                    </option>
+                  )
+                )}
               </FilterSelect>
 
               <FilterSelect
-                value={categoriaGestion}
-                onChange={setCategoriaGestion}
+                value={
+                  categoriaGestion
+                }
+                onChange={
+                  setCategoriaGestion
+                }
                 ariaLabel="Filtrar por categoría de gestión"
               >
-                <option value="">Toda la gestión</option>
-                <option value="DOCUMENTAL">Documental</option>
-                <option value="INTERVENCION">Intervención</option>
-                <option value="EMERGENCIAS">Emergencias</option>
+                <option value="">
+                  Toda la gestión
+                </option>
+                <option value="DOCUMENTAL">
+                  Documental
+                </option>
+                <option value="INTERVENCION">
+                  Intervención
+                </option>
+                <option value="EMERGENCIAS">
+                  Emergencias
+                </option>
               </FilterSelect>
 
               <FilterSelect
-                value={grupoMinisterial}
-                onChange={setGrupoMinisterial}
+                value={
+                  grupoMinisterial
+                }
+                onChange={
+                  setGrupoMinisterial
+                }
                 ariaLabel="Filtrar por grupo ministerial"
               >
-                <option value="">Grupos 7 / 21 / 60</option>
+                <option value="">
+                  Grupos 7 / 21 / 60
+                </option>
                 <option value="ESTANDARES_7">
                   7 estándares
                 </option>
@@ -558,21 +744,32 @@ export default function MatrizEvaluacion({
                 />
                 <select
                   value={vigencia}
-                  onChange={(event) =>
-                    setVigencia(event.target.value)
+                  onChange={(
+                    event
+                  ) =>
+                    setVigencia(
+                      event.target
+                        .value
+                    )
                   }
                   className={`${selectClass} pl-8`}
                   aria-label="Filtrar por vigencia"
                 >
-                  <option value="">Toda vigencia</option>
+                  <option value="">
+                    Toda vigencia
+                  </option>
                   <option value="SIN_REVISION">
                     Sin revisión
                   </option>
-                  <option value="VIGENTE">Vigente</option>
+                  <option value="VIGENTE">
+                    Vigente
+                  </option>
                   <option value="POR_VENCER">
                     Por vencer
                   </option>
-                  <option value="VENCIDO">Vencido</option>
+                  <option value="VENCIDO">
+                    Vencido
+                  </option>
                   <option value="VIGENTE_PERMANENTE">
                     Vigente permanente
                   </option>
@@ -588,13 +785,19 @@ export default function MatrizEvaluacion({
                 </select>
               </div>
 
-              {(filtrosActivos > 0 || busqueda) && (
+              {(filtrosActivos >
+                0 ||
+                busqueda) && (
                 <button
                   type="button"
-                  onClick={limpiarFiltros}
+                  onClick={
+                    limpiarFiltros
+                  }
                   className="flex min-h-9 items-center justify-center gap-2 rounded-lg border border-neutral-700 bg-neutral-900 px-3 text-xs font-semibold text-neutral-300 transition hover:border-neutral-600 hover:text-white xl:col-start-6"
                 >
-                  <RotateCcw size={14} />
+                  <RotateCcw
+                    size={14}
+                  />
                   Limpiar
                 </button>
               )}
@@ -605,48 +808,54 @@ export default function MatrizEvaluacion({
             <div className="grid w-full shrink-0 grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
               <button
                 type="button"
-                onClick={() => void guardarCambios()}
+                onClick={() =>
+                  void guardarCambios()
+                }
                 disabled={
-                  procesando || modificados.size === 0
+                  procesando ||
+                  modificados.size ===
+                    0
                 }
                 className="flex min-h-10 items-center justify-center gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 text-xs font-bold text-cyan-300 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {procesando ? (
                   <AppSpinner
                     size="sm"
-                    className={
-                      procesando &&
-                      modificados.size === 0
-                        ? "text-cyan-300"
-                        : "text-current"
-                    }
+                    className="text-current"
                   />
                 ) : (
-                  <Save size={15} />
+                  <Save
+                    size={15}
+                  />
                 )}
-                Guardar ({modificados.size})
+                Guardar (
+                {
+                  modificados.size
+                }
+                )
               </button>
 
               <button
                 type="button"
                 onClick={() =>
-                  setConfirmFinalizarOpen(true)
+                  setConfirmFinalizarOpen(
+                    true
+                  )
                 }
-                disabled={procesando}
+                disabled={
+                  procesando
+                }
                 className="flex min-h-10 items-center justify-center gap-2 rounded-xl bg-white px-3 text-xs font-bold text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {procesando ? (
                   <AppSpinner
                     size="sm"
-                    className={
-                      procesando &&
-                      modificados.size === 0
-                        ? "text-cyan-300"
-                        : "text-current"
-                    }
+                    className="text-current"
                   />
                 ) : (
-                  <Send size={15} />
+                  <Send
+                    size={15}
+                  />
                 )}
                 Finalizar
               </button>
@@ -656,12 +865,21 @@ export default function MatrizEvaluacion({
 
         <div className="mt-3 flex flex-col gap-2 border-t border-neutral-800/80 pt-3 text-[11px] text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
           <span>
-            Mostrando {Math.min(visibles, filasFiltradas.length)} de{" "}
-            {filasFiltradas.length} filas filtradas
+            Mostrando{" "}
+            {Math.min(
+              visibles,
+              filasFiltradas.length
+            )}{" "}
+            de{" "}
+            {
+              filasFiltradas.length
+            }{" "}
+            filas filtradas
           </span>
 
           <span>
-            {modificados.size > 0
+            {modificados.size >
+            0
               ? `${modificados.size} cambio(s) pendiente(s)`
               : "Todo guardado"}
           </span>
@@ -669,7 +887,9 @@ export default function MatrizEvaluacion({
       </div>
 
       <VigenciaResumenAlertas
-        filas={filasFiltradas}
+        filas={
+          filasFiltradas
+        }
       />
 
       <div className="max-h-[72vh] min-h-[420px] overflow-auto overscroll-contain [scrollbar-gutter:stable]">
@@ -703,11 +923,11 @@ export default function MatrizEvaluacion({
               <HeaderCell className="w-[230px] min-w-[230px]">
                 Observación
               </HeaderCell>
-              <HeaderCell className="w-[132px] min-w-[132px]">
-                Fecha documento
+              <HeaderCell className="w-[144px] min-w-[144px]">
+                Fecha del soporte
               </HeaderCell>
-              <HeaderCell className="w-[130px] min-w-[130px]">
-                Vigencia
+              <HeaderCell className="w-[150px] min-w-[150px]">
+                Vigencia calculada
               </HeaderCell>
               <HeaderCell className="w-[220px] min-w-[220px]">
                 Justificación No aplica
@@ -719,344 +939,544 @@ export default function MatrizEvaluacion({
           </thead>
 
           <tbody>
-            {rows.length === 0 ? (
+            {rows.length ===
+            0 ? (
               <tr>
                 <td
                   colSpan={13}
                   className="px-6 py-16 text-center text-sm text-neutral-500"
                 >
-                  No hay filas que coincidan con los filtros.
+                  No hay filas
+                  que coincidan
+                  con los
+                  filtros.
                 </td>
               </tr>
             ) : (
-              rows.map((fila) => {
-                const draft =
-                  borradores[fila.aspecto.id] ??
-                  crearBorrador(fila);
-                const isChanged = modificados.has(
-                  fila.aspecto.id
-                );
-                const stickyBackground = isChanged
-                  ? "bg-[#102126]"
-                  : "bg-[#101112]";
+              rows.map(
+                (fila) => {
+                  const draft =
+                    borradores[
+                      fila
+                        .aspecto
+                        .id
+                    ] ??
+                    crearBorrador(
+                      fila
+                    );
 
-                return (
-                  <tr
-                    key={fila.tareaId}
-                    className={`group transition-colors hover:bg-neutral-800/20 ${
-                      isChanged ? "bg-cyan-500/[0.035]" : ""
-                    }`}
-                  >
-                    <StickyCell
-                      className={`left-0 w-[52px] min-w-[52px] text-center font-mono text-neutral-500 ${stickyBackground}`}
-                    >
-                      <div className="flex flex-col items-center gap-1">
-                        <span>{fila.orden}</span>
-                        {isChanged && (
-                          <span
-                            className="h-1.5 w-1.5 rounded-full bg-cyan-400"
-                            title="Cambios pendientes"
-                          />
-                        )}
-                      </div>
-                    </StickyCell>
+                  const isChanged =
+                    modificados.has(
+                      fila
+                        .aspecto
+                        .id
+                    );
 
-                    <StickyCell
-                      className={`left-[52px] w-[280px] min-w-[280px] border-r border-neutral-700 ${stickyBackground}`}
+                  const fechaGuardada =
+                    fila
+                      .evaluacionGestionActiva
+                      ?.fechaDocumento ??
+                    null;
+
+                  const fechaPendiente =
+                    isChanged &&
+                    existeCambioFechaDocumento(
+                      draft.fechaDocumento,
+                      fechaGuardada
+                    );
+
+                  const permiteFechaManual =
+                    fila.aspecto
+                      .configuracionVigencia
+                      ?.permiteFechaManual ??
+                    true;
+
+                  const stickyBackground =
+                    isChanged
+                      ? "bg-[#102126]"
+                      : "bg-[#101112]";
+
+                  return (
+                    <tr
+                      key={
+                        fila.tareaId
+                      }
+                      className={`group transition-colors hover:bg-neutral-800/20 ${
+                        isChanged
+                          ? "bg-cyan-500/[0.035]"
+                          : ""
+                      }`}
                     >
-                      <p
-                        className="line-clamp-3 whitespace-normal font-semibold leading-4 text-white"
-                        title={fila.aspecto.nombre}
+                      <StickyCell
+                        className={`left-0 w-[52px] min-w-[52px] text-center font-mono text-neutral-500 ${stickyBackground}`}
                       >
-                        {fila.aspecto.nombre}
-                      </p>
-
-                      <div className="mt-1.5 flex flex-wrap items-center gap-1">
-                        {fila.codigo && (
-                          <span className="rounded bg-neutral-800 px-1.5 py-0.5 font-mono text-[8px] text-neutral-500">
-                            {fila.codigo}
+                        <div className="flex flex-col items-center gap-1">
+                          <span>
+                            {
+                              fila.orden
+                            }
                           </span>
-                        )}
-
-                        {fila.categoriasGestion.map(
-                          (categoria) => (
+                          {isChanged && (
                             <span
-                              key={categoria.id}
-                              className="rounded bg-cyan-500/10 px-1.5 py-0.5 text-[8px] text-cyan-300"
-                            >
-                              {categoria.nombre}
+                              className="h-1.5 w-1.5 rounded-full bg-cyan-400"
+                              title="Cambios pendientes"
+                            />
+                          )}
+                        </div>
+                      </StickyCell>
+
+                      <StickyCell
+                        className={`left-[52px] w-[280px] min-w-[280px] border-r border-neutral-700 ${stickyBackground}`}
+                      >
+                        <p
+                          className="line-clamp-3 whitespace-normal font-semibold leading-4 text-white"
+                          title={
+                            fila
+                              .aspecto
+                              .nombre
+                          }
+                        >
+                          {
+                            fila
+                              .aspecto
+                              .nombre
+                          }
+                        </p>
+
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                          {fila.codigo && (
+                            <span className="rounded bg-neutral-800 px-1.5 py-0.5 font-mono text-[8px] text-neutral-500">
+                              {
+                                fila.codigo
+                              }
                             </span>
-                          )
-                        )}
-                      </div>
-                    </StickyCell>
+                          )}
 
-                    <BodyCell className="w-[140px] min-w-[140px]">
-                      <p
-                        className="line-clamp-3 font-medium leading-4 text-neutral-300"
-                        title={fila.proceso.nombre}
-                      >
-                        {fila.proceso.nombre}
-                      </p>
-                    </BodyCell>
+                          {fila.categoriasGestion.map(
+                            (
+                              categoria
+                            ) => (
+                              <span
+                                key={
+                                  categoria.id
+                                }
+                                className="rounded bg-cyan-500/10 px-1.5 py-0.5 text-[8px] text-cyan-300"
+                              >
+                                {
+                                  categoria.nombre
+                                }
+                              </span>
+                            )
+                          )}
+                        </div>
+                      </StickyCell>
 
-                    <BodyCell className="w-[190px] min-w-[190px]">
-                      <p
-                        className="line-clamp-3 font-medium leading-4 text-neutral-300"
-                        title={fila.estandar.nombre}
-                      >
-                        {fila.estandar.nombre}
-                      </p>
+                      <BodyCell className="w-[140px] min-w-[140px]">
+                        <p
+                          className="line-clamp-3 font-medium leading-4 text-neutral-300"
+                          title={
+                            fila
+                              .proceso
+                              .nombre
+                          }
+                        >
+                          {
+                            fila
+                              .proceso
+                              .nombre
+                          }
+                        </p>
+                      </BodyCell>
 
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {fila.estandar.gruposMinisteriales.map(
-                          (grupo) => (
-                            <span
-                              key={grupo.id}
-                              className="rounded bg-neutral-800 px-1.5 py-0.5 text-[8px] text-neutral-500"
-                            >
-                              {grupo.codigo.replace(
-                                "ESTANDARES_",
-                                ""
+                      <BodyCell className="w-[190px] min-w-[190px]">
+                        <p
+                          className="line-clamp-3 font-medium leading-4 text-neutral-300"
+                          title={
+                            fila
+                              .estandar
+                              .nombre
+                          }
+                        >
+                          {
+                            fila
+                              .estandar
+                              .nombre
+                          }
+                        </p>
+
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {fila.estandar.gruposMinisteriales.map(
+                            (
+                              grupo
+                            ) => (
+                              <span
+                                key={
+                                  grupo.id
+                                }
+                                className="rounded bg-neutral-800 px-1.5 py-0.5 text-[8px] text-neutral-500"
+                              >
+                                {grupo.codigo.replace(
+                                  "ESTANDARES_",
+                                  ""
+                                )}
+                              </span>
+                            )
+                          )}
+                        </div>
+                      </BodyCell>
+
+                      <BodyCell className="w-[240px] min-w-[240px] whitespace-normal text-neutral-400">
+                        <p
+                          className="line-clamp-4 leading-4"
+                          title={
+                            fila
+                              .aspecto
+                              .planAccionEspecifico ??
+                            "Sin plan de acción"
+                          }
+                        >
+                          {fila
+                            .aspecto
+                            .planAccionEspecifico ??
+                            "Sin plan de acción"}
+                        </p>
+                      </BodyCell>
+
+                      <BodyCell className="w-[120px] min-w-[120px]">
+                        {fila.ultimaEvaluacion ? (
+                          <div className="space-y-1">
+                            <span className="inline-flex rounded-full bg-neutral-800 px-2 py-1 text-[9px] font-bold text-neutral-300">
+                              {estadoCumplimientoLabel(
+                                fila
+                                  .ultimaEvaluacion
+                                  .estadoCumplimiento
                               )}
                             </span>
-                          )
-                        )}
-                      </div>
-                    </BodyCell>
 
-                    <BodyCell className="w-[240px] min-w-[240px] whitespace-normal text-neutral-400">
-                      <p
-                        className="line-clamp-4 leading-4"
-                        title={
-                          fila.aspecto.planAccionEspecifico ??
-                          "Sin plan de acción"
-                        }
-                      >
-                        {fila.aspecto.planAccionEspecifico ??
-                          "Sin plan de acción"}
-                      </p>
-                    </BodyCell>
-
-                    <BodyCell className="w-[120px] min-w-[120px]">
-                      {fila.ultimaEvaluacion ? (
-                        <div className="space-y-1">
-                          <span className="inline-flex rounded-full bg-neutral-800 px-2 py-1 text-[9px] font-bold text-neutral-300">
-                            {estadoCumplimientoLabel(
-                              fila.ultimaEvaluacion
-                                .estadoCumplimiento
-                            )}
+                            <p className="text-[10px] text-neutral-500">
+                              Nota{" "}
+                              <strong className="text-neutral-300">
+                                {
+                                  fila
+                                    .ultimaEvaluacion
+                                    .calificacionAdministrativa
+                                }
+                              </strong>
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-neutral-600">
+                            Sin evaluación
                           </span>
-
-                          <p className="text-[10px] text-neutral-500">
-                            Nota{" "}
-                            <strong className="text-neutral-300">
-                              {
-                                fila.ultimaEvaluacion
-                                  .calificacionAdministrativa
-                              }
-                            </strong>
-                          </p>
-                        </div>
-                      ) : (
-                        <span className="text-neutral-600">
-                          Sin evaluación
-                        </span>
-                      )}
-                    </BodyCell>
-
-                    <BodyCell className="w-[150px] min-w-[150px]">
-                      <select
-                        value={draft.estadoCumplimiento}
-                        disabled={!gestionActiva || procesando}
-                        onChange={(event) =>
-                          updateDraft(fila, {
-                            estadoCumplimiento:
-                              event.target.value as
-                                | EstadoCumplimientoAspecto
-                                | "",
-                          })
-                        }
-                        className={`${selectClass} ${estadoSelectClass(
-                          draft.estadoCumplimiento
-                        )}`}
-                      >
-                        <option value="">Seleccionar</option>
-                        <option value="CUMPLIDO">
-                          Cumplido
-                        </option>
-                        <option value="PARCIAL">Parcial</option>
-                        <option value="NO_CUMPLIDO">
-                          No cumplido
-                        </option>
-                        {fila.aspecto.configuracion
-                          ?.permiteNoAplica !== false && (
-                          <option value="NO_APLICA">
-                            No aplica
-                          </option>
                         )}
-                      </select>
-                    </BodyCell>
+                      </BodyCell>
 
-                    <BodyCell className="w-[92px] min-w-[92px]">
-                      <select
-                        value={
-                          draft.calificacionAdministrativa ?? ""
-                        }
-                        disabled={
-                          !gestionActiva ||
-                          procesando ||
-                          draft.estadoCumplimiento ===
-                            "NO_APLICA"
-                        }
-                        onChange={(event) =>
-                          updateDraft(fila, {
-                            calificacionAdministrativa:
-                              event.target.value === ""
-                                ? null
-                                : Number(event.target.value),
-                          })
-                        }
-                        className={selectClass}
-                      >
-                        <option value="">Nota</option>
-                        {[0, 1, 2, 3, 4, 5].map((score) => (
-                          <option key={score} value={score}>
-                            {score}
+                      <BodyCell className="w-[150px] min-w-[150px]">
+                        <select
+                          value={
+                            draft.estadoCumplimiento
+                          }
+                          disabled={
+                            !gestionActiva ||
+                            procesando
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            updateDraft(
+                              fila,
+                              {
+                                estadoCumplimiento:
+                                  event
+                                    .target
+                                    .value as
+                                    | EstadoCumplimientoAspecto
+                                    | "",
+                              }
+                            )
+                          }
+                          className={`${selectClass} ${estadoSelectClass(
+                            draft.estadoCumplimiento
+                          )}`}
+                        >
+                          <option value="">
+                            Seleccionar
                           </option>
-                        ))}
-                      </select>
-                    </BodyCell>
+                          <option value="CUMPLIDO">
+                            Cumplido
+                          </option>
+                          <option value="PARCIAL">
+                            Parcial
+                          </option>
+                          <option value="NO_CUMPLIDO">
+                            No cumplido
+                          </option>
+                          {fila
+                            .aspecto
+                            .configuracion
+                            ?.permiteNoAplica !==
+                            false && (
+                            <option value="NO_APLICA">
+                              No aplica
+                            </option>
+                          )}
+                        </select>
+                      </BodyCell>
 
-                    <BodyCell className="w-[230px] min-w-[230px]">
-                      <textarea
-                        rows={2}
-                        value={draft.observacion}
-                        disabled={!gestionActiva || procesando}
-                        onChange={(event) =>
-                          updateDraft(fila, {
-                            observacion: event.target.value,
-                          })
-                        }
-                        placeholder="Hallazgo y orientación..."
-                        className={`${inputClass} min-h-[56px] max-h-32 resize-y leading-4`}
-                      />
-                    </BodyCell>
+                      <BodyCell className="w-[92px] min-w-[92px]">
+                        <select
+                          value={
+                            draft.calificacionAdministrativa ??
+                            ""
+                          }
+                          disabled={
+                            !gestionActiva ||
+                            procesando ||
+                            draft.estadoCumplimiento ===
+                              "NO_APLICA"
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            updateDraft(
+                              fila,
+                              {
+                                calificacionAdministrativa:
+                                  event
+                                    .target
+                                    .value ===
+                                  ""
+                                    ? null
+                                    : Number(
+                                        event
+                                          .target
+                                          .value
+                                      ),
+                              }
+                            )
+                          }
+                          className={
+                            selectClass
+                          }
+                        >
+                          <option value="">
+                            Nota
+                          </option>
+                          {[
+                            0,
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                          ].map(
+                            (
+                              score
+                            ) => (
+                              <option
+                                key={
+                                  score
+                                }
+                                value={
+                                  score
+                                }
+                              >
+                                {
+                                  score
+                                }
+                              </option>
+                            )
+                          )}
+                        </select>
+                      </BodyCell>
 
-                    <BodyCell className="w-[132px] min-w-[132px]">
-                      <input
-                        type="date"
-                        value={draft.fechaDocumento}
-                        disabled={!gestionActiva || procesando}
-                        onChange={(event) =>
-                          updateDraft(fila, {
-                            fechaDocumento: event.target.value,
-                          })
-                        }
-                        className={inputClass}
-                      />
-                    </BodyCell>
+                      <BodyCell className="w-[230px] min-w-[230px]">
+                        <textarea
+                          rows={2}
+                          value={
+                            draft.observacion
+                          }
+                          disabled={
+                            !gestionActiva ||
+                            procesando
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            updateDraft(
+                              fila,
+                              {
+                                observacion:
+                                  event
+                                    .target
+                                    .value,
+                              }
+                            )
+                          }
+                          placeholder="Hallazgo y orientación..."
+                          className={`${inputClass} min-h-[56px] max-h-32 resize-y leading-4`}
+                        />
+                      </BodyCell>
 
-                    <BodyCell className="w-[130px] min-w-[130px]">
-                      <div className="space-y-1.5">
+                      <BodyCell className="w-[144px] min-w-[144px]">
+                        <AppDateField
+                          value={
+                            draft.fechaDocumento
+                          }
+                          disabled={
+                            !gestionActiva ||
+                            procesando ||
+                            draft.estadoCumplimiento ===
+                              "NO_APLICA"
+                          }
+                          permiteFechaManual={
+                            permiteFechaManual
+                          }
+                          pending={
+                            fechaPendiente
+                          }
+                          onChange={(
+                            value
+                          ) =>
+                            updateDraft(
+                              fila,
+                              {
+                                fechaDocumento:
+                                  value,
+                              }
+                            )
+                          }
+                        />
+                      </BodyCell>
+
+                      <BodyCell className="w-[150px] min-w-[150px]">
                         <VigenciaBadge
                           detalle={
                             fila.detalleVigencia
                           }
+                          fechaDocumentoPendiente={
+                            fechaPendiente
+                          }
+                          fechaDocumentoLocal={
+                            draft.fechaDocumento
+                          }
                         />
+                      </BodyCell>
 
-                        {fila.ultimaEvaluacion
-                          ?.fechaVencimientoCalculada && (
-                          <p className="text-[9px] leading-4 text-neutral-500">
-                            Vence{" "}
-                            {new Date(
-                              fila.ultimaEvaluacion
-                                .fechaVencimientoCalculada
-                            ).toLocaleDateString("es-CO")}
-                          </p>
-                        )}
-                      </div>
-                    </BodyCell>
-
-                    <BodyCell className="w-[220px] min-w-[220px]">
-                      <textarea
-                        rows={2}
-                        value={draft.justificacionNoAplica}
-                        disabled={
-                          !gestionActiva ||
-                          procesando ||
-                          draft.estadoCumplimiento !==
+                      <BodyCell className="w-[220px] min-w-[220px]">
+                        <textarea
+                          rows={2}
+                          value={
+                            draft.justificacionNoAplica
+                          }
+                          disabled={
+                            !gestionActiva ||
+                            procesando ||
+                            draft.estadoCumplimiento !==
+                              "NO_APLICA"
+                          }
+                          onChange={(
+                            event
+                          ) =>
+                            updateDraft(
+                              fila,
+                              {
+                                justificacionNoAplica:
+                                  event
+                                    .target
+                                    .value,
+                              }
+                            )
+                          }
+                          placeholder={
+                            draft.estadoCumplimiento ===
                             "NO_APLICA"
-                        }
-                        onChange={(event) =>
-                          updateDraft(fila, {
-                            justificacionNoAplica:
-                              event.target.value,
-                          })
-                        }
-                        placeholder={
-                          draft.estadoCumplimiento === "NO_APLICA"
-                            ? "Justificación obligatoria..."
-                            : "Se habilita al marcar No aplica"
-                        }
-                        className={`${inputClass} min-h-[56px] max-h-32 resize-y leading-4`}
-                      />
-                    </BodyCell>
+                              ? "Justificación obligatoria..."
+                              : "Se habilita al marcar No aplica"
+                          }
+                          className={`${inputClass} min-h-[56px] max-h-32 resize-y leading-4`}
+                        />
+                      </BodyCell>
 
-                    <BodyCell className="w-[112px] min-w-[112px] text-center">
-                      <button
-                        type="button"
-                        disabled={!gestionActiva || procesando}
-                        aria-pressed={
-                          draft.marcadaRevisionTecnica
-                        }
-                        onClick={() =>
-                          updateDraft(fila, {
-                            marcadaRevisionTecnica:
-                              !draft.marcadaRevisionTecnica,
-                          })
-                        }
-                        className={`mx-auto flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg border px-2 text-[9px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-45 ${
-                          draft.marcadaRevisionTecnica
-                            ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-300"
-                            : "border-neutral-700 bg-[#090a0b] text-neutral-500 hover:text-neutral-300"
-                        }`}
-                      >
-                        <CheckCircle2 size={13} />
-                        {draft.marcadaRevisionTecnica
-                          ? "Marcada"
-                          : "Marcar"}
-                      </button>
-                    </BodyCell>
-                  </tr>
-                );
-              })
+                      <BodyCell className="w-[112px] min-w-[112px] text-center">
+                        <button
+                          type="button"
+                          disabled={
+                            !gestionActiva ||
+                            procesando
+                          }
+                          aria-pressed={
+                            draft.marcadaRevisionTecnica
+                          }
+                          onClick={() =>
+                            updateDraft(
+                              fila,
+                              {
+                                marcadaRevisionTecnica:
+                                  !draft.marcadaRevisionTecnica,
+                              }
+                            )
+                          }
+                          className={`mx-auto flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg border px-2 text-[9px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-45 ${
+                            draft.marcadaRevisionTecnica
+                              ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-300"
+                              : "border-neutral-700 bg-[#090a0b] text-neutral-500 hover:text-neutral-300"
+                          }`}
+                        >
+                          <CheckCircle2
+                            size={13}
+                          />
+                          {draft.marcadaRevisionTecnica
+                            ? "Marcada"
+                            : "Marcar"}
+                        </button>
+                      </BodyCell>
+                    </tr>
+                  );
+                }
+              )
             )}
           </tbody>
         </table>
 
-        <div ref={sentinelRef} className="h-1" />
+        <div
+          ref={sentinelRef}
+          className="h-1"
+        />
       </div>
 
       <div className="flex flex-col gap-1 border-t border-neutral-800 bg-[#0b0c0d] px-3 py-2 text-[10px] text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
         <span>
-          Desliza horizontalmente para ver todas las columnas.
+          Desliza
+          horizontalmente para
+          ver todas las
+          columnas.
         </span>
         <span>
-          Las filas se cargan progresivamente en bloques de 100.
+          Las filas se cargan
+          progresivamente en
+          bloques de 100.
         </span>
       </div>
 
       <AppToast
         open={Boolean(toast)}
         tone={toast?.tone}
-        title={toast?.title ?? ""}
-        description={toast?.description}
-        onClose={() => setToast(null)}
+        title={
+          toast?.title ?? ""
+        }
+        description={
+          toast?.description
+        }
+        onClose={() =>
+          setToast(null)
+        }
       />
 
       <AppConfirmDialog
-        open={confirmFinalizarOpen}
+        open={
+          confirmFinalizarOpen
+        }
         title="Finalizar gestión"
         description={`Se consolidarán las evaluaciones de esta jornada. ${
           modificados.size > 0
@@ -1066,7 +1486,9 @@ export default function MatrizEvaluacion({
         confirmLabel="Finalizar gestión"
         busy={procesando}
         onCancel={() =>
-          setConfirmFinalizarOpen(false)
+          setConfirmFinalizarOpen(
+            false
+          )
         }
         onConfirm={() =>
           void confirmarFinalizacion()
@@ -1083,7 +1505,9 @@ function FilterSelect({
   children,
 }: {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (
+    value: string
+  ) => void;
   ariaLabel: string;
   children: ReactNode;
 }) {
@@ -1091,8 +1515,16 @@ function FilterSelect({
     <select
       value={value}
       aria-label={ariaLabel}
-      onChange={(event) => onChange(event.target.value)}
-      className={selectClass}
+      onChange={(
+        event
+      ) =>
+        onChange(
+          event.target.value
+        )
+      }
+      className={
+        selectClass
+      }
     >
       {children}
     </select>

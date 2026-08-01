@@ -65,7 +65,10 @@ export interface PeriodoEvaluacion {
 
 export interface CategoriaGestionEvaluacion {
   id: number;
-  codigo: "DOCUMENTAL" | "INTERVENCION" | "EMERGENCIAS";
+  codigo:
+    | "DOCUMENTAL"
+    | "INTERVENCION"
+    | "EMERGENCIAS";
   nombre: string;
 }
 
@@ -76,7 +79,9 @@ export interface GestionActivaEvaluacion {
   tipoActividad: string;
   observacionGeneral: string | null;
   estado: EstadoGestionSgsst;
-  categoriaGestion: CategoriaGestionEvaluacion | null;
+  categoriaGestion:
+    | CategoriaGestionEvaluacion
+    | null;
   profesional: {
     id: string;
     nombres: string;
@@ -86,12 +91,17 @@ export interface GestionActivaEvaluacion {
 
 export interface EvaluacionRegistrada {
   id: string;
-  estadoCumplimiento: EstadoCumplimientoAspecto;
+  estadoCumplimiento:
+    EstadoCumplimientoAspecto;
   calificacionAdministrativa: number;
   observacion: string | null;
   fechaDocumento: string | null;
-  fechaVencimientoCalculada: string | null;
-  justificacionNoAplica: string | null;
+  fechaVencimientoCalculada:
+    | string
+    | null;
+  justificacionNoAplica:
+    | string
+    | null;
   marcadaRevisionTecnica: boolean;
   creadaEn: string;
   actualizadaEn: string;
@@ -113,7 +123,8 @@ export interface FilaEvaluacion {
     codigo: string | null;
     nombre: string;
   };
-  categoriasGestion: CategoriaGestionEvaluacion[];
+  categoriasGestion:
+    CategoriaGestionEvaluacion[];
   cicloPhva: {
     id: number;
     codigo: string;
@@ -143,7 +154,9 @@ export interface FilaEvaluacion {
     id: number;
     codigo: string | null;
     nombre: string;
-    planAccionEspecifico: string | null;
+    planAccionEspecifico:
+      | string
+      | null;
     configuracion: {
       esEvergreen: boolean;
       documentoActualizacionPeriodica: boolean;
@@ -155,22 +168,32 @@ export interface FilaEvaluacion {
       cantidad: number | null;
       unidad: string | null;
       diasAlertaPrevia: number;
+      permiteFechaManual: boolean;
       descripcionRegla: string | null;
     } | null;
     configuracionEvidencia: {
       requiereEvidencia: boolean;
-      descripcionEvidencia: string | null;
+      descripcionEvidencia:
+        | string
+        | null;
     } | null;
     configuracionRevision: {
       requiereRevisionTecnica: boolean;
       observaciones: string | null;
     } | null;
   };
-  ultimaEvaluacion: EvaluacionRegistrada | null;
-  evaluacionGestionActiva: EvaluacionRegistrada | null;
-  estadoVigencia: EstadoVigenciaEvaluacion;
-  detalleVigencia: DetalleVigenciaEvaluacion;
-  estadoVigenciaOficial: EstadoVigenciaEvaluacion;
+  ultimaEvaluacion:
+    | EvaluacionRegistrada
+    | null;
+  evaluacionGestionActiva:
+    | EvaluacionRegistrada
+    | null;
+  estadoVigencia:
+    EstadoVigenciaEvaluacion;
+  detalleVigencia:
+    DetalleVigenciaEvaluacion;
+  estadoVigenciaOficial:
+    EstadoVigenciaEvaluacion;
 }
 
 export interface ResumenEvaluacion {
@@ -189,10 +212,17 @@ export interface ResumenEvaluacion {
 export interface ContextoEvaluacionResponse {
   empresa: EmpresaEvaluacion;
   anio: number;
-  periodo: PeriodoEvaluacion | null;
-  versionDisponible: VersionEvaluacion | null;
-  gestionActiva: GestionActivaEvaluacion | null;
-  categoriasGestion: CategoriaGestionEvaluacion[];
+  periodo:
+    | PeriodoEvaluacion
+    | null;
+  versionDisponible:
+    | VersionEvaluacion
+    | null;
+  gestionActiva:
+    | GestionActivaEvaluacion
+    | null;
+  categoriasGestion:
+    CategoriaGestionEvaluacion[];
   filas: FilaEvaluacion[];
   resumen: ResumenEvaluacion;
 }
@@ -201,15 +231,23 @@ export interface CrearGestionInput {
   fechaGestion: string;
   modalidad: ModalidadGestion;
   tipoActividad: string;
-  observacionGeneral?: string | null;
-  categoriaGestionId?: number | null;
+  observacionGeneral?:
+    | string
+    | null;
+  categoriaGestionId?:
+    | number
+    | null;
 }
 
 export interface BorradorEvaluacionAspecto {
   aspectoId: number;
   supermatrizTareaId: number;
-  estadoCumplimiento: EstadoCumplimientoAspecto | "";
-  calificacionAdministrativa: number | null;
+  estadoCumplimiento:
+    | EstadoCumplimientoAspecto
+    | "";
+  calificacionAdministrativa:
+    | number
+    | null;
   observacion: string;
   fechaDocumento: string;
   justificacionNoAplica: string;
@@ -219,10 +257,13 @@ export interface BorradorEvaluacionAspecto {
 export interface GuardarEvaluacionInput {
   aspectoId: number;
   supermatrizTareaId: number;
-  estadoCumplimiento: EstadoCumplimientoAspecto;
+  estadoCumplimiento:
+    EstadoCumplimientoAspecto;
   calificacionAdministrativa: number;
   observacion: string | null;
   fechaDocumento: string | null;
-  justificacionNoAplica: string | null;
+  justificacionNoAplica:
+    | string
+    | null;
   marcadaRevisionTecnica: boolean;
 }
