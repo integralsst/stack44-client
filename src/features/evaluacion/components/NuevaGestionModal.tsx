@@ -11,7 +11,7 @@ import type {
   CategoriaGestionEvaluacion,
   CrearGestionInput,
   ModalidadGestion,
-} from "../types/evaluacion.types";
+} from "../../../types/evaluacion.types";
 
 interface Props {
   open: boolean;

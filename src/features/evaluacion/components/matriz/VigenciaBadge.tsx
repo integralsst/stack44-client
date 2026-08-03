@@ -13,7 +13,7 @@ import {
 import type {
   DetalleVigenciaEvaluacion,
   EstadoVigenciaEvaluacion,
-} from "../../types/evaluacion.types";
+} from "../../../../types/evaluacion.types";
 
 interface Props {
   detalle: DetalleVigenciaEvaluacion;

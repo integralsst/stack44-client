@@ -23,7 +23,7 @@ import type {
   EstadoCumplimientoAspecto,
   FilaEvaluacion,
   GuardarEvaluacionInput,
-} from "../types/evaluacion.types";
+} from "../../../types/evaluacion.types";
 
 import {
   existeCambioFechaDocumento,

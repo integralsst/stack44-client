@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import type { FilaEvaluacion } from "../../types/evaluacion.types";
+import type { FilaEvaluacion } from "../../../../types/evaluacion.types";
 import AppAlert from "../feedback/AppAlert";
 
 export default function VigenciaResumenAlertas({

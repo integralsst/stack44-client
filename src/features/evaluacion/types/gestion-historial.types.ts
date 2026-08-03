@@ -1,7 +1,7 @@
 import type {
   EstadoGestionSgsst,
   ModalidadGestion,
-} from "./evaluacion.types";
+} from "../../../types/evaluacion.types";
 
 export interface GestionHistorialEvaluacion {
   id: string;

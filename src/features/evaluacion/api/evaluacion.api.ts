@@ -3,7 +3,7 @@ import type {
   ContextoEvaluacionResponse,
   CrearGestionInput,
   GuardarEvaluacionInput,
-} from "../types/evaluacion.types";
+} from "../../../types/evaluacion.types";
 
 export function obtenerContextoEvaluacion(
   empresaId: string,

@@ -7,7 +7,7 @@ import {
   Scale,
 } from "lucide-react";
 
-import type { ResumenEvaluacion as Resumen } from "../types/evaluacion.types";
+import type { ResumenEvaluacion as Resumen } from "../../../types/evaluacion.types";
 
 export default function ResumenEvaluacion({
   resumen,

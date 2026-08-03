@@ -3,7 +3,7 @@ import {
   XCircle,
 } from "lucide-react";
 
-import type { EstadoGestionSgsst } from "../../types/evaluacion.types";
+import type { EstadoGestionSgsst } from "../../../../types/evaluacion.types";
 
 export default function GestionEstadoBadge({
   estado,

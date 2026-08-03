@@ -3,7 +3,7 @@ import type {
   EstadoCumplimientoAspecto,
   EstadoGestionSgsst,
   ModalidadGestion,
-} from "./evaluacion.types";
+} from "../../../types/evaluacion.types";
 import type { EvidenciaEvaluacion } from "./evidencia-evaluacion.types";
 
 export interface EvaluacionDetalleAspecto {
