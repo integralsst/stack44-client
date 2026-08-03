@@ -17,6 +17,9 @@ interface Props {
   onRemove: () => void;
 }
 
+const SELECTOR_REVISION_OBLIGATORIA =
+  'button[title="Revisión obligatoria según la Supermatriz"]';
+
 export default function SolicitarRevisionTecnicaModal({
   open,
   aspectoNombre,
@@ -29,6 +32,39 @@ export default function SolicitarRevisionTecnicaModal({
 }: Props) {
   const [motivo, setMotivo] = useState(motivoInicial);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const bloquearBotonesObligatorios = () => {
+      document
+        .querySelectorAll<HTMLButtonElement>(
+          SELECTOR_REVISION_OBLIGATORIA
+        )
+        .forEach((button) => {
+          if (!button.disabled) {
+            button.disabled = true;
+          }
+
+          if (button.getAttribute("aria-disabled") !== "true") {
+            button.setAttribute("aria-disabled", "true");
+          }
+        });
+    };
+
+    bloquearBotonesObligatorios();
+
+    const observer = new MutationObserver(() => {
+      bloquearBotonesObligatorios();
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["disabled", "title"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (open) {
