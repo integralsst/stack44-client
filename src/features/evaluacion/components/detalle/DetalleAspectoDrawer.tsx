@@ -8,6 +8,7 @@ import {
   History,
   Info,
   LayoutPanelTop,
+  ShieldCheck,
   X,
 } from "lucide-react";
 
@@ -17,8 +18,13 @@ import DetalleAspectoSkeleton from "./DetalleAspectoSkeleton";
 import EvidenciasAspectoTab from "./EvidenciasAspectoTab";
 import HistorialAspectoTab from "./HistorialAspectoTab";
 import ResumenAspectoTab from "./ResumenAspectoTab";
+import RevisionTecnicaAspectoTab from "./RevisionTecnicaAspectoTab";
 
-type DetailTab = "RESUMEN" | "HISTORIAL" | "EVIDENCIAS";
+type DetailTab =
+  | "RESUMEN"
+  | "HISTORIAL"
+  | "EVIDENCIAS"
+  | "REVISION_TECNICA";
 
 export default function DetalleAspectoDrawer({
   open,
@@ -154,6 +160,14 @@ export default function DetalleAspectoDrawer({
               label={`Evidencias${data ? ` (${data.evidencias.length})` : ""}`}
               onClick={() => setTab("EVIDENCIAS")}
             />
+            {data?.permisos.puedeVerRevisionTecnica && (
+              <TabButton
+                active={tab === "REVISION_TECNICA"}
+                icon={ShieldCheck}
+                label="Revisión técnica"
+                onClick={() => setTab("REVISION_TECNICA")}
+              />
+            )}
           </nav>
         </header>
 
@@ -193,6 +207,10 @@ export default function DetalleAspectoDrawer({
                   onRemove={removeEvidence}
                 />
               )}
+              {tab === "REVISION_TECNICA" &&
+                data.permisos.puedeVerRevisionTecnica && (
+                  <RevisionTecnicaAspectoTab data={data} />
+                )}
             </>
           ) : (
             <div className="flex min-h-[40vh] items-center justify-center text-center">

@@ -11,6 +11,31 @@ export type EstadoCumplimientoAspecto =
   | "NO_CUMPLIDO"
   | "NO_APLICA";
 
+export type EstadoRevisionTecnica =
+  | "PENDIENTE"
+  | "APROBADA"
+  | "REQUIERE_AJUSTES"
+  | "ANULADA";
+
+export interface RevisionTecnicaRegistrada {
+  id: string;
+  estado: EstadoRevisionTecnica;
+  motivoSolicitud: string;
+  conceptoTecnico: string | null;
+  motivoAnulacion: string | null;
+  solicitadaEn: string;
+  revisadaEn: string | null;
+  anuladaEn: string | null;
+  solicitadaPor: {
+    id: string;
+    nombre: string;
+  };
+  revisadaPor: {
+    id: string;
+    nombre: string;
+  } | null;
+}
+
 export type ModalidadGestion =
   | "PRESENCIAL"
   | "REMOTA"
@@ -103,6 +128,8 @@ export interface EvaluacionRegistrada {
     | string
     | null;
   marcadaRevisionTecnica: boolean;
+  motivoRevisionTecnica: string | null;
+  revisionTecnica: RevisionTecnicaRegistrada | null;
   creadaEn: string;
   actualizadaEn: string;
   gestion: {
@@ -252,6 +279,7 @@ export interface BorradorEvaluacionAspecto {
   fechaDocumento: string;
   justificacionNoAplica: string;
   marcadaRevisionTecnica: boolean;
+  motivoRevisionTecnica: string;
 }
 
 export interface GuardarEvaluacionInput {
@@ -266,4 +294,5 @@ export interface GuardarEvaluacionInput {
     | string
     | null;
   marcadaRevisionTecnica: boolean;
+  motivoRevisionTecnica: string | null;
 }

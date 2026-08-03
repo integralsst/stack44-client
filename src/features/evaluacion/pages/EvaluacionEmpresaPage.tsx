@@ -1,23 +1,26 @@
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import {
   ClipboardCheck,
   History,
   Plus,
+  ShieldCheck,
 } from "lucide-react";
+import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
-import { useAuth } from "../../auth/context/AuthContext";
 import AppModal from "../../../components/ui/AppModal";
+import { useAuth } from "../../auth/context/AuthContext";
+import DetalleAspectoDrawer from "../components/detalle/DetalleAspectoDrawer";
 import EvaluacionEmpresaHeader from "../components/EvaluacionEmpresaHeader";
+import AppAlert from "../components/feedback/AppAlert";
+import EvaluacionPageSkeleton from "../components/feedback/EvaluacionPageSkeleton";
+import AppSpinner from "../components/feedback/AppSpinner";
+import HistorialGestionesEmpresa from "../components/gestiones/HistorialGestionesEmpresa";
 import MatrizEvaluacion from "../components/MatrizEvaluacion";
 import NuevaGestionModal from "../components/NuevaGestionModal";
 import ResumenEvaluacion from "../components/ResumenEvaluacion";
-import DetalleAspectoDrawer from "../components/detalle/DetalleAspectoDrawer";
-import AppAlert from "../components/feedback/AppAlert";
-import AppSpinner from "../components/feedback/AppSpinner";
-import HistorialGestionesEmpresa from "../components/gestiones/HistorialGestionesEmpresa";
-import EvaluacionPageSkeleton from "../components/feedback/EvaluacionPageSkeleton";
+import RevisionesTecnicasPeriodo from "../components/revisiones/RevisionesTecnicasPeriodo";
 import { useEvaluacionEmpresa } from "../hooks/useEvaluacionEmpresa";
+import { useRevisionesTecnicas } from "../hooks/useRevisionesTecnicas";
 
 export default function EvaluacionEmpresaPage() {
   const { empresaId } = useParams<{ empresaId: string }>();
@@ -29,8 +32,10 @@ export default function EvaluacionEmpresaPage() {
   );
   const [gestionModalOpen, setGestionModalOpen] =
     useState(false);
-    const [historialModalOpen, setHistorialModalOpen] =
-  useState(false);
+  const [historialModalOpen, setHistorialModalOpen] =
+    useState(false);
+  const [revisionesModalOpen, setRevisionesModalOpen] =
+    useState(false);
   const [tareaDetalleId, setTareaDetalleId] =
     useState<number | null>(null);
 
@@ -53,10 +58,31 @@ export default function EvaluacionEmpresaPage() {
     "SUPERADMIN"
   );
 
+  const puedeVerRevisiones = hasRole(
+    "PROFESSIONAL",
+    "ADMIN",
+    "OWNER",
+    "SUPERADMIN"
+  );
+
+  const revisiones = useRevisionesTecnicas(
+    puedeVerRevisiones ? contexto?.periodo?.id : null
+  );
+
+  const finalizarConRevisiones = async () => {
+    await finalizar();
+    await revisiones.recargar();
+  };
+
+  const recargarDespuesDeInvalidar = async () => {
+    await Promise.all([
+      recargar(),
+      revisiones.recargar(),
+    ]);
+  };
+
   if (cargando && !contexto) {
-    return (
-      <EvaluacionPageSkeleton />
-    );
+    return <EvaluacionPageSkeleton />;
   }
 
   if (!contexto) {
@@ -66,15 +92,12 @@ export default function EvaluacionEmpresaPage() {
           tone="error"
           title="No fue posible abrir la evaluación"
           description={
-            error ??
-            "La empresa no está disponible."
+            error ?? "La empresa no está disponible."
           }
         >
           <button
             type="button"
-            onClick={() =>
-              navigate("/dashboard/empresas")
-            }
+            onClick={() => navigate("/dashboard/empresas")}
             className="rounded-xl bg-white px-4 py-2 text-sm font-bold text-black transition hover:bg-neutral-200"
           >
             Volver a empresas
@@ -91,9 +114,7 @@ export default function EvaluacionEmpresaPage() {
         periodo={contexto.periodo}
         anio={anio}
         onAnioChange={setAnio}
-        onVolver={() =>
-          navigate("/dashboard/empresas")
-        }
+        onVolver={() => navigate("/dashboard/empresas")}
       />
 
       {error && (
@@ -106,8 +127,7 @@ export default function EvaluacionEmpresaPage() {
 
       <ResumenEvaluacion resumen={contexto.resumen} />
 
-      {(contexto.resumen.pendientesVigencia ?? 0) >
-        0 && (
+      {(contexto.resumen.pendientesVigencia ?? 0) > 0 && (
         <AppAlert
           tone="warning"
           title="Hay información pendiente para calcular vigencias"
@@ -126,9 +146,7 @@ export default function EvaluacionEmpresaPage() {
           </h2>
 
           <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-neutral-400">
-            Al abrirlo se fijará la versión de la Supermatriz
-            que se utilizará para todas las evaluaciones
-            históricas de este año.
+            Al abrirlo se fijará la versión de la Supermatriz que se utilizará para todas las evaluaciones históricas de este año.
           </p>
 
           {contexto.versionDisponible ? (
@@ -161,9 +179,7 @@ export default function EvaluacionEmpresaPage() {
             </div>
           ) : (
             <div className="mx-auto mt-5 max-w-xl rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-              No existe una versión vigente de la Supermatriz
-              aplicable a este año. Publícala primero desde el
-              módulo Supermatriz.
+              No existe una versión vigente de la Supermatriz aplicable a este año. Publícala primero desde el módulo Supermatriz.
             </div>
           )}
         </section>
@@ -207,48 +223,60 @@ export default function EvaluacionEmpresaPage() {
                   No tienes una gestión en borrador
                 </h2>
                 <p className="mt-1 text-xs text-neutral-500 sm:text-sm">
-                  Crea una visita, asesoría o jornada para
-                  registrar nuevas calificaciones.
+                  Crea una visita, asesoría o jornada para registrar nuevas calificaciones.
                 </p>
               </div>
             )}
 
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-  <button
-    type="button"
-    onClick={() => setHistorialModalOpen(true)}
-    className="flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-700 bg-[#08090a] px-4 py-2.5 text-sm font-semibold text-neutral-200 transition hover:border-cyan-500/40 hover:bg-cyan-500/5 hover:text-cyan-200 sm:w-auto"
-  >
-    <History size={17} />
-    Historial de gestiones
-  </button>
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+              {puedeVerRevisiones && (
+                <button
+                  type="button"
+                  onClick={() => setRevisionesModalOpen(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-2.5 text-sm font-semibold text-amber-200 transition hover:bg-amber-500/15 sm:w-auto"
+                >
+                  <ShieldCheck size={17} />
+                  Revisiones técnicas
+                  {(revisiones.data?.resumen.pendientes ?? 0) > 0 && (
+                    <span className="rounded-full bg-amber-300 px-2 py-0.5 text-[10px] font-bold text-black">
+                      {revisiones.data?.resumen.pendientes}
+                    </span>
+                  )}
+                </button>
+              )}
 
-  {!contexto.gestionActiva && puedeEvaluar && (
-    <button
-      type="button"
-      onClick={() => setGestionModalOpen(true)}
-      className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black transition hover:bg-neutral-200 sm:w-auto"
-    >
-      <Plus size={17} />
-      Nueva gestión
-    </button>
-  )}
-</div>
+              <button
+                type="button"
+                onClick={() => setHistorialModalOpen(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-700 bg-[#08090a] px-4 py-2.5 text-sm font-semibold text-neutral-200 transition hover:border-cyan-500/40 hover:bg-cyan-500/5 hover:text-cyan-200 sm:w-auto"
+              >
+                <History size={17} />
+                Historial de gestiones
+              </button>
+
+              {!contexto.gestionActiva && puedeEvaluar && (
+                <button
+                  type="button"
+                  onClick={() => setGestionModalOpen(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black transition hover:bg-neutral-200 sm:w-auto"
+                >
+                  <Plus size={17} />
+                  Nueva gestión
+                </button>
+              )}
+            </div>
           </section>
 
           <MatrizEvaluacion
             filas={contexto.filas}
-            gestionActiva={Boolean(
-              contexto.gestionActiva
-            )}
+            gestionActiva={Boolean(contexto.gestionActiva)}
             procesando={procesando}
             onGuardar={guardar}
-            onFinalizar={finalizar}
+            onFinalizar={finalizarConRevisiones}
             onAbrirDetalle={(fila) =>
               setTareaDetalleId(fila.tareaId)
             }
           />
-
         </>
       )}
 
@@ -261,19 +289,44 @@ export default function EvaluacionEmpresaPage() {
       />
 
       {contexto.periodo && (
-  <AppModal
-    open={historialModalOpen}
-    title={`Historial de gestiones · ${anio}`}
-    description={`Consulta las visitas, asesorías y jornadas realizadas para ${contexto.empresa.nombre}. Desde aquí también puedes invalidar una gestión completamente equivocada.`}
-    onClose={() => setHistorialModalOpen(false)}
-    size="2xl"
-  >
-    <HistorialGestionesEmpresa
-      periodoId={contexto.periodo.id}
-      onGestionInvalidada={recargar}
-    />
-  </AppModal>
-)}
+        <AppModal
+          open={historialModalOpen}
+          title={`Historial de gestiones · ${anio}`}
+          description={`Consulta las visitas, asesorías y jornadas realizadas para ${contexto.empresa.nombre}. Desde aquí también puedes invalidar una gestión completamente equivocada.`}
+          onClose={() => setHistorialModalOpen(false)}
+          size="2xl"
+        >
+          <HistorialGestionesEmpresa
+            periodoId={contexto.periodo.id}
+            onGestionInvalidada={recargarDespuesDeInvalidar}
+          />
+        </AppModal>
+      )}
+
+      {contexto.periodo && puedeVerRevisiones && (
+        <AppModal
+          open={revisionesModalOpen}
+          title={`Revisiones técnicas · ${anio}`}
+          description={`Consulta y resuelve las evaluaciones de ${contexto.empresa.nombre} que requieren validación técnica.`}
+          onClose={() => {
+            if (!revisiones.procesando) {
+              setRevisionesModalOpen(false);
+            }
+          }}
+          busy={revisiones.procesando}
+          size="2xl"
+        >
+          <RevisionesTecnicasPeriodo
+            data={revisiones.data}
+            cargando={revisiones.cargando}
+            procesando={revisiones.procesando}
+            error={revisiones.error}
+            onReload={revisiones.recargar}
+            onResolve={revisiones.resolver}
+            onResolved={recargar}
+          />
+        </AppModal>
+      )}
 
       <DetalleAspectoDrawer
         open={tareaDetalleId !== null}

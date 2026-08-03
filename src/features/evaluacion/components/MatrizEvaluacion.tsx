@@ -37,6 +37,8 @@ import AppToast, {
 import AppDateField from "./form/AppDateField";
 import VigenciaBadge from "./matriz/VigenciaBadge";
 import VigenciaResumenAlertas from "./matriz/VigenciaResumenAlertas";
+import RevisionTecnicaEstadoBadge from "./revisiones/RevisionTecnicaEstadoBadge";
+import SolicitarRevisionTecnicaModal from "./revisiones/SolicitarRevisionTecnicaModal";
 
 interface Props {
   filas: FilaEvaluacion[];
@@ -60,6 +62,13 @@ function crearBorrador(
 ): BorradorEvaluacionAspecto {
   const evaluacion =
     fila.evaluacionGestionActiva;
+  const revisionObligatoria =
+    fila.aspecto.configuracionRevision
+      ?.requiereRevisionTecnica ?? false;
+  const motivoConfigurado =
+    fila.aspecto.configuracionRevision
+      ?.observaciones?.trim() ||
+    "Revisión técnica obligatoria configurada en la Supermatriz.";
 
   return {
     aspectoId: fila.aspecto.id,
@@ -77,8 +86,11 @@ function crearBorrador(
     justificacionNoAplica:
       evaluacion?.justificacionNoAplica ?? "",
     marcadaRevisionTecnica:
-      evaluacion?.marcadaRevisionTecnica ??
-      false,
+      revisionObligatoria ||
+      Boolean(evaluacion?.marcadaRevisionTecnica),
+    motivoRevisionTecnica:
+      evaluacion?.motivoRevisionTecnica ??
+      (revisionObligatoria ? motivoConfigurado : ""),
   };
 }
 
@@ -176,6 +188,10 @@ export default function MatrizEvaluacion({
     confirmFinalizarOpen,
     setConfirmFinalizarOpen,
   ] = useState(false);
+  const [
+    filaRevisionSeleccionada,
+    setFilaRevisionSeleccionada,
+  ] = useState<FilaEvaluacion | null>(null);
   const sentinelRef =
     useRef<HTMLDivElement | null>(
       null
@@ -453,6 +469,15 @@ export default function MatrizEvaluacion({
           );
         }
 
+        if (
+          draft.marcadaRevisionTecnica &&
+          draft.motivoRevisionTecnica.trim().length < 10
+        ) {
+          throw new Error(
+            "Las evaluaciones marcadas para revisión técnica requieren un motivo de al menos 10 caracteres."
+          );
+        }
+
         payload.push({
           aspectoId:
             draft.aspectoId,
@@ -478,6 +503,10 @@ export default function MatrizEvaluacion({
               : null,
           marcadaRevisionTecnica:
             draft.marcadaRevisionTecnica,
+          motivoRevisionTecnica:
+            draft.marcadaRevisionTecnica
+              ? draft.motivoRevisionTecnica.trim()
+              : null,
         });
       }
 
@@ -896,7 +925,7 @@ export default function MatrizEvaluacion({
       />
 
       <div className="max-h-[72vh] min-h-[420px] overflow-auto overscroll-contain [scrollbar-gutter:stable]">
-        <table className="min-w-[2030px] border-separate border-spacing-0 text-left text-[11px]">
+        <table className="min-w-[2050px] border-separate border-spacing-0 text-left text-[11px]">
           <thead className="sticky top-0 z-40 bg-[#08090a] text-[9px] uppercase tracking-wider text-neutral-400">
             <tr>
               <StickyHeader className="left-0 w-[52px] min-w-[52px] text-center">
@@ -935,7 +964,7 @@ export default function MatrizEvaluacion({
               <HeaderCell className="w-[220px] min-w-[220px]">
                 Justificación No aplica
               </HeaderCell>
-              <HeaderCell className="w-[112px] min-w-[112px] text-center">
+              <HeaderCell className="w-[132px] min-w-[132px] text-center">
                 Revisión técnica
               </HeaderCell>
             </tr>
@@ -1042,7 +1071,7 @@ export default function MatrizEvaluacion({
                           </span>
                           <span className="mt-1 inline-flex items-center gap-1 text-[8px] font-semibold uppercase tracking-wider text-neutral-600 transition group-hover/detail:text-cyan-400">
                             <Eye size={10} />
-                            Ver detalle, historial y evidencias
+                            Ver detalle, historial, evidencias y revisión
                           </span>
                         </button>
 
@@ -1401,38 +1430,65 @@ export default function MatrizEvaluacion({
                         />
                       </BodyCell>
 
-                      <BodyCell className="w-[112px] min-w-[112px] text-center">
-                        <button
-                          type="button"
-                          disabled={
-                            !gestionActiva ||
-                            procesando
-                          }
-                          aria-pressed={
-                            draft.marcadaRevisionTecnica
-                          }
-                          onClick={() =>
-                            updateDraft(
-                              fila,
-                              {
-                                marcadaRevisionTecnica:
-                                  !draft.marcadaRevisionTecnica,
-                              }
-                            )
-                          }
-                          className={`mx-auto flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg border px-2 text-[9px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-45 ${
-                            draft.marcadaRevisionTecnica
-                              ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-300"
-                              : "border-neutral-700 bg-[#090a0b] text-neutral-500 hover:text-neutral-300"
-                          }`}
-                        >
-                          <CheckCircle2
-                            size={13}
+                      <BodyCell className="w-[132px] min-w-[132px] text-center">
+                        {gestionActiva ? (
+                          <button
+                            type="button"
+                            disabled={procesando}
+                            aria-pressed={
+                              draft.marcadaRevisionTecnica
+                            }
+                            onClick={() =>
+                              setFilaRevisionSeleccionada(
+                                fila
+                              )
+                            }
+                            title={
+                              fila.aspecto
+                                .configuracionRevision
+                                ?.requiereRevisionTecnica
+                                ? "Revisión obligatoria según la Supermatriz"
+                                : draft.marcadaRevisionTecnica
+                                  ? draft.motivoRevisionTecnica
+                                  : "Solicitar revisión técnica"
+                            }
+                            className={`mx-auto flex min-h-9 w-full items-center justify-center gap-1.5 rounded-lg border px-2 text-[9px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-45 ${
+                              fila.aspecto
+                                .configuracionRevision
+                                ?.requiereRevisionTecnica
+                                ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                                : draft.marcadaRevisionTecnica
+                                  ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-300"
+                                  : "border-neutral-700 bg-[#090a0b] text-neutral-500 hover:text-neutral-300"
+                            }`}
+                          >
+                            <CheckCircle2 size={13} />
+                            {fila.aspecto
+                              .configuracionRevision
+                              ?.requiereRevisionTecnica
+                              ? "Obligatoria"
+                              : draft.marcadaRevisionTecnica
+                                ? "Solicitada"
+                                : "Solicitar"}
+                          </button>
+                        ) : fila.ultimaEvaluacion
+                            ?.revisionTecnica ? (
+                          <RevisionTecnicaEstadoBadge
+                            estado={
+                              fila.ultimaEvaluacion
+                                .revisionTecnica.estado
+                            }
                           />
-                          {draft.marcadaRevisionTecnica
-                            ? "Marcada"
-                            : "Marcar"}
-                        </button>
+                        ) : fila.ultimaEvaluacion
+                            ?.marcadaRevisionTecnica ? (
+                          <span className="inline-flex rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-amber-300">
+                            Pendiente
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-neutral-600">
+                            Sin solicitud
+                          </span>
+                        )}
                       </BodyCell>
                     </tr>
                   );
@@ -1461,6 +1517,50 @@ export default function MatrizEvaluacion({
           bloques de 100.
         </span>
       </div>
+
+      <SolicitarRevisionTecnicaModal
+        open={filaRevisionSeleccionada !== null}
+        aspectoNombre={
+          filaRevisionSeleccionada?.aspecto.nombre ?? ""
+        }
+        obligatoria={Boolean(
+          filaRevisionSeleccionada?.aspecto
+            .configuracionRevision
+            ?.requiereRevisionTecnica
+        )}
+        observacionConfiguracion={
+          filaRevisionSeleccionada?.aspecto
+            .configuracionRevision?.observaciones ?? null
+        }
+        motivoInicial={
+          filaRevisionSeleccionada
+            ? borradores[
+                filaRevisionSeleccionada.aspecto.id
+              ]?.motivoRevisionTecnica ?? ""
+            : ""
+        }
+        onClose={() =>
+          setFilaRevisionSeleccionada(null)
+        }
+        onSave={(motivo) => {
+          if (!filaRevisionSeleccionada) return;
+
+          updateDraft(filaRevisionSeleccionada, {
+            marcadaRevisionTecnica: true,
+            motivoRevisionTecnica: motivo,
+          });
+          setFilaRevisionSeleccionada(null);
+        }}
+        onRemove={() => {
+          if (!filaRevisionSeleccionada) return;
+
+          updateDraft(filaRevisionSeleccionada, {
+            marcadaRevisionTecnica: false,
+            motivoRevisionTecnica: "",
+          });
+          setFilaRevisionSeleccionada(null);
+        }}
+      />
 
       <AppToast
         open={Boolean(toast)}

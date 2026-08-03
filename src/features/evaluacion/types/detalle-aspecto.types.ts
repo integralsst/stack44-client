@@ -5,6 +5,7 @@ import type {
   ModalidadGestion,
 } from "../../../types/evaluacion.types";
 import type { EvidenciaEvaluacion } from "./evidencia-evaluacion.types";
+import type { RevisionTecnicaDetalle } from "./revision-tecnica.types";
 
 export interface EvaluacionDetalleAspecto {
   id: string;
@@ -15,6 +16,8 @@ export interface EvaluacionDetalleAspecto {
   fechaVencimientoCalculada: string | null;
   justificacionNoAplica: string | null;
   marcadaRevisionTecnica: boolean;
+  motivoRevisionTecnica: string | null;
+  revisionTecnica: RevisionTecnicaDetalle | null;
   creadaEn: string;
   actualizadaEn: string;
   anio: number;
@@ -195,6 +198,7 @@ export interface DetalleAspectoResponse {
   } | null;
   permisos: {
     puedeGestionarEvidencias: boolean;
+    puedeVerRevisionTecnica: boolean;
     motivoEvidencias: string | null;
   };
 }
