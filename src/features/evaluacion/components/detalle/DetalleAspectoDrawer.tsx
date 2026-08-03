@@ -8,11 +8,13 @@ import {
   History,
   Info,
   LayoutPanelTop,
+  RefreshCw,
   ShieldCheck,
   X,
 } from "lucide-react";
 
 import { useDetalleAspecto } from "../../hooks/useDetalleAspecto";
+import type { SeccionDetalleAspecto } from "../../types/detalle-aspecto.types";
 import AppAlert from "../feedback/AppAlert";
 import DetalleAspectoSkeleton from "./DetalleAspectoSkeleton";
 import EvidenciasAspectoTab from "./EvidenciasAspectoTab";
@@ -22,9 +24,7 @@ import RevisionTecnicaAspectoTab from "./RevisionTecnicaAspectoTab";
 
 type DetailTab =
   | "RESUMEN"
-  | "HISTORIAL"
-  | "EVIDENCIAS"
-  | "REVISION_TECNICA";
+  | SeccionDetalleAspecto;
 
 export default function DetalleAspectoDrawer({
   open,
@@ -45,6 +45,10 @@ export default function DetalleAspectoDrawer({
     loading,
     busy,
     error,
+    loadSection,
+    loadingSections,
+    loadedSections,
+    sectionErrors,
     createEvidence,
     updateEvidence,
     removeEvidence,
@@ -87,6 +91,24 @@ export default function DetalleAspectoDrawer({
 
   const title =
     data?.tarea.aspecto.nombre ?? "Detalle del aspecto";
+  const deferredTab = tab === "RESUMEN" ? null : tab;
+  const sectionLoading = deferredTab
+    ? loadingSections[deferredTab]
+    : false;
+  const sectionLoaded = deferredTab
+    ? loadedSections[deferredTab]
+    : true;
+  const sectionError = deferredTab
+    ? sectionErrors[deferredTab]
+    : null;
+
+  const activateTab = (nextTab: DetailTab) => {
+    setTab(nextTab);
+
+    if (nextTab !== "RESUMEN") {
+      void loadSection(nextTab);
+    }
+  };
 
   return createPortal(
     <div
@@ -146,26 +168,43 @@ export default function DetalleAspectoDrawer({
               active={tab === "RESUMEN"}
               icon={LayoutPanelTop}
               label="Resumen"
-              onClick={() => setTab("RESUMEN")}
+              onClick={() => activateTab("RESUMEN")}
             />
             <TabButton
               active={tab === "HISTORIAL"}
               icon={History}
-              label={`Historial${data ? ` (${data.historial.length})` : ""}`}
-              onClick={() => setTab("HISTORIAL")}
+              label={`Historial${
+                loadedSections.HISTORIAL
+                  ? ` (${data?.historial.length ?? 0})`
+                  : ""
+              }`}
+              loading={loadingSections.HISTORIAL}
+              onClick={() => activateTab("HISTORIAL")}
             />
             <TabButton
               active={tab === "EVIDENCIAS"}
               icon={FileCheck2}
-              label={`Evidencias${data ? ` (${data.evidencias.length})` : ""}`}
-              onClick={() => setTab("EVIDENCIAS")}
+              label={`Evidencias${
+                loadedSections.EVIDENCIAS
+                  ? ` (${data?.evidencias.length ?? 0})`
+                  : ""
+              }`}
+              loading={loadingSections.EVIDENCIAS}
+              onClick={() => activateTab("EVIDENCIAS")}
             />
             {data?.permisos.puedeVerRevisionTecnica && (
               <TabButton
                 active={tab === "REVISION_TECNICA"}
                 icon={ShieldCheck}
-                label="Revisión técnica"
-                onClick={() => setTab("REVISION_TECNICA")}
+                label={`Revisión técnica${
+                  loadedSections.REVISION_TECNICA
+                    ? ` (${data.revisionesTecnicas.length})`
+                    : ""
+                }`}
+                loading={loadingSections.REVISION_TECNICA}
+                onClick={() =>
+                  activateTab("REVISION_TECNICA")
+                }
               />
             )}
           </nav>
@@ -195,19 +234,56 @@ export default function DetalleAspectoDrawer({
               {tab === "RESUMEN" && (
                 <ResumenAspectoTab data={data} />
               )}
-              {tab === "HISTORIAL" && (
-                <HistorialAspectoTab data={data} />
-              )}
-              {tab === "EVIDENCIAS" && (
-                <EvidenciasAspectoTab
-                  data={data}
-                  busy={busy}
-                  onCreate={createEvidence}
-                  onUpdate={updateEvidence}
-                  onRemove={removeEvidence}
-                />
-              )}
+
+              {deferredTab &&
+                sectionLoading &&
+                !sectionLoaded && (
+                  <SectionSkeleton />
+                )}
+
+              {deferredTab &&
+                sectionError &&
+                !sectionLoading && (
+                  <AppAlert
+                    tone="error"
+                    title="No fue posible cargar esta sección"
+                    description={sectionError}
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void loadSection(
+                          deferredTab,
+                          true
+                        )
+                      }
+                      className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-bold text-black transition hover:bg-neutral-200"
+                    >
+                      <RefreshCw size={15} />
+                      Reintentar
+                    </button>
+                  </AppAlert>
+                )}
+
+              {tab === "HISTORIAL" &&
+                sectionLoaded &&
+                !sectionError && (
+                  <HistorialAspectoTab data={data} />
+                )}
+              {tab === "EVIDENCIAS" &&
+                sectionLoaded &&
+                !sectionError && (
+                  <EvidenciasAspectoTab
+                    data={data}
+                    busy={busy}
+                    onCreate={createEvidence}
+                    onUpdate={updateEvidence}
+                    onRemove={removeEvidence}
+                  />
+                )}
               {tab === "REVISION_TECNICA" &&
+                sectionLoaded &&
+                !sectionError &&
                 data.permisos.puedeVerRevisionTecnica && (
                   <RevisionTecnicaAspectoTab data={data} />
                 )}
@@ -229,15 +305,31 @@ export default function DetalleAspectoDrawer({
   );
 }
 
+function SectionSkeleton() {
+  return (
+    <div
+      className="space-y-3"
+      aria-label="Cargando sección"
+      aria-busy="true"
+    >
+      <div className="h-24 animate-pulse rounded-2xl bg-neutral-800/80" />
+      <div className="h-40 animate-pulse rounded-2xl bg-neutral-800/80" />
+      <div className="h-32 animate-pulse rounded-2xl bg-neutral-800/80" />
+    </div>
+  );
+}
+
 function TabButton({
   active,
   icon: Icon,
   label,
+  loading = false,
   onClick,
 }: {
   active: boolean;
   icon: typeof LayoutPanelTop;
   label: string;
+  loading?: boolean;
   onClick: () => void;
 }) {
   return (
@@ -250,7 +342,10 @@ function TabButton({
           : "border-transparent text-neutral-500 hover:text-neutral-300"
       }`}
     >
-      <Icon size={14} />
+      <Icon
+        size={14}
+        className={loading ? "animate-pulse" : undefined}
+      />
       {label}
     </button>
   );

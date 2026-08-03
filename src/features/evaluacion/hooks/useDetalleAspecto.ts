@@ -5,17 +5,37 @@ import {
 } from "react";
 
 import { useAuth } from "../../auth/context/AuthContext";
-import { obtenerDetalleAspecto } from "../api/detalle-aspecto.api";
+import {
+  obtenerEvidenciasAspecto,
+  obtenerHistorialAspecto,
+  obtenerResumenAspecto,
+  obtenerRevisionTecnicaAspecto,
+} from "../api/detalle-aspecto.api";
 import {
   actualizarEvidenciaEvaluacion,
   crearEvidenciaEvaluacion,
   desactivarEvidenciaEvaluacion,
 } from "../api/evidencias-evaluacion.api";
-import type { DetalleAspectoResponse } from "../types/detalle-aspecto.types";
+import type {
+  DetalleAspectoResponse,
+  SeccionDetalleAspecto,
+} from "../types/detalle-aspecto.types";
 import type {
   EvidenciaEvaluacion,
   EvidenciaEvaluacionFormInput,
 } from "../types/evidencia-evaluacion.types";
+
+const estadoSeccionesInicial = {
+  HISTORIAL: false,
+  EVIDENCIAS: false,
+  REVISION_TECNICA: false,
+};
+
+const erroresSeccionesInicial = {
+  HISTORIAL: null,
+  EVIDENCIAS: null,
+  REVISION_TECNICA: null,
+};
 
 export function useDetalleAspecto({
   open,
@@ -36,6 +56,19 @@ export function useDetalleAspecto({
   const [error, setError] = useState<string | null>(
     null
   );
+  const [loadingSections, setLoadingSections] =
+    useState<Record<SeccionDetalleAspecto, boolean>>(
+      estadoSeccionesInicial
+    );
+  const [loadedSections, setLoadedSections] =
+    useState<Record<SeccionDetalleAspecto, boolean>>(
+      estadoSeccionesInicial
+    );
+  const [sectionErrors, setSectionErrors] =
+    useState<Record<
+      SeccionDetalleAspecto,
+      string | null
+    >>(erroresSeccionesInicial);
 
   const reload = useCallback(async () => {
     if (!open || !empresaId || !tareaId || !token) {
@@ -46,13 +79,20 @@ export function useDetalleAspecto({
     setError(null);
 
     try {
-      const response = await obtenerDetalleAspecto(
+      const response = await obtenerResumenAspecto(
         empresaId,
         tareaId,
         anio,
         token
       );
-      setData(response);
+
+      setData((current) => ({
+        ...response,
+        historial: current?.historial ?? [],
+        evidencias: current?.evidencias ?? [],
+        revisionesTecnicas:
+          current?.revisionesTecnicas ?? [],
+      }));
     } catch (currentError) {
       setError(
         currentError instanceof Error
@@ -64,15 +104,129 @@ export function useDetalleAspecto({
     }
   }, [anio, empresaId, open, tareaId, token]);
 
-  useEffect(() => {
-    if (!open) {
-      setData(null);
-      setError(null);
-      return;
-    }
+  const loadSection = useCallback(
+    async (
+      section: SeccionDetalleAspecto,
+      force = false
+    ) => {
+      if (
+        !open ||
+        !empresaId ||
+        !tareaId ||
+        !token ||
+        (!force && loadedSections[section]) ||
+        loadingSections[section]
+      ) {
+        return;
+      }
 
-    void reload();
-  }, [open, reload]);
+      setLoadingSections((current) => ({
+        ...current,
+        [section]: true,
+      }));
+      setSectionErrors((current) => ({
+        ...current,
+        [section]: null,
+      }));
+
+      try {
+        if (section === "HISTORIAL") {
+          const response = await obtenerHistorialAspecto(
+            empresaId,
+            tareaId,
+            anio,
+            token
+          );
+          setData((current) =>
+            current
+              ? {
+                  ...current,
+                  historial: response.historial,
+                }
+              : current
+          );
+        }
+
+        if (section === "EVIDENCIAS") {
+          const response = await obtenerEvidenciasAspecto(
+            empresaId,
+            tareaId,
+            anio,
+            token
+          );
+          setData((current) =>
+            current
+              ? {
+                  ...current,
+                  evidencias: response.evidencias,
+                  evidenciaObjetivo:
+                    response.evidenciaObjetivo,
+                  permisos: response.permisos,
+                }
+              : current
+          );
+        }
+
+        if (section === "REVISION_TECNICA") {
+          const response =
+            await obtenerRevisionTecnicaAspecto(
+              empresaId,
+              tareaId,
+              anio,
+              token
+            );
+          setData((current) =>
+            current
+              ? {
+                  ...current,
+                  revisionesTecnicas:
+                    response.evaluaciones,
+                }
+              : current
+          );
+        }
+
+        setLoadedSections((current) => ({
+          ...current,
+          [section]: true,
+        }));
+      } catch (currentError) {
+        setSectionErrors((current) => ({
+          ...current,
+          [section]:
+            currentError instanceof Error
+              ? currentError.message
+              : "No fue posible cargar esta sección.",
+        }));
+      } finally {
+        setLoadingSections((current) => ({
+          ...current,
+          [section]: false,
+        }));
+      }
+    },
+    [
+      anio,
+      empresaId,
+      loadedSections,
+      loadingSections,
+      open,
+      tareaId,
+      token,
+    ]
+  );
+
+  useEffect(() => {
+    setData(null);
+    setError(null);
+    setLoadedSections(estadoSeccionesInicial);
+    setLoadingSections(estadoSeccionesInicial);
+    setSectionErrors(erroresSeccionesInicial);
+
+    if (open) {
+      void reload();
+    }
+  }, [open, reload, tareaId]);
 
   const runEvidenceAction = useCallback(
     async (action: () => Promise<unknown>) => {
@@ -81,7 +235,7 @@ export function useDetalleAspecto({
 
       try {
         await action();
-        await reload();
+        await loadSection("EVIDENCIAS", true);
       } catch (currentError) {
         const message =
           currentError instanceof Error
@@ -93,7 +247,7 @@ export function useDetalleAspecto({
         setBusy(false);
       }
     },
-    [reload]
+    [loadSection]
   );
 
   const createEvidence = useCallback(
@@ -156,6 +310,10 @@ export function useDetalleAspecto({
     busy,
     error,
     reload,
+    loadSection,
+    loadingSections,
+    loadedSections,
+    sectionErrors,
     createEvidence,
     updateEvidence,
     removeEvidence,
