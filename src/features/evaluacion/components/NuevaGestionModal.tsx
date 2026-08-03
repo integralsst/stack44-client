@@ -17,6 +17,11 @@ interface Props {
   open: boolean;
   busy: boolean;
   categorias: CategoriaGestionEvaluacion[];
+  initialValues?: Partial<CrearGestionInput> | null;
+  correctionContext?: {
+    aspectoNombre: string;
+    conceptoTecnico: string | null;
+  } | null;
   onClose: () => void;
   onSubmit: (data: CrearGestionInput) => Promise<void>;
 }
@@ -36,6 +41,8 @@ export default function NuevaGestionModal({
   open,
   busy,
   categorias,
+  initialValues = null,
+  correctionContext = null,
   onClose,
   onSubmit,
 }: Props) {
@@ -52,13 +59,17 @@ export default function NuevaGestionModal({
   useEffect(() => {
     if (!open) return;
 
-    setFechaGestion(todayInput());
-    setModalidad("PRESENCIAL");
-    setTipoActividad("");
-    setCategoriaGestionId("");
-    setObservacionGeneral("");
+    setFechaGestion(initialValues?.fechaGestion ?? todayInput());
+    setModalidad(initialValues?.modalidad ?? "PRESENCIAL");
+    setTipoActividad(initialValues?.tipoActividad ?? "");
+    setCategoriaGestionId(
+      initialValues?.categoriaGestionId
+        ? String(initialValues.categoriaGestionId)
+        : ""
+    );
+    setObservacionGeneral(initialValues?.observacionGeneral ?? "");
     setError(null);
-  }, [open]);
+  }, [initialValues, open]);
 
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>
@@ -95,8 +106,16 @@ export default function NuevaGestionModal({
   return (
     <AppModal
       open={open}
-      title="Nueva gestión SG-SST"
-      description="Crea la jornada, visita o asesoría dentro de la cual registrarás las evaluaciones."
+      title={
+        correctionContext
+          ? "Nueva gestión correctiva"
+          : "Nueva gestión SG-SST"
+      }
+      description={
+        correctionContext
+          ? `Registrarás una nueva evaluación para corregir: ${correctionContext.aspectoNombre}`
+          : "Crea la jornada, visita o asesoría dentro de la cual registrarás las evaluaciones."
+      }
       onClose={onClose}
       busy={busy}
       size="lg"
@@ -122,7 +141,7 @@ export default function NuevaGestionModal({
                 className="text-black"
               />
             )}
-            Crear y comenzar
+            {correctionContext ? "Crear y corregir" : "Crear y comenzar"}
           </button>
         </div>
       }
@@ -139,6 +158,18 @@ export default function NuevaGestionModal({
             description={error}
             className="sm:col-span-2"
           />
+        )}
+
+        {correctionContext && (
+          <div className="sm:col-span-2 rounded-2xl border border-red-500/25 bg-red-500/10 p-4">
+            <p className="text-xs font-bold uppercase tracking-wider text-red-300">
+              Concepto técnico que debes corregir
+            </p>
+            <p className="mt-2 text-sm leading-6 text-neutral-200">
+              {correctionContext.conceptoTecnico ||
+                "El revisor solicitó una nueva evaluación del aspecto."}
+            </p>
+          </div>
         )}
 
         <label>

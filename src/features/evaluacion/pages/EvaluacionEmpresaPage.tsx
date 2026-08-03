@@ -1,10 +1,16 @@
 import {
+  AlertTriangle,
   ClipboardCheck,
   History,
   Plus,
   ShieldCheck,
+  Wrench,
 } from "lucide-react";
-import { useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import AppModal from "../../../components/ui/AppModal";
@@ -21,6 +27,42 @@ import ResumenEvaluacion from "../components/ResumenEvaluacion";
 import RevisionesTecnicasPeriodo from "../components/revisiones/RevisionesTecnicasPeriodo";
 import { useEvaluacionEmpresa } from "../hooks/useEvaluacionEmpresa";
 import { useRevisionesTecnicas } from "../hooks/useRevisionesTecnicas";
+import "../styles/revision-tecnica-flujo.css";
+import type { RevisionTecnicaEvaluacionItem } from "../types/revision-tecnica.types";
+
+function enfocarAspectoEnMatriz(aspectoNombre: string) {
+  const title = `Abrir detalle de ${aspectoNombre}`;
+  const button = Array.from(
+    document.querySelectorAll<HTMLButtonElement>("button[title]")
+  ).find((item) => item.title === title);
+
+  const row = button?.closest("tr");
+
+  if (!row) return;
+
+  row.scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+    inline: "center",
+  });
+  row.classList.add(
+    "outline",
+    "outline-2",
+    "outline-red-400",
+    "outline-offset-[-2px]",
+    "bg-red-500/10"
+  );
+
+  window.setTimeout(() => {
+    row.classList.remove(
+      "outline",
+      "outline-2",
+      "outline-red-400",
+      "outline-offset-[-2px]",
+      "bg-red-500/10"
+    );
+  }, 6000);
+}
 
 export default function EvaluacionEmpresaPage() {
   const { empresaId } = useParams<{ empresaId: string }>();
@@ -38,6 +80,8 @@ export default function EvaluacionEmpresaPage() {
     useState(false);
   const [tareaDetalleId, setTareaDetalleId] =
     useState<number | null>(null);
+  const [revisionCorreccion, setRevisionCorreccion] =
+    useState<RevisionTecnicaEvaluacionItem | null>(null);
 
   const {
     contexto,
@@ -81,6 +125,37 @@ export default function EvaluacionEmpresaPage() {
     ]);
   };
 
+  const enfocarRevision = useCallback(
+    (revision: RevisionTecnicaEvaluacionItem) => {
+      setRevisionCorreccion(revision);
+      setRevisionesModalOpen(false);
+
+      if (!contexto?.gestionActiva) {
+        setGestionModalOpen(true);
+        return;
+      }
+
+      window.setTimeout(() => {
+        enfocarAspectoEnMatriz(
+          revision.evaluacion.aspecto.nombre
+        );
+      }, 200);
+    },
+    [contexto?.gestionActiva]
+  );
+
+  useEffect(() => {
+    if (!contexto?.gestionActiva || !revisionCorreccion) return;
+
+    const timer = window.setTimeout(() => {
+      enfocarAspectoEnMatriz(
+        revisionCorreccion.evaluacion.aspecto.nombre
+      );
+    }, 450);
+
+    return () => window.clearTimeout(timer);
+  }, [contexto?.gestionActiva, revisionCorreccion]);
+
   if (cargando && !contexto) {
     return <EvaluacionPageSkeleton />;
   }
@@ -106,6 +181,19 @@ export default function EvaluacionEmpresaPage() {
       </div>
     );
   }
+
+  const ajustesActivos =
+    revisiones.data?.resumen.requierenAjustesActivos ?? 0;
+  const pendientesRevision =
+    revisiones.data?.resumen.pendientes ?? 0;
+  const enCorreccion =
+    revisiones.data?.resumen.enCorreccion ?? 0;
+
+  const botonRevisionClass = ajustesActivos > 0
+    ? "revision-alert-pulse border-red-500/40 bg-red-500/15 text-red-100 hover:bg-red-500/20"
+    : pendientesRevision > 0
+      ? "border-amber-500/25 bg-amber-500/10 text-amber-200 hover:bg-amber-500/15"
+      : "border-neutral-700 bg-[#08090a] text-neutral-300 hover:border-cyan-500/40 hover:text-cyan-200";
 
   return (
     <div className="flex min-h-full w-full min-w-0 max-w-none flex-col gap-3 pb-6">
@@ -233,15 +321,23 @@ export default function EvaluacionEmpresaPage() {
                 <button
                   type="button"
                   onClick={() => setRevisionesModalOpen(true)}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-2.5 text-sm font-semibold text-amber-200 transition hover:bg-amber-500/15 sm:w-auto"
+                  className={`flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition sm:w-auto ${botonRevisionClass}`}
                 >
-                  <ShieldCheck size={17} />
-                  Revisiones técnicas
-                  {(revisiones.data?.resumen.pendientes ?? 0) > 0 && (
-                    <span className="rounded-full bg-amber-300 px-2 py-0.5 text-[10px] font-bold text-black">
-                      {revisiones.data?.resumen.pendientes}
-                    </span>
+                  {ajustesActivos > 0 ? (
+                    <AlertTriangle size={17} />
+                  ) : (
+                    <ShieldCheck size={17} />
                   )}
+                  Revisiones técnicas
+                  {ajustesActivos > 0 ? (
+                    <span className="rounded-full bg-red-300 px-2 py-0.5 text-[10px] font-bold text-red-950">
+                      {ajustesActivos} por corregir
+                    </span>
+                  ) : pendientesRevision > 0 ? (
+                    <span className="rounded-full bg-amber-300 px-2 py-0.5 text-[10px] font-bold text-black">
+                      {pendientesRevision}
+                    </span>
+                  ) : null}
                 </button>
               )}
 
@@ -257,7 +353,10 @@ export default function EvaluacionEmpresaPage() {
               {!contexto.gestionActiva && puedeEvaluar && (
                 <button
                   type="button"
-                  onClick={() => setGestionModalOpen(true)}
+                  onClick={() => {
+                    setRevisionCorreccion(null);
+                    setGestionModalOpen(true);
+                  }}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black transition hover:bg-neutral-200 sm:w-auto"
                 >
                   <Plus size={17} />
@@ -266,6 +365,38 @@ export default function EvaluacionEmpresaPage() {
               )}
             </div>
           </section>
+
+          {ajustesActivos > 0 && (
+            <div className="revision-alert-pulse flex flex-col gap-3 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex gap-3">
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-300" />
+                <div>
+                  <p className="text-sm font-bold text-red-100">
+                    Hay {ajustesActivos} evaluación(es) que requieren corrección
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-red-200/75">
+                    Revisa el concepto técnico y registra una nueva evaluación. La gestión original permanecerá intacta.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRevisionesModalOpen(true)}
+                className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-red-400"
+              >
+                <Wrench size={16} />
+                Ver y corregir
+              </button>
+            </div>
+          )}
+
+          {enCorreccion > 0 && ajustesActivos === 0 && (
+            <AppAlert
+              tone="info"
+              title={`${enCorreccion} revisión(es) están en corrección`}
+              description="Finaliza la nueva evaluación para que dejen de aparecer como una acción activa y queden registradas como subsanadas."
+            />
+          )}
 
           <MatrizEvaluacion
             filas={contexto.filas}
@@ -284,6 +415,28 @@ export default function EvaluacionEmpresaPage() {
         open={gestionModalOpen}
         busy={procesando}
         categorias={contexto.categoriasGestion}
+        initialValues={
+          revisionCorreccion
+            ? {
+                modalidad: "SEGUIMIENTO_PUNTUAL",
+                tipoActividad: `Corrección técnica · ${revisionCorreccion.evaluacion.aspecto.nombre}`,
+                categoriaGestionId:
+                  revisionCorreccion.evaluacion.gestion
+                    .categoriaGestion?.id ?? null,
+                observacionGeneral: `Corrección solicitada mediante revisión técnica.\n\nConcepto: ${revisionCorreccion.conceptoTecnico ?? "Pendiente de corrección."}`,
+              }
+            : null
+        }
+        correctionContext={
+          revisionCorreccion
+            ? {
+                aspectoNombre:
+                  revisionCorreccion.evaluacion.aspecto.nombre,
+                conceptoTecnico:
+                  revisionCorreccion.conceptoTecnico,
+              }
+            : null
+        }
         onClose={() => setGestionModalOpen(false)}
         onSubmit={crearGestion}
       />
@@ -307,7 +460,7 @@ export default function EvaluacionEmpresaPage() {
         <AppModal
           open={revisionesModalOpen}
           title={`Revisiones técnicas · ${anio}`}
-          description={`Consulta y resuelve las evaluaciones de ${contexto.empresa.nombre} que requieren validación técnica.`}
+          description={`Consulta, resuelve y corrige las evaluaciones de ${contexto.empresa.nombre} que requieren validación técnica.`}
           onClose={() => {
             if (!revisiones.procesando) {
               setRevisionesModalOpen(false);
@@ -323,6 +476,7 @@ export default function EvaluacionEmpresaPage() {
             error={revisiones.error}
             onReload={revisiones.recargar}
             onResolve={revisiones.resolver}
+            onCorregir={enfocarRevision}
             onResolved={recargar}
           />
         </AppModal>

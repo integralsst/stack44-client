@@ -2,13 +2,15 @@ import {
   Ban,
   CheckCircle2,
   Clock3,
+  LoaderCircle,
+  ShieldCheck,
   Wrench,
 } from "lucide-react";
 
-import type { EstadoRevisionTecnica } from "../../types/revision-tecnica.types";
+import type { EstadoFlujoRevisionTecnica } from "../../types/revision-tecnica.types";
 
 const CONFIG: Record<
-  EstadoRevisionTecnica,
+  EstadoFlujoRevisionTecnica,
   {
     label: string;
     className: string;
@@ -18,20 +20,32 @@ const CONFIG: Record<
   PENDIENTE: {
     label: "Pendiente",
     className:
-      "border-amber-500/25 bg-amber-500/10 text-amber-300",
+      "border-amber-500/30 bg-amber-500/10 text-amber-300",
     icon: Clock3,
   },
   APROBADA: {
     label: "Aprobada",
     className:
-      "border-emerald-500/25 bg-emerald-500/10 text-emerald-300",
+      "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
     icon: CheckCircle2,
   },
   REQUIERE_AJUSTES: {
-    label: "Requiere ajustes",
+    label: "Requiere corrección",
     className:
-      "border-orange-500/25 bg-orange-500/10 text-orange-300",
+      "border-red-500/35 bg-red-500/10 text-red-300",
     icon: Wrench,
+  },
+  EN_CORRECCION: {
+    label: "En corrección",
+    className:
+      "border-cyan-500/30 bg-cyan-500/10 text-cyan-300",
+    icon: LoaderCircle,
+  },
+  SUBSANADA: {
+    label: "Subsanada",
+    className:
+      "border-teal-500/30 bg-teal-500/10 text-teal-300",
+    icon: ShieldCheck,
   },
   ANULADA: {
     label: "Anulada",
@@ -44,7 +58,7 @@ const CONFIG: Record<
 export default function RevisionTecnicaEstadoBadge({
   estado,
 }: {
-  estado: EstadoRevisionTecnica;
+  estado: EstadoFlujoRevisionTecnica;
 }) {
   const config = CONFIG[estado];
   const Icon = config.icon;
@@ -53,7 +67,10 @@ export default function RevisionTecnicaEstadoBadge({
     <span
       className={`inline-flex w-fit items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${config.className}`}
     >
-      <Icon size={12} />
+      <Icon
+        size={12}
+        className={estado === "EN_CORRECCION" ? "animate-spin" : ""}
+      />
       {config.label}
     </span>
   );

@@ -1,4 +1,6 @@
 import {
+  AlertTriangle,
+  ArrowRight,
   CalendarDays,
   ExternalLink,
   FileCheck2,
@@ -13,20 +15,31 @@ import RevisionTecnicaEstadoBadge from "./RevisionTecnicaEstadoBadge";
 interface Props {
   revision: RevisionTecnicaEvaluacionItem;
   onResolver: (revision: RevisionTecnicaEvaluacionItem) => void;
+  onCorregir: (revision: RevisionTecnicaEvaluacionItem) => void;
 }
 
 export default function RevisionTecnicaCard({
   revision,
   onResolver,
+  onCorregir,
 }: Props) {
   const evaluacion = revision.evaluacion;
+  const urgente = revision.estadoFlujo === "REQUIERE_AJUSTES";
 
   return (
-    <article className="rounded-2xl border border-neutral-800 bg-[#0b0c0d] p-4 shadow-lg sm:p-5">
+    <article
+      className={`rounded-2xl border p-4 shadow-lg sm:p-5 ${
+        urgente
+          ? "revision-alert-pulse border-red-500/35 bg-red-500/[0.045]"
+          : revision.estadoFlujo === "EN_CORRECCION"
+            ? "border-cyan-500/25 bg-cyan-500/[0.035]"
+            : "border-neutral-800 bg-[#0b0c0d]"
+      }`}
+    >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <RevisionTecnicaEstadoBadge estado={revision.estado} />
+            <RevisionTecnicaEstadoBadge estado={revision.estadoFlujo} />
             <span className="text-[10px] text-neutral-600">
               Solicitada {formatDateTime(revision.solicitadaEn)}
             </span>
@@ -43,22 +56,40 @@ export default function RevisionTecnicaCard({
           </p>
         </div>
 
-        {revision.puedeResolver && (
-          <button
-            type="button"
-            onClick={() => onResolver(revision)}
-            className="flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black transition hover:bg-neutral-200 lg:w-auto"
-          >
-            <ShieldCheck size={16} />
-            Emitir concepto
-          </button>
-        )}
+        <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
+          {revision.puedeCorregir &&
+            (revision.estadoFlujo === "REQUIERE_AJUSTES" ||
+              revision.estadoFlujo === "EN_CORRECCION") && (
+              <button
+                type="button"
+                onClick={() => onCorregir(revision)}
+                className="flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-red-400 lg:w-auto"
+              >
+                <AlertTriangle size={16} />
+                {revision.estadoFlujo === "EN_CORRECCION"
+                  ? "Continuar corrección"
+                  : "Corregir evaluación"}
+                <ArrowRight size={15} />
+              </button>
+            )}
+
+          {revision.puedeResolver && (
+            <button
+              type="button"
+              onClick={() => onResolver(revision)}
+              className="flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black transition hover:bg-neutral-200 lg:w-auto"
+            >
+              <ShieldCheck size={16} />
+              Emitir concepto
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Fact
           icon={CalendarDays}
-          label="Gestión"
+          label="Gestión original"
           value={`${formatDate(evaluacion.gestion.fechaGestion)} · ${evaluacion.gestion.tipoActividad}`}
         />
         <Fact
@@ -79,24 +110,28 @@ export default function RevisionTecnicaCard({
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <TextBlock
-          title="Motivo de la solicitud"
-          text={revision.motivoSolicitud}
-        />
+        <TextBlock title="Motivo de la solicitud" text={revision.motivoSolicitud} />
         <TextBlock
           title="Observación de la evaluación"
-          text={
-            evaluacion.observacion ||
-            "La evaluación no tiene observación adicional."
-          }
+          text={evaluacion.observacion || "La evaluación no tiene observación adicional."}
           muted={!evaluacion.observacion}
         />
       </div>
 
       {revision.conceptoTecnico && (
-        <div className="mt-4 rounded-2xl border border-cyan-500/15 bg-cyan-500/5 p-4">
+        <div
+          className={`mt-4 rounded-2xl border p-4 ${
+            urgente
+              ? "border-red-500/25 bg-red-500/10"
+              : "border-cyan-500/15 bg-cyan-500/5"
+          }`}
+        >
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">
+            <p
+              className={`text-[10px] font-bold uppercase tracking-wider ${
+                urgente ? "text-red-300" : "text-cyan-400"
+              }`}
+            >
               Concepto técnico
             </p>
             <span className="text-[10px] text-neutral-500">
@@ -109,6 +144,25 @@ export default function RevisionTecnicaCard({
           <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-neutral-200">
             {revision.conceptoTecnico}
           </p>
+        </div>
+      )}
+
+      {revision.gestionCorreccion && (
+        <div className="mt-4 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-300">
+            Trazabilidad de la corrección
+          </p>
+          <p className="mt-2 text-sm font-semibold text-white">
+            {revision.gestionCorreccion.tipoActividad}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-neutral-400">
+            {formatDate(revision.gestionCorreccion.fechaGestion)} · {revision.gestionCorreccion.profesional}
+          </p>
+          {revision.evaluacionCorrectiva && (
+            <p className="mt-2 text-xs text-neutral-300">
+              Nueva evaluación: {estadoLabel(revision.evaluacionCorrectiva.estadoCumplimiento)} · Nota {revision.evaluacionCorrectiva.calificacionAdministrativa.toFixed(2)}
+            </p>
+          )}
         </div>
       )}
 
@@ -143,9 +197,7 @@ export default function RevisionTecnicaCard({
                 rel="noreferrer"
                 className="flex items-center justify-between gap-3 rounded-xl border border-neutral-800 bg-[#090a0b] px-3 py-3 text-sm text-neutral-300 transition hover:border-cyan-500/30 hover:text-cyan-200"
               >
-                <span className="min-w-0 truncate">
-                  {evidencia.nombre}
-                </span>
+                <span className="min-w-0 truncate">{evidencia.nombre}</span>
                 <ExternalLink size={14} className="shrink-0" />
               </a>
             ))}
@@ -175,9 +227,7 @@ function Fact({
         <Icon size={13} />
         {label}
       </p>
-      <p className="mt-2 text-xs leading-5 text-neutral-300">
-        {value}
-      </p>
+      <p className="mt-2 text-xs leading-5 text-neutral-300">{value}</p>
     </div>
   );
 }
