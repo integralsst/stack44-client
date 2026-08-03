@@ -9,7 +9,7 @@ import {
 import type {
   EmpresaEvaluacion,
   PeriodoEvaluacion,
-} from "../types/evaluacion.types";
+} from "../evaluacion/types/evaluacion.types";
 
 interface Props {
   empresa: EmpresaEvaluacion;
