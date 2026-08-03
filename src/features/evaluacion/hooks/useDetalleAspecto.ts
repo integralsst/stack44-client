@@ -6,9 +6,10 @@ import {
 
 import { useAuth } from "../../auth/context/AuthContext";
 import {
+  obtenerConfiguracionResumenAspecto,
   obtenerEvidenciasAspecto,
   obtenerHistorialAspecto,
-  obtenerResumenAspecto,
+  obtenerResumenRapidoAspecto,
   obtenerRevisionTecnicaAspecto,
 } from "../api/detalle-aspecto.api";
 import {
@@ -18,6 +19,8 @@ import {
 } from "../api/evidencias-evaluacion.api";
 import type {
   DetalleAspectoResponse,
+  DetalleAspectoResumenRapidoResponse,
+  HistorialPaginacion,
   SeccionDetalleAspecto,
 } from "../types/detalle-aspecto.types";
 import type {
@@ -36,6 +39,75 @@ const erroresSeccionesInicial = {
   EVIDENCIAS: null,
   REVISION_TECNICA: null,
 };
+
+const paginacionHistorialInicial: HistorialPaginacion = {
+  pagina: 0,
+  limite: 20,
+  hayMas: false,
+  paginaSiguiente: null,
+};
+
+function construirDetalleParcial(
+  response: DetalleAspectoResumenRapidoResponse
+): DetalleAspectoResponse {
+  return {
+    empresa: response.empresa,
+    periodo: response.periodo,
+    tarea: {
+      ...response.tarea,
+      ejecucion: null,
+      fundamentosSoportes: null,
+      responsableActividad: null,
+      metasEstandar: null,
+      recursosAdministrativos: null,
+      createdAt: "",
+      updatedAt: "",
+      aspecto: {
+        ...response.tarea.aspecto,
+        descripcion: null,
+        planAccionEspecifico: null,
+        configuracion: null,
+        configuracionVigencia: null,
+        configuracionTareaCotidiana: null,
+        configuracionEvidencia: null,
+        configuracionRevision: null,
+        reglasAprobacion: [],
+        palabrasClave: [],
+        requisitosNormativos: [],
+        estandar: {
+          id: 0,
+          codigo: null,
+          nombre: "Cargando configuración…",
+          descripcion: null,
+          gruposMinisteriales: [],
+          categoriaEstandar: {
+            id: 0,
+            codigo: null,
+            nombre: "Cargando configuración…",
+            cicloPhva: {
+              id: 0,
+              codigo: "",
+              nombre: "Cargando configuración…",
+            },
+          },
+        },
+      },
+    },
+    evaluacionBorrador: null,
+    ultimaEvaluacion: null,
+    detalleVigencia: response.detalleVigencia,
+    historial: [],
+    evidencias: [],
+    revisionesTecnicas: [],
+    evidenciaObjetivo: null,
+    permisos: {
+      puedeGestionarEvidencias: false,
+      puedeVerRevisionTecnica:
+        response.permisos.puedeVerRevisionTecnica,
+      motivoEvidencias: null,
+    },
+  };
+}
 
 export function useDetalleAspecto({
   open,
@@ -56,6 +128,16 @@ export function useDetalleAspecto({
   const [error, setError] = useState<string | null>(
     null
   );
+  const [loadingConfiguration, setLoadingConfiguration] =
+    useState(false);
+  const [configurationLoaded, setConfigurationLoaded] =
+    useState(false);
+  const [configurationError, setConfigurationError] =
+    useState<string | null>(null);
+  const [historyPagination, setHistoryPagination] =
+    useState<HistorialPaginacion>(
+      paginacionHistorialInicial
+    );
   const [loadingSections, setLoadingSections] =
     useState<Record<SeccionDetalleAspecto, boolean>>(
       estadoSeccionesInicial
@@ -70,6 +152,43 @@ export function useDetalleAspecto({
       string | null
     >>(erroresSeccionesInicial);
 
+  const loadConfiguration = useCallback(async () => {
+    if (!open || !empresaId || !tareaId || !token) {
+      return;
+    }
+
+    setLoadingConfiguration(true);
+    setConfigurationError(null);
+
+    try {
+      const response =
+        await obtenerConfiguracionResumenAspecto(
+          empresaId,
+          tareaId,
+          anio,
+          token
+        );
+
+      setData((current) =>
+        current
+          ? {
+              ...current,
+              tarea: response.tarea,
+            }
+          : current
+      );
+      setConfigurationLoaded(true);
+    } catch (currentError) {
+      setConfigurationError(
+        currentError instanceof Error
+          ? currentError.message
+          : "No fue posible cargar la configuración ampliada."
+      );
+    } finally {
+      setLoadingConfiguration(false);
+    }
+  }, [anio, empresaId, open, tareaId, token]);
+
   const reload = useCallback(async () => {
     if (!open || !empresaId || !tareaId || !token) {
       return;
@@ -77,22 +196,19 @@ export function useDetalleAspecto({
 
     setLoading(true);
     setError(null);
+    setConfigurationLoaded(false);
+    setConfigurationError(null);
 
     try {
-      const response = await obtenerResumenAspecto(
+      const response = await obtenerResumenRapidoAspecto(
         empresaId,
         tareaId,
         anio,
         token
       );
 
-      setData((current) => ({
-        ...response,
-        historial: current?.historial ?? [],
-        evidencias: current?.evidencias ?? [],
-        revisionesTecnicas:
-          current?.revisionesTecnicas ?? [],
-      }));
+      setData(construirDetalleParcial(response));
+      void loadConfiguration();
     } catch (currentError) {
       setError(
         currentError instanceof Error
@@ -102,7 +218,14 @@ export function useDetalleAspecto({
     } finally {
       setLoading(false);
     }
-  }, [anio, empresaId, open, tareaId, token]);
+  }, [
+    anio,
+    empresaId,
+    loadConfiguration,
+    open,
+    tareaId,
+    token,
+  ]);
 
   const loadSection = useCallback(
     async (
@@ -135,6 +258,7 @@ export function useDetalleAspecto({
             empresaId,
             tareaId,
             anio,
+            1,
             token
           );
           setData((current) =>
@@ -145,6 +269,7 @@ export function useDetalleAspecto({
                 }
               : current
           );
+          setHistoryPagination(response.paginacion);
         }
 
         if (section === "EVIDENCIAS") {
@@ -216,9 +341,88 @@ export function useDetalleAspecto({
     ]
   );
 
+  const loadMoreHistory = useCallback(async () => {
+    const pagina = historyPagination.paginaSiguiente;
+
+    if (
+      !pagina ||
+      !open ||
+      !empresaId ||
+      !tareaId ||
+      !token ||
+      loadingSections.HISTORIAL
+    ) {
+      return;
+    }
+
+    setLoadingSections((current) => ({
+      ...current,
+      HISTORIAL: true,
+    }));
+    setSectionErrors((current) => ({
+      ...current,
+      HISTORIAL: null,
+    }));
+
+    try {
+      const response = await obtenerHistorialAspecto(
+        empresaId,
+        tareaId,
+        anio,
+        pagina,
+        token
+      );
+
+      setData((current) => {
+        if (!current) return current;
+
+        const existentes = new Set(
+          current.historial.map((item) => item.id)
+        );
+        const nuevos = response.historial.filter(
+          (item) => !existentes.has(item.id)
+        );
+
+        return {
+          ...current,
+          historial: [
+            ...current.historial,
+            ...nuevos,
+          ],
+        };
+      });
+      setHistoryPagination(response.paginacion);
+    } catch (currentError) {
+      setSectionErrors((current) => ({
+        ...current,
+        HISTORIAL:
+          currentError instanceof Error
+            ? currentError.message
+            : "No fue posible cargar más historial.",
+      }));
+    } finally {
+      setLoadingSections((current) => ({
+        ...current,
+        HISTORIAL: false,
+      }));
+    }
+  }, [
+    anio,
+    empresaId,
+    historyPagination.paginaSiguiente,
+    loadingSections.HISTORIAL,
+    open,
+    tareaId,
+    token,
+  ]);
+
   useEffect(() => {
     setData(null);
     setError(null);
+    setConfigurationLoaded(false);
+    setLoadingConfiguration(false);
+    setConfigurationError(null);
+    setHistoryPagination(paginacionHistorialInicial);
     setLoadedSections(estadoSeccionesInicial);
     setLoadingSections(estadoSeccionesInicial);
     setSectionErrors(erroresSeccionesInicial);
@@ -310,7 +514,13 @@ export function useDetalleAspecto({
     busy,
     error,
     reload,
+    loadConfiguration,
+    loadingConfiguration,
+    configurationLoaded,
+    configurationError,
     loadSection,
+    loadMoreHistory,
+    historyPagination,
     loadingSections,
     loadedSections,
     sectionErrors,
