@@ -10,12 +10,21 @@ export type EstadoRevisionTecnica =
   | "REQUIERE_AJUSTES"
   | "ANULADA";
 
+export type EstadoFlujoRevisionTecnica =
+  | EstadoRevisionTecnica
+  | "EN_CORRECCION"
+  | "SUBSANADA";
+
 export interface RevisionTecnicaResumen {
   total: number;
   pendientes: number;
   aprobadas: number;
   requierenAjustes: number;
   anuladas: number;
+  requierenAjustesActivos: number;
+  enCorreccion: number;
+  subsanadas: number;
+  accionesPendientes: number;
 }
 
 export interface RevisionTecnicaPersona {
@@ -33,9 +42,27 @@ export interface RevisionTecnicaEvidencia {
   createdAt: string;
 }
 
+export interface RevisionTecnicaGestionCorreccion {
+  id: string;
+  estado: EstadoGestionSgsst;
+  fechaGestion: string;
+  tipoActividad: string;
+  profesional: string;
+}
+
+export interface RevisionTecnicaEvaluacionCorrectiva {
+  id: string;
+  estadoCumplimiento: EstadoCumplimientoAspecto;
+  calificacionAdministrativa: number;
+  observacion: string | null;
+  fechaDocumento: string | null;
+  creadaEn: string;
+}
+
 export interface RevisionTecnicaEvaluacionItem {
   id: string;
   estado: EstadoRevisionTecnica;
+  estadoFlujo: EstadoFlujoRevisionTecnica;
   motivoSolicitud: string;
   conceptoTecnico: string | null;
   motivoAnulacion: string | null;
@@ -47,6 +74,10 @@ export interface RevisionTecnicaEvaluacionItem {
   solicitadaPor: RevisionTecnicaPersona;
   revisadaPor: RevisionTecnicaPersona | null;
   puedeResolver: boolean;
+  puedeCorregir: boolean;
+  requiereAccion: boolean;
+  gestionCorreccion: RevisionTecnicaGestionCorreccion | null;
+  evaluacionCorrectiva: RevisionTecnicaEvaluacionCorrectiva | null;
   evaluacion: {
     id: string;
     estadoCumplimiento: EstadoCumplimientoAspecto;
