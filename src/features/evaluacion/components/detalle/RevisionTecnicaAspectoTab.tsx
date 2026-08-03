@@ -51,7 +51,7 @@ export default function RevisionTecnicaAspectoTab({
           key={evaluacion.id}
           evaluacion={evaluacion}
           esBorrador={
-            data.evaluacionBorrador?.id === evaluacion.id
+            evaluacion.gestion.estado === "BORRADOR"
           }
         />
       ))}

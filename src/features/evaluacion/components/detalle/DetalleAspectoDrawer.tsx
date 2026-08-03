@@ -14,8 +14,12 @@ import {
 } from "lucide-react";
 
 import { useDetalleAspecto } from "../../hooks/useDetalleAspecto";
-import type { SeccionDetalleAspecto } from "../../types/detalle-aspecto.types";
+import type {
+  DetalleAspectoResponse,
+  SeccionDetalleAspecto,
+} from "../../types/detalle-aspecto.types";
 import AppAlert from "../feedback/AppAlert";
+import VigenciaBadge from "../matriz/VigenciaBadge";
 import DetalleAspectoSkeleton from "./DetalleAspectoSkeleton";
 import EvidenciasAspectoTab from "./EvidenciasAspectoTab";
 import HistorialAspectoTab from "./HistorialAspectoTab";
@@ -45,7 +49,13 @@ export default function DetalleAspectoDrawer({
     loading,
     busy,
     error,
+    loadConfiguration,
+    loadingConfiguration,
+    configurationLoaded,
+    configurationError,
     loadSection,
+    loadMoreHistory,
+    historyPagination,
     loadingSections,
     loadedSections,
     sectionErrors,
@@ -168,6 +178,7 @@ export default function DetalleAspectoDrawer({
               active={tab === "RESUMEN"}
               icon={LayoutPanelTop}
               label="Resumen"
+              loading={loadingConfiguration}
               onClick={() => activateTab("RESUMEN")}
             />
             <TabButton
@@ -231,9 +242,19 @@ export default function DetalleAspectoDrawer({
                 </div>
               )}
 
-              {tab === "RESUMEN" && (
-                <ResumenAspectoTab data={data} />
-              )}
+              {tab === "RESUMEN" &&
+                (configurationLoaded ? (
+                  <ResumenAspectoTab data={data} />
+                ) : (
+                  <ResumenRapido
+                    data={data}
+                    loading={loadingConfiguration}
+                    error={configurationError}
+                    onRetry={() =>
+                      void loadConfiguration()
+                    }
+                  />
+                ))}
 
               {deferredTab &&
                 sectionLoading &&
@@ -243,7 +264,8 @@ export default function DetalleAspectoDrawer({
 
               {deferredTab &&
                 sectionError &&
-                !sectionLoading && (
+                !sectionLoading &&
+                !sectionLoaded && (
                   <AppAlert
                     tone="error"
                     title="No fue posible cargar esta sección"
@@ -265,14 +287,33 @@ export default function DetalleAspectoDrawer({
                   </AppAlert>
                 )}
 
+              {deferredTab &&
+                sectionError &&
+                sectionLoaded && (
+                  <div className="mb-4">
+                    <AppAlert
+                      tone="error"
+                      title="No fue posible completar la carga"
+                      description={sectionError}
+                    />
+                  </div>
+                )}
+
               {tab === "HISTORIAL" &&
-                sectionLoaded &&
-                !sectionError && (
-                  <HistorialAspectoTab data={data} />
+                sectionLoaded && (
+                  <HistorialAspectoTab
+                    data={data}
+                    paginacion={historyPagination}
+                    loadingMore={loadingSections.HISTORIAL}
+                    onLoadMore={() =>
+                      void loadMoreHistory()
+                    }
+                  />
                 )}
               {tab === "EVIDENCIAS" &&
                 sectionLoaded &&
-                !sectionError && (
+                !sectionError &&
+                (configurationLoaded ? (
                   <EvidenciasAspectoTab
                     data={data}
                     busy={busy}
@@ -280,7 +321,9 @@ export default function DetalleAspectoDrawer({
                     onUpdate={updateEvidence}
                     onRemove={removeEvidence}
                   />
-                )}
+                ) : (
+                  <SectionSkeleton />
+                ))}
               {tab === "REVISION_TECNICA" &&
                 sectionLoaded &&
                 !sectionError &&
@@ -302,6 +345,110 @@ export default function DetalleAspectoDrawer({
       </section>
     </div>,
     document.body
+  );
+}
+
+function ResumenRapido({
+  data,
+  loading,
+  error,
+  onRetry,
+}: {
+  data: DetalleAspectoResponse;
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
+}) {
+  const gestiones =
+    data.tarea.categoriasGestion
+      .map((item) => item.nombre)
+      .join(", ") || "Sin categoría";
+
+  return (
+    <div className="space-y-4">
+      <section className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4 sm:p-5">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-400">
+          Estado actual del aspecto
+        </p>
+        <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <h3 className="text-lg font-bold leading-7 text-white">
+              {data.tarea.aspecto.nombre}
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-neutral-400">
+              Proceso: <strong className="text-neutral-200">{data.tarea.proceso.nombre}</strong>
+            </p>
+          </div>
+          <div className="shrink-0">
+            <VigenciaBadge detalle={data.detalleVigencia} />
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <QuickFact label="Orden" value={String(data.tarea.orden)} />
+          <QuickFact
+            label="Código"
+            value={
+              data.tarea.codigo ??
+              data.tarea.aspecto.codigo ??
+              `#${data.tarea.id}`
+            }
+          />
+          <QuickFact
+            label="Versión"
+            value={data.tarea.versionSupermatriz.nombre}
+          />
+          <QuickFact label="Gestiones" value={gestiones} />
+        </div>
+      </section>
+
+      {error ? (
+        <AppAlert
+          tone="error"
+          title="No fue posible cargar la configuración ampliada"
+          description={error}
+        >
+          <button
+            type="button"
+            onClick={onRetry}
+            className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-bold text-black transition hover:bg-neutral-200"
+          >
+            <RefreshCw size={15} />
+            Reintentar
+          </button>
+        </AppAlert>
+      ) : (
+        <div className="space-y-3" aria-busy={loading}>
+          <div className="flex items-center gap-2 text-xs text-neutral-500">
+            <RefreshCw
+              size={14}
+              className={loading ? "animate-spin" : undefined}
+            />
+            Cargando configuración de la Supermatriz…
+          </div>
+          <SectionSkeleton />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuickFact({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-xl border border-neutral-800 bg-[#090a0b] p-3">
+      <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-600">
+        {label}
+      </p>
+      <p className="mt-2 text-xs leading-5 text-neutral-300">
+        {value}
+      </p>
+    </div>
   );
 }
 

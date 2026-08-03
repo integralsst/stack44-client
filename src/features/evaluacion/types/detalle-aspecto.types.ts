@@ -206,6 +206,44 @@ export interface DetalleAspectoBaseResponse {
   };
 }
 
+export interface DetalleAspectoResumenRapidoResponse {
+  empresa: DetalleAspectoBaseResponse["empresa"];
+  periodo: DetalleAspectoBaseResponse["periodo"];
+  tarea: {
+    id: number;
+    codigo: string | null;
+    orden: number;
+    versionSupermatriz:
+      DetalleAspectoBaseResponse["tarea"]["versionSupermatriz"];
+    proceso: DetalleAspectoBaseResponse["tarea"]["proceso"];
+    categoriasGestion:
+      DetalleAspectoBaseResponse["tarea"]["categoriasGestion"];
+    aspecto: {
+      id: number;
+      codigo: string | null;
+      nombre: string;
+    };
+  };
+  detalleVigencia: DetalleVigenciaEvaluacion;
+  permisos: {
+    puedeVerRevisionTecnica: boolean;
+  };
+}
+
+export interface DetalleAspectoConfiguracionResponse {
+  tarea: DetalleAspectoBaseResponse["tarea"];
+  cache: {
+    ttlMs: number;
+  };
+}
+
+export interface HistorialPaginacion {
+  pagina: number;
+  limite: number;
+  hayMas: boolean;
+  paginaSiguiente: number | null;
+}
+
 export interface DetalleAspectoResponse
   extends DetalleAspectoBaseResponse {
   historial: HistorialAspectoItem[];
@@ -215,6 +253,7 @@ export interface DetalleAspectoResponse
 
 export interface DetalleAspectoHistorialResponse {
   historial: HistorialAspectoItem[];
+  paginacion: HistorialPaginacion;
 }
 
 export interface DetalleAspectoEvidenciasResponse {
