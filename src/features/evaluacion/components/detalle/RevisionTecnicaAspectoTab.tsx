@@ -19,7 +19,7 @@ export default function RevisionTecnicaAspectoTab({
 }: {
   data: DetalleAspectoResponse;
 }) {
-  const evaluaciones = construirEvaluaciones(data);
+  const evaluaciones = data.revisionesTecnicas;
 
   if (evaluaciones.length === 0) {
     return (
@@ -56,37 +56,6 @@ export default function RevisionTecnicaAspectoTab({
         />
       ))}
     </div>
-  );
-}
-
-function construirEvaluaciones(
-  data: DetalleAspectoResponse
-): EvaluacionDetalleAspecto[] {
-  const map = new Map<string, EvaluacionDetalleAspecto>();
-
-  if (
-    data.evaluacionBorrador?.marcadaRevisionTecnica ||
-    data.evaluacionBorrador?.revisionTecnica
-  ) {
-    map.set(
-      data.evaluacionBorrador.id,
-      data.evaluacionBorrador
-    );
-  }
-
-  for (const evaluacion of data.historial) {
-    if (
-      evaluacion.marcadaRevisionTecnica ||
-      evaluacion.revisionTecnica
-    ) {
-      map.set(evaluacion.id, evaluacion);
-    }
-  }
-
-  return [...map.values()].sort(
-    (a, b) =>
-      new Date(b.creadaEn).getTime() -
-      new Date(a.creadaEn).getTime()
   );
 }
 
