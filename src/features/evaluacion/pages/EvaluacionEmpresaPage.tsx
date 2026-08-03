@@ -27,7 +27,6 @@ import ResumenEvaluacion from "../components/ResumenEvaluacion";
 import RevisionesTecnicasPeriodo from "../components/revisiones/RevisionesTecnicasPeriodo";
 import { useEvaluacionEmpresa } from "../hooks/useEvaluacionEmpresa";
 import { useRevisionesTecnicas } from "../hooks/useRevisionesTecnicas";
-import "../styles/revision-tecnica-flujo.css";
 import type { RevisionTecnicaEvaluacionItem } from "../types/revision-tecnica.types";
 
 function enfocarAspectoEnMatriz(aspectoNombre: string) {
@@ -145,7 +144,9 @@ export default function EvaluacionEmpresaPage() {
   );
 
   useEffect(() => {
-    if (!contexto?.gestionActiva || !revisionCorreccion) return;
+    if (!contexto?.gestionActiva || !revisionCorreccion) {
+      return;
+    }
 
     const timer = window.setTimeout(() => {
       enfocarAspectoEnMatriz(
@@ -190,7 +191,7 @@ export default function EvaluacionEmpresaPage() {
     revisiones.data?.resumen.enCorreccion ?? 0;
 
   const botonRevisionClass = ajustesActivos > 0
-    ? "revision-alert-pulse border-red-500/40 bg-red-500/15 text-red-100 hover:bg-red-500/20"
+    ? "border-red-500/40 bg-red-500/15 text-red-100 ring-2 ring-red-500/15 hover:bg-red-500/20"
     : pendientesRevision > 0
       ? "border-amber-500/25 bg-amber-500/10 text-amber-200 hover:bg-amber-500/15"
       : "border-neutral-700 bg-[#08090a] text-neutral-300 hover:border-cyan-500/40 hover:text-cyan-200";
@@ -324,7 +325,10 @@ export default function EvaluacionEmpresaPage() {
                   className={`flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition sm:w-auto ${botonRevisionClass}`}
                 >
                   {ajustesActivos > 0 ? (
-                    <AlertTriangle size={17} />
+                    <AlertTriangle
+                      size={17}
+                      className="animate-pulse"
+                    />
                   ) : (
                     <ShieldCheck size={17} />
                   )}
@@ -367,9 +371,9 @@ export default function EvaluacionEmpresaPage() {
           </section>
 
           {ajustesActivos > 0 && (
-            <div className="revision-alert-pulse flex flex-col gap-3 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 ring-1 ring-red-500/20 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex gap-3">
-                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-300" />
+                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 animate-pulse text-red-300" />
                 <div>
                   <p className="text-sm font-bold text-red-100">
                     Hay {ajustesActivos} evaluación(es) que requieren corrección
