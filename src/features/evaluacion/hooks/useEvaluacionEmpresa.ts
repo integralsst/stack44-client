@@ -18,6 +18,10 @@ import type {
   GuardarEvaluacionInput,
 } from "../../../types/evaluacion.types";
 
+interface RecargarEvaluacionOptions {
+  mostrarCarga?: boolean;
+}
+
 export function useEvaluacionEmpresa(
   empresaId: string | undefined,
   anio: number
@@ -30,34 +34,45 @@ export function useEvaluacionEmpresa(
   const [procesando, setProcesando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const recargar = useCallback(async () => {
-    if (!empresaId || !token) {
-      return;
-    }
+  const recargar = useCallback(
+    async (
+      options: RecargarEvaluacionOptions = {}
+    ) => {
+      if (!empresaId || !token) {
+        return;
+      }
 
-    setCargando(true);
-    setError(null);
+      const mostrarCarga = options.mostrarCarga ?? true;
 
-    try {
-      const data = await obtenerContextoEvaluacion(
-        empresaId,
-        anio,
-        token
-      );
-      setContexto(data);
-    } catch (currentError) {
-      setError(
-        currentError instanceof Error
-          ? currentError.message
-          : "No fue posible cargar la evaluación."
-      );
-    } finally {
-      setCargando(false);
-    }
-  }, [anio, empresaId, token]);
+      if (mostrarCarga) {
+        setCargando(true);
+      }
+      setError(null);
+
+      try {
+        const data = await obtenerContextoEvaluacion(
+          empresaId,
+          anio,
+          token
+        );
+        setContexto(data);
+      } catch (currentError) {
+        setError(
+          currentError instanceof Error
+            ? currentError.message
+            : "No fue posible cargar la evaluación."
+        );
+      } finally {
+        if (mostrarCarga) {
+          setCargando(false);
+        }
+      }
+    },
+    [anio, empresaId, token]
+  );
 
   useEffect(() => {
-    void recargar();
+    void recargar({ mostrarCarga: true });
   }, [recargar]);
 
   const ejecutar = useCallback(
@@ -67,7 +82,7 @@ export function useEvaluacionEmpresa(
 
       try {
         await action();
-        await recargar();
+        await recargar({ mostrarCarga: false });
       } catch (currentError) {
         const message =
           currentError instanceof Error
