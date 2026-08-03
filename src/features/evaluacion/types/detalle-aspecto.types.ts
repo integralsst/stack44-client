@@ -7,6 +7,11 @@ import type {
 import type { EvidenciaEvaluacion } from "./evidencia-evaluacion.types";
 import type { RevisionTecnicaDetalle } from "./revision-tecnica.types";
 
+export type SeccionDetalleAspecto =
+  | "HISTORIAL"
+  | "EVIDENCIAS"
+  | "REVISION_TECNICA";
+
 export interface EvaluacionDetalleAspecto {
   id: string;
   estadoCumplimiento: EstadoCumplimientoAspecto;
@@ -51,7 +56,7 @@ export interface HistorialAspectoItem
   totalEvidencias: number;
 }
 
-export interface DetalleAspectoResponse {
+export interface DetalleAspectoBaseResponse {
   empresa: {
     id: string;
     nit: string;
@@ -190,8 +195,6 @@ export interface DetalleAspectoResponse {
   evaluacionBorrador: EvaluacionDetalleAspecto | null;
   ultimaEvaluacion: EvaluacionDetalleAspecto | null;
   detalleVigencia: DetalleVigenciaEvaluacion;
-  historial: HistorialAspectoItem[];
-  evidencias: EvidenciaEvaluacion[];
   evidenciaObjetivo: {
     evaluacionId: string;
     esBorrador: boolean;
@@ -201,4 +204,28 @@ export interface DetalleAspectoResponse {
     puedeVerRevisionTecnica: boolean;
     motivoEvidencias: string | null;
   };
+}
+
+export interface DetalleAspectoResponse
+  extends DetalleAspectoBaseResponse {
+  historial: HistorialAspectoItem[];
+  evidencias: EvidenciaEvaluacion[];
+  revisionesTecnicas: EvaluacionDetalleAspecto[];
+}
+
+export interface DetalleAspectoHistorialResponse {
+  historial: HistorialAspectoItem[];
+}
+
+export interface DetalleAspectoEvidenciasResponse {
+  evidencias: EvidenciaEvaluacion[];
+  evidenciaObjetivo: {
+    evaluacionId: string;
+    esBorrador: boolean;
+  } | null;
+  permisos: DetalleAspectoBaseResponse["permisos"];
+}
+
+export interface DetalleAspectoRevisionResponse {
+  evaluaciones: EvaluacionDetalleAspecto[];
 }
