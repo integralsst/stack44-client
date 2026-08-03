@@ -1,7 +1,4 @@
-import {
-  AlertTriangle,
-  ShieldCheck,
-} from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import AppModal from "../../../../components/ui/AppModal";
@@ -9,7 +6,6 @@ import AppModal from "../../../../components/ui/AppModal";
 interface Props {
   open: boolean;
   aspectoNombre: string;
-  obligatoria: boolean;
   observacionConfiguracion: string | null;
   motivoInicial: string;
   onClose: () => void;
@@ -17,13 +13,9 @@ interface Props {
   onRemove: () => void;
 }
 
-const SELECTOR_REVISION_OBLIGATORIA =
-  'button[title="Revisión obligatoria según la Supermatriz"]';
-
 export default function SolicitarRevisionTecnicaModal({
   open,
   aspectoNombre,
-  obligatoria,
   observacionConfiguracion,
   motivoInicial,
   onClose,
@@ -32,39 +24,6 @@ export default function SolicitarRevisionTecnicaModal({
 }: Props) {
   const [motivo, setMotivo] = useState(motivoInicial);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const bloquearBotonesObligatorios = () => {
-      document
-        .querySelectorAll<HTMLButtonElement>(
-          SELECTOR_REVISION_OBLIGATORIA
-        )
-        .forEach((button) => {
-          if (!button.disabled) {
-            button.disabled = true;
-          }
-
-          if (button.getAttribute("aria-disabled") !== "true") {
-            button.setAttribute("aria-disabled", "true");
-          }
-        });
-    };
-
-    bloquearBotonesObligatorios();
-
-    const observer = new MutationObserver(() => {
-      bloquearBotonesObligatorios();
-    });
-
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["disabled", "title"],
-    });
-
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     if (open) {
@@ -96,18 +55,14 @@ export default function SolicitarRevisionTecnicaModal({
   return (
     <AppModal
       open={open}
-      title={
-        obligatoria
-          ? "Revisión técnica obligatoria"
-          : "Solicitar revisión técnica"
-      }
+      title="Solicitar revisión técnica"
       description={aspectoNombre}
       onClose={onClose}
       size="lg"
       footer={
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
           <div>
-            {!obligatoria && motivoInicial.trim() && (
+            {motivoInicial.trim() && (
               <button
                 type="button"
                 onClick={onRemove}
@@ -139,20 +94,6 @@ export default function SolicitarRevisionTecnicaModal({
       }
     >
       <div className="space-y-4">
-        {obligatoria && (
-          <div className="flex gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-amber-100">
-            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
-            <div>
-              <p className="text-sm font-semibold">
-                Esta revisión no se puede desactivar
-              </p>
-              <p className="mt-1 text-xs leading-5 text-amber-200/70">
-                La Supermatriz exige revisión técnica para este aspecto. La solicitud se formalizará cuando finalices la gestión.
-              </p>
-            </div>
-          </div>
-        )}
-
         {observacionConfiguracion && (
           <div className="rounded-2xl border border-cyan-500/15 bg-cyan-500/5 p-4">
             <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">
