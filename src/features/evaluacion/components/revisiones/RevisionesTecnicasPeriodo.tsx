@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   CheckCircle2,
   Clock3,
   RefreshCw,
@@ -8,7 +9,7 @@ import {
 import { useMemo, useState } from "react";
 
 import type {
-  EstadoRevisionTecnica,
+  EstadoFlujoRevisionTecnica,
   ResolverRevisionTecnicaInput,
   RevisionTecnicaEvaluacionItem,
   RevisionesTecnicasPeriodoResponse,
@@ -29,10 +30,11 @@ interface Props {
     revisionId: string,
     input: ResolverRevisionTecnicaInput
   ) => Promise<{ mensaje: string }>;
+  onCorregir: (revision: RevisionTecnicaEvaluacionItem) => void;
   onResolved?: () => Promise<void> | void;
 }
 
-type Filtro = "TODAS" | EstadoRevisionTecnica;
+type Filtro = "TODAS" | EstadoFlujoRevisionTecnica;
 
 export default function RevisionesTecnicasPeriodo({
   data,
@@ -41,9 +43,10 @@ export default function RevisionesTecnicasPeriodo({
   error,
   onReload,
   onResolve,
+  onCorregir,
   onResolved,
 }: Props) {
-  const [filtro, setFiltro] = useState<Filtro>("PENDIENTE");
+  const [filtro, setFiltro] = useState<Filtro>("REQUIERE_AJUSTES");
   const [seleccionada, setSeleccionada] =
     useState<RevisionTecnicaEvaluacionItem | null>(null);
   const [toast, setToast] = useState<{
@@ -55,7 +58,7 @@ export default function RevisionesTecnicasPeriodo({
     const items = data?.revisiones ?? [];
     return filtro === "TODAS"
       ? items
-      : items.filter((item) => item.estado === filtro);
+      : items.filter((item) => item.estadoFlujo === filtro);
   }, [data?.revisiones, filtro]);
 
   const resolver = async (
@@ -63,17 +66,14 @@ export default function RevisionesTecnicasPeriodo({
   ) => {
     if (!seleccionada) return;
 
-    const response = await onResolve(
-      seleccionada.id,
-      input
-    );
+    const response = await onResolve(seleccionada.id, input);
     setSeleccionada(null);
     await onResolved?.();
     setToast({
       title:
         input.estado === "APROBADA"
           ? "Revisión aprobada"
-          : "Ajustes requeridos",
+          : "Corrección requerida",
       description: response.mensaje,
     });
   };
@@ -81,32 +81,60 @@ export default function RevisionesTecnicasPeriodo({
   return (
     <>
       <div className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {(data?.resumen.requierenAjustesActivos ?? 0) > 0 && (
+          <div className="revision-alert-pulse flex flex-col gap-3 rounded-2xl border border-red-500/35 bg-red-500/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex gap-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-300" />
+              <div>
+                <p className="text-sm font-bold text-red-100">
+                  Hay {data?.resumen.requierenAjustesActivos} evaluación(es) que requieren corrección
+                </p>
+                <p className="mt-1 text-xs leading-5 text-red-200/75">
+                  Abre el concepto técnico y registra una nueva evaluación desde el botón Corregir evaluación.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <SummaryCard
+            icon={AlertTriangle}
+            label="Requieren corrección"
+            value={data?.resumen.requierenAjustesActivos ?? 0}
+            tone="danger"
+            active={filtro === "REQUIERE_AJUSTES"}
+            onClick={() => setFiltro("REQUIERE_AJUSTES")}
+          />
           <SummaryCard
             icon={Clock3}
             label="Pendientes"
             value={data?.resumen.pendientes ?? 0}
+            tone="warning"
             active={filtro === "PENDIENTE"}
             onClick={() => setFiltro("PENDIENTE")}
           />
           <SummaryCard
-            icon={CheckCircle2}
-            label="Aprobadas"
-            value={data?.resumen.aprobadas ?? 0}
-            active={filtro === "APROBADA"}
-            onClick={() => setFiltro("APROBADA")}
+            icon={Wrench}
+            label="En corrección"
+            value={data?.resumen.enCorreccion ?? 0}
+            tone="info"
+            active={filtro === "EN_CORRECCION"}
+            onClick={() => setFiltro("EN_CORRECCION")}
           />
           <SummaryCard
-            icon={Wrench}
-            label="Requieren ajustes"
-            value={data?.resumen.requierenAjustes ?? 0}
-            active={filtro === "REQUIERE_AJUSTES"}
-            onClick={() => setFiltro("REQUIERE_AJUSTES")}
+            icon={CheckCircle2}
+            label="Subsanadas"
+            value={data?.resumen.subsanadas ?? 0}
+            tone="success"
+            active={filtro === "SUBSANADA"}
+            onClick={() => setFiltro("SUBSANADA")}
           />
           <SummaryCard
             icon={ShieldCheck}
             label="Todas"
             value={data?.resumen.total ?? 0}
+            tone="neutral"
             active={filtro === "TODAS"}
             onClick={() => setFiltro("TODAS")}
           />
@@ -118,7 +146,7 @@ export default function RevisionesTecnicasPeriodo({
               {revisiones.length} revisión(es) en esta vista
             </p>
             <p className="mt-1 text-xs leading-5 text-neutral-500">
-              Una revisión pendiente no bloquea la vigencia. Cuando requiere ajustes, la corrección se registra mediante una nueva gestión.
+              La evaluación original no se modifica. La corrección se registra en una nueva gestión y deja de ser alerta activa cuando existe una evaluación posterior finalizada y válida.
             </p>
           </div>
           <button
@@ -154,6 +182,7 @@ export default function RevisionesTecnicasPeriodo({
                 key={revision.id}
                 revision={revision}
                 onResolver={setSeleccionada}
+                onCorregir={onCorregir}
               />
             ))}
           </div>
@@ -164,7 +193,7 @@ export default function RevisionesTecnicasPeriodo({
               No hay revisiones en este estado
             </p>
             <p className="mx-auto mt-2 max-w-xl text-xs leading-5 text-neutral-600">
-              Las solicitudes se crean al finalizar una gestión que tenga evaluaciones marcadas para revisión técnica.
+              Las revisiones subsanadas permanecen en la trazabilidad, pero ya no aparecen como acciones pendientes.
             </p>
           </div>
         )}
@@ -198,29 +227,39 @@ function SummaryCard({
   label,
   value,
   active,
+  tone,
   onClick,
 }: {
   icon: typeof Clock3;
   label: string;
   value: number;
   active: boolean;
+  tone: "danger" | "warning" | "info" | "success" | "neutral";
   onClick: () => void;
 }) {
+  const toneClass = {
+    danger: "border-red-500/35 bg-red-500/10 text-red-300",
+    warning: "border-amber-500/30 bg-amber-500/10 text-amber-300",
+    info: "border-cyan-500/30 bg-cyan-500/10 text-cyan-300",
+    success: "border-teal-500/30 bg-teal-500/10 text-teal-300",
+    neutral: "border-neutral-700 bg-neutral-800/50 text-neutral-300",
+  }[tone];
+
   return (
     <button
       type="button"
       onClick={onClick}
       className={`rounded-2xl border p-4 text-left transition ${
         active
-          ? "border-cyan-500/35 bg-cyan-500/10"
-          : "border-neutral-800 bg-[#090a0b] hover:border-neutral-700"
+          ? toneClass
+          : "border-neutral-800 bg-[#090a0b] text-neutral-500 hover:border-neutral-700"
       }`}
     >
       <div className="flex items-center justify-between gap-3">
-        <Icon className="h-5 w-5 text-cyan-400" />
+        <Icon className="h-5 w-5 text-current" />
         <span className="text-2xl font-bold text-white">{value}</span>
       </div>
-      <p className="mt-3 text-xs font-medium text-neutral-400">{label}</p>
+      <p className="mt-3 text-xs font-medium">{label}</p>
     </button>
   );
 }
