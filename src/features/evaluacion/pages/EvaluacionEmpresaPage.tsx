@@ -13,6 +13,7 @@ import ResumenEvaluacion from "../components/ResumenEvaluacion";
 import DetalleAspectoDrawer from "../components/detalle/DetalleAspectoDrawer";
 import AppAlert from "../components/feedback/AppAlert";
 import AppSpinner from "../components/feedback/AppSpinner";
+import HistorialGestionesEmpresa from "../components/gestiones/HistorialGestionesEmpresa";
 import EvaluacionPageSkeleton from "../components/feedback/EvaluacionPageSkeleton";
 import { useEvaluacionEmpresa } from "../hooks/useEvaluacionEmpresa";
 
@@ -34,6 +35,7 @@ export default function EvaluacionEmpresaPage() {
     cargando,
     procesando,
     error,
+    recargar,
     abrirPeriodo,
     crearGestion,
     guardar,
@@ -230,6 +232,11 @@ export default function EvaluacionEmpresaPage() {
             onAbrirDetalle={(fila) =>
               setTareaDetalleId(fila.tareaId)
             }
+          />
+
+          <HistorialGestionesEmpresa
+            periodoId={contexto.periodo.id}
+            onGestionInvalidada={recargar}
           />
         </>
       )}

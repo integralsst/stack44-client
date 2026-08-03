@@ -1,4 +1,5 @@
 import {
+  Ban,
   CalendarDays,
   FileCheck2,
   UserRound,
@@ -30,8 +31,16 @@ export default function HistorialEvaluacionCard({
 }: {
   item: HistorialAspectoItem;
 }) {
+  const invalidada = item.gestion.estado === "INVALIDADA";
+
   return (
-    <article className="rounded-2xl border border-neutral-800 bg-[#101112] p-4 sm:p-5">
+    <article
+      className={`rounded-2xl border p-4 sm:p-5 ${
+        invalidada
+          ? "border-red-500/20 bg-red-500/[0.035]"
+          : "border-neutral-800 bg-[#101112]"
+      }`}
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -39,7 +48,7 @@ export default function HistorialEvaluacionCard({
               className={`rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider ${
                 stateClass[item.estadoCumplimiento] ??
                 "border-neutral-700 bg-neutral-800 text-neutral-300"
-              }`}
+              } ${invalidada ? "opacity-60" : ""}`}
             >
               {stateLabel[item.estadoCumplimiento] ??
                 item.estadoCumplimiento}
@@ -50,6 +59,13 @@ export default function HistorialEvaluacionCard({
             <span className="text-[10px] text-neutral-600">
               Periodo {item.anio}
             </span>
+
+            {invalidada && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-red-400/20 bg-red-400/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-red-200">
+                <Ban size={11} />
+                Gestión invalidada
+              </span>
+            )}
           </div>
 
           <h4 className="mt-3 text-sm font-semibold text-white">
@@ -70,6 +86,29 @@ export default function HistorialEvaluacionCard({
           </p>
         </div>
       </div>
+
+      {invalidada && (
+        <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/5 p-3">
+          <p className="text-[9px] font-bold uppercase tracking-wider text-red-300/80">
+            No participa en el estado vigente ni en los cálculos
+          </p>
+          <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-red-100">
+            {item.gestion.motivoInvalidacion ??
+              "No se registró un motivo de invalidación."}
+          </p>
+          <p className="mt-2 text-[10px] leading-5 text-neutral-500">
+            {item.gestion.invalidadaPor
+              ? `Invalidada por ${item.gestion.invalidadaPor.nombre} el ${formatDate(
+                  item.gestion.invalidadaEn,
+                  true
+                )}.`
+              : `Invalidada el ${formatDate(
+                  item.gestion.invalidadaEn,
+                  true
+                )}.`}
+          </p>
+        </div>
+      )}
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-xl border border-neutral-800 bg-[#090a0b] p-3">

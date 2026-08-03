@@ -26,6 +26,14 @@ export interface EvaluacionDetalleAspecto {
     categoriaGestion: string | null;
     profesional: string;
     estado: EstadoGestionSgsst;
+    valida: boolean;
+    finalizadaEn: string | null;
+    invalidadaEn: string | null;
+    motivoInvalidacion: string | null;
+    invalidadaPor: {
+      id: string;
+      nombre: string;
+    } | null;
   };
   usuarioRegistrador: string;
 }
