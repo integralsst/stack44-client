@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ClipboardCheck,
+  History,
   Plus,
 } from "lucide-react";
 
 import { useAuth } from "../../auth/context/AuthContext";
+import AppModal from "../../../components/ui/AppModal";
 import EvaluacionEmpresaHeader from "../components/EvaluacionEmpresaHeader";
 import MatrizEvaluacion from "../components/MatrizEvaluacion";
 import NuevaGestionModal from "../components/NuevaGestionModal";
@@ -27,6 +29,8 @@ export default function EvaluacionEmpresaPage() {
   );
   const [gestionModalOpen, setGestionModalOpen] =
     useState(false);
+    const [historialModalOpen, setHistorialModalOpen] =
+  useState(false);
   const [tareaDetalleId, setTareaDetalleId] =
     useState<number | null>(null);
 
@@ -209,16 +213,27 @@ export default function EvaluacionEmpresaPage() {
               </div>
             )}
 
-            {!contexto.gestionActiva && puedeEvaluar && (
-              <button
-                type="button"
-                onClick={() => setGestionModalOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black transition hover:bg-neutral-200 sm:w-auto"
-              >
-                <Plus size={17} />
-                Nueva gestión
-              </button>
-            )}
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+  <button
+    type="button"
+    onClick={() => setHistorialModalOpen(true)}
+    className="flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-700 bg-[#08090a] px-4 py-2.5 text-sm font-semibold text-neutral-200 transition hover:border-cyan-500/40 hover:bg-cyan-500/5 hover:text-cyan-200 sm:w-auto"
+  >
+    <History size={17} />
+    Historial de gestiones
+  </button>
+
+  {!contexto.gestionActiva && puedeEvaluar && (
+    <button
+      type="button"
+      onClick={() => setGestionModalOpen(true)}
+      className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black transition hover:bg-neutral-200 sm:w-auto"
+    >
+      <Plus size={17} />
+      Nueva gestión
+    </button>
+  )}
+</div>
           </section>
 
           <MatrizEvaluacion
@@ -234,10 +249,6 @@ export default function EvaluacionEmpresaPage() {
             }
           />
 
-          <HistorialGestionesEmpresa
-            periodoId={contexto.periodo.id}
-            onGestionInvalidada={recargar}
-          />
         </>
       )}
 
@@ -248,6 +259,21 @@ export default function EvaluacionEmpresaPage() {
         onClose={() => setGestionModalOpen(false)}
         onSubmit={crearGestion}
       />
+
+      {contexto.periodo && (
+  <AppModal
+    open={historialModalOpen}
+    title={`Historial de gestiones · ${anio}`}
+    description={`Consulta las visitas, asesorías y jornadas realizadas para ${contexto.empresa.nombre}. Desde aquí también puedes invalidar una gestión completamente equivocada.`}
+    onClose={() => setHistorialModalOpen(false)}
+    size="2xl"
+  >
+    <HistorialGestionesEmpresa
+      periodoId={contexto.periodo.id}
+      onGestionInvalidada={recargar}
+    />
+  </AppModal>
+)}
 
       <DetalleAspectoDrawer
         open={tareaDetalleId !== null}
