@@ -2,7 +2,10 @@ import {
   FilePlus2,
   Layers3,
 } from "lucide-react";
-import { useState } from "react";
+import {
+  useState,
+  type ReactNode,
+} from "react";
 
 import AppButton from "../../../../components/ui/AppButton";
 import type {
@@ -189,7 +192,7 @@ function Field({
   children,
 }: {
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <div>
