@@ -81,6 +81,13 @@ const EvaluacionEmpresaPage = lazy(
     )
 );
 
+const InformesGlobalesPage = lazy(
+  () =>
+    import(
+      "../features/evaluacion/pages/InformesGlobalesPage"
+    )
+);
+
 /* ======================================================
    PERMISOS
 ====================================================== */
@@ -106,6 +113,15 @@ const SUPERMATRIZ_ROLES: UserRole[] = [
 ];
 
 const EVALUACION_ROLES: UserRole[] = [
+  "PROFESSIONAL",
+  "ADMIN",
+  "OWNER",
+  "SUPERADMIN",
+];
+
+const INFORMES_ROLES: UserRole[] = [
+  "CLIENT_USER",
+  "CLIENT_ADMIN",
   "PROFESSIONAL",
   "ADMIN",
   "OWNER",
@@ -226,6 +242,15 @@ function AppRoutes() {
                   allowedRoles={EVALUACION_ROLES}
                 >
                   <EvaluacionEmpresaPage />
+                </RoleGuard>
+              }
+            />
+
+            <Route
+              path="informes"
+              element={
+                <RoleGuard allowedRoles={INFORMES_ROLES}>
+                  <InformesGlobalesPage />
                 </RoleGuard>
               }
             />
