@@ -4,7 +4,10 @@ import {
   Layers3,
   RefreshCw,
 } from "lucide-react";
-import { useState } from "react";
+import {
+  useState,
+  type ReactNode,
+} from "react";
 
 import AppButton from "../../../../components/ui/AppButton";
 import AppAlert from "../feedback/AppAlert";
@@ -156,7 +159,7 @@ function TabButton({
   onClick,
 }: {
   active: boolean;
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   onClick: () => void;
 }) {
