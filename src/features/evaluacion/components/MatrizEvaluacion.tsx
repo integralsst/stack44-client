@@ -7,16 +7,8 @@ import {
 } from "react";
 import {
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
   Eye,
-  Filter,
   LockKeyhole,
-  RotateCcw,
-  Save,
-  Search,
-  Send,
-  SlidersHorizontal,
 } from "lucide-react";
 
 import type {
@@ -30,8 +22,8 @@ import {
   existeCambioFechaDocumento,
   normalizarFechaInput,
 } from "../utils/fecha-documento.utils";
+import MatrizEvaluacionToolbar from "./MatrizEvaluacionToolbar";
 import AppConfirmDialog from "./feedback/AppConfirmDialog";
-import AppSpinner from "./feedback/AppSpinner";
 import AppToast, {
   type ToastTone,
 } from "./feedback/AppToast";
@@ -481,222 +473,33 @@ export default function MatrizEvaluacion({
 
   return (
     <section className="min-w-0 overflow-hidden rounded-2xl border border-neutral-800 bg-[#101112] shadow-2xl">
-      <div className="border-b border-neutral-800 bg-[#0b0c0d] p-3 sm:p-4">
-        <div className="flex flex-col gap-3 2xl:flex-row 2xl:items-start 2xl:justify-between">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <h2 className="text-sm font-semibold text-white sm:text-base">
-                  Matriz de evaluación
-                </h2>
-                <p className="mt-0.5 text-[11px] text-neutral-500">
-                  La periodicidad se define en la Supermatriz. Aquí solo se registra la fecha real del documento y el sistema calcula su vencimiento.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setMostrarFiltros((current) => !current)
-                }
-                className="flex shrink-0 items-center gap-2 rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2 text-xs font-semibold text-neutral-300 md:hidden"
-              >
-                <SlidersHorizontal size={14} />
-                Filtros
-                {filtrosActivos > 0 && (
-                  <span className="rounded-full bg-cyan-500/15 px-1.5 py-0.5 text-[9px] text-cyan-300">
-                    {filtrosActivos}
-                  </span>
-                )}
-                {mostrarFiltros ? (
-                  <ChevronUp size={14} />
-                ) : (
-                  <ChevronDown size={14} />
-                )}
-              </button>
-            </div>
-
-            <div
-              className={`mt-3 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 ${
-                mostrarFiltros
-                  ? "grid"
-                  : "hidden md:grid"
-              }`}
-            >
-              <div className="relative sm:col-span-2 xl:col-span-2">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
-                <input
-                  type="search"
-                  value={busqueda}
-                  onChange={(event) =>
-                    setBusqueda(event.target.value)
-                  }
-                  placeholder="Buscar aspecto, estándar o proceso..."
-                  className={`${inputClass} pl-9`}
-                />
-              </div>
-
-              <FilterSelect
-                value={procesoId}
-                onChange={setProcesoId}
-                ariaLabel="Filtrar por proceso"
-              >
-                <option value="">Todos los procesos</option>
-                {procesos.map(([id, nombre]) => (
-                  <option key={id} value={id}>
-                    {nombre}
-                  </option>
-                ))}
-              </FilterSelect>
-
-              <FilterSelect
-                value={estandarId}
-                onChange={setEstandarId}
-                ariaLabel="Filtrar por estándar"
-              >
-                <option value="">Todos los estándares</option>
-                {estandares.map(([id, nombre]) => (
-                  <option key={id} value={id}>
-                    {nombre}
-                  </option>
-                ))}
-              </FilterSelect>
-
-              <FilterSelect
-                value={categoriaGestion}
-                onChange={setCategoriaGestion}
-                ariaLabel="Filtrar por categoría de gestión"
-              >
-                <option value="">Toda la gestión</option>
-                <option value="DOCUMENTAL">Documental</option>
-                <option value="INTERVENCION">
-                  Intervención
-                </option>
-                <option value="EMERGENCIAS">
-                  Emergencias
-                </option>
-              </FilterSelect>
-
-              <FilterSelect
-                value={grupoMinisterial}
-                onChange={setGrupoMinisterial}
-                ariaLabel="Filtrar por grupo ministerial"
-              >
-                <option value="">Grupos 7 / 21 / 60</option>
-                <option value="ESTANDARES_7">
-                  7 estándares
-                </option>
-                <option value="ESTANDARES_21">
-                  21 estándares
-                </option>
-                <option value="ESTANDARES_60">
-                  60 estándares
-                </option>
-              </FilterSelect>
-
-              <div className="relative">
-                <Filter
-                  size={14}
-                  className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-neutral-500"
-                />
-                <select
-                  value={vigencia}
-                  onChange={(event) =>
-                    setVigencia(event.target.value)
-                  }
-                  className={`${selectClass} pl-8`}
-                  aria-label="Filtrar por vigencia"
-                >
-                  <option value="">Toda vigencia</option>
-                  <option value="SIN_REVISION">
-                    Sin revisión
-                  </option>
-                  <option value="VIGENTE">Vigente</option>
-                  <option value="POR_VENCER">
-                    Por vencer
-                  </option>
-                  <option value="VENCIDO">Vencido</option>
-                  <option value="VIGENTE_PERMANENTE">
-                    Vigente permanente
-                  </option>
-                  <option value="FALTA_FECHA_DOCUMENTO">
-                    Falta fecha
-                  </option>
-                  <option value="PERIODICIDAD_NO_CONFIGURADA">
-                    Periodicidad pendiente
-                  </option>
-                  <option value="NO_APLICA">No aplica</option>
-                </select>
-              </div>
-
-              {(filtrosActivos > 0 || busqueda) && (
-                <button
-                  type="button"
-                  onClick={limpiarFiltros}
-                  className="flex min-h-9 items-center justify-center gap-2 rounded-lg border border-neutral-700 bg-neutral-900 px-3 text-xs font-semibold text-neutral-300 transition hover:border-neutral-600 hover:text-white xl:col-start-6"
-                >
-                  <RotateCcw size={14} />
-                  Limpiar
-                </button>
-              )}
-            </div>
-          </div>
-
-          {gestionActiva && (
-            <div className="grid w-full shrink-0 grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
-              <button
-                type="button"
-                onClick={() => void guardarCambios()}
-                disabled={
-                  procesando || modificados.size === 0
-                }
-                className="flex min-h-10 items-center justify-center gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 text-xs font-bold text-cyan-300 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                {procesando ? (
-                  <AppSpinner
-                    size="sm"
-                    className="text-current"
-                  />
-                ) : (
-                  <Save size={15} />
-                )}
-                Guardar ({modificados.size})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setConfirmFinalizarOpen(true)}
-                disabled={procesando}
-                className="flex min-h-10 items-center justify-center gap-2 rounded-xl bg-white px-3 text-xs font-bold text-black transition hover:bg-neutral-200 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {procesando ? (
-                  <AppSpinner
-                    size="sm"
-                    className="text-current"
-                  />
-                ) : (
-                  <Send size={15} />
-                )}
-                Finalizar
-              </button>
-            </div>
-          )}
-        </div>
-
-        <div className="mt-3 flex flex-col gap-2 border-t border-neutral-800/80 pt-3 text-[11px] text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
-          <span>
-            Mostrando{" "}
-            {Math.min(visibles, filasFiltradas.length)} de{" "}
-            {filasFiltradas.length} filas filtradas
-          </span>
-
-          <span>
-            {modificados.size > 0
-              ? `${modificados.size} cambio(s) pendiente(s)`
-              : "Todo guardado"}
-          </span>
-        </div>
-      </div>
+      <MatrizEvaluacionToolbar
+        busqueda={busqueda}
+        setBusqueda={setBusqueda}
+        procesos={procesos}
+        procesoId={procesoId}
+        setProcesoId={setProcesoId}
+        estandares={estandares}
+        estandarId={estandarId}
+        setEstandarId={setEstandarId}
+        categoriaGestion={categoriaGestion}
+        setCategoriaGestion={setCategoriaGestion}
+        grupoMinisterial={grupoMinisterial}
+        setGrupoMinisterial={setGrupoMinisterial}
+        vigencia={vigencia}
+        setVigencia={setVigencia}
+        mostrarFiltros={mostrarFiltros}
+        setMostrarFiltros={setMostrarFiltros}
+        filtrosActivos={filtrosActivos}
+        gestionActiva={gestionActiva}
+        procesando={procesando}
+        cambiosPendientes={modificados.size}
+        visibles={visibles}
+        totalFiltradas={filasFiltradas.length}
+        onLimpiar={limpiarFiltros}
+        onGuardar={() => void guardarCambios()}
+        onFinalizar={() => setConfirmFinalizarOpen(true)}
+      />
 
       <VigenciaResumenAlertas filas={filasFiltradas} />
 
@@ -826,7 +629,7 @@ export default function MatrizEvaluacion({
                         </span>
                         <span className="mt-1 inline-flex items-center gap-1 text-[8px] font-semibold uppercase tracking-wider text-neutral-600 transition group-hover/detail:text-cyan-400">
                           <Eye size={10} />
-                          Ver detalle, historial, evidencias y revisión
+                          Ver detalle
                         </span>
                       </button>
 
@@ -1141,13 +944,8 @@ export default function MatrizEvaluacion({
         <div ref={sentinelRef} className="h-1" />
       </div>
 
-      <div className="flex flex-col gap-1 border-t border-neutral-800 bg-[#0b0c0d] px-3 py-2 text-[10px] text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
-        <span>
-          Desliza horizontalmente para ver todas las columnas.
-        </span>
-        <span>
-          Las filas se cargan progresivamente en bloques de 100.
-        </span>
+      <div className="border-t border-neutral-800 bg-[#0b0c0d] px-3 py-2 text-[10px] text-neutral-500">
+        Desliza horizontalmente para ver más columnas.
       </div>
 
       <SolicitarRevisionTecnicaModal
@@ -1209,29 +1007,6 @@ export default function MatrizEvaluacion({
         onConfirm={() => void confirmarFinalizacion()}
       />
     </section>
-  );
-}
-
-function FilterSelect({
-  value,
-  onChange,
-  ariaLabel,
-  children,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  ariaLabel: string;
-  children: ReactNode;
-}) {
-  return (
-    <select
-      value={value}
-      aria-label={ariaLabel}
-      onChange={(event) => onChange(event.target.value)}
-      className={selectClass}
-    >
-      {children}
-    </select>
   );
 }
 
