@@ -1,5 +1,7 @@
 import {
+  AlertTriangle,
   Building2,
+  CheckCircle2,
   ClipboardCheck,
   Layers3,
   RefreshCw,
@@ -131,6 +133,34 @@ export default function ResultadosEvaluacionPanel({
         </div>
       ) : (
         <>
+          {data.validacionGrupo && (
+            <div
+              className={`flex flex-col gap-2 rounded-xl border px-3 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between ${
+                data.validacionGrupo.coincide
+                  ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-200"
+                  : "border-amber-500/30 bg-amber-500/10 text-amber-200"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {data.validacionGrupo.coincide ? (
+                  <CheckCircle2 size={15} className="shrink-0" />
+                ) : (
+                  <AlertTriangle size={15} className="shrink-0" />
+                )}
+                <span className="font-semibold">
+                  Máximo ministerial del grupo
+                </span>
+              </div>
+              <span>
+                {data.validacionGrupo.maximoCalculado.toFixed(2)} calculado ·{" "}
+                {data.validacionGrupo.maximoConfigurado.toFixed(2)} configurado
+                {data.validacionGrupo.coincide
+                  ? " · Validado"
+                  : " · Revisar Supermatriz"}
+              </span>
+            </div>
+          )}
+
           {vista === "EMPRESA" && (
             <ResumenResultadosEmpresa
               resumen={data.resumenEmpresa}
@@ -144,7 +174,7 @@ export default function ResultadosEvaluacionPanel({
           )}
 
           <p className="text-center text-[10px] leading-4 text-neutral-600">
-            Administrativo: promedio de aspectos evaluados. Ministerial: el estándar obtiene su puntaje únicamente cuando todos sus aspectos cumplen o no aplican.
+            Administrativo: promedio de aspectos evaluados. Los procesos no reciben calificación ministerial. El puntaje ministerial se calcula por estándar y se consolida para la empresa.
           </p>
         </>
       )}
