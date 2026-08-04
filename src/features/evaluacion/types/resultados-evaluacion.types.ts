@@ -21,7 +21,7 @@ export interface GrupoMinisterialResultado {
   id: number;
   codigo: Exclude<GrupoResultadosEvaluacion, "TODOS">;
   nombre: string;
-  porcentajeEvaluable: number;
+  porcentajeEvaluable?: number;
 }
 
 export interface ValidacionGrupoResultado {
