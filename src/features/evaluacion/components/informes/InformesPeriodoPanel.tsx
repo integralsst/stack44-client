@@ -62,6 +62,16 @@ export default function InformesPeriodoPanel({
     setOpeningId(null);
   };
 
+  const generar = async (input: GenerarInformePeriodoInput) => {
+    const generado = await onGenerate(input);
+
+    if (generado) {
+      setVista("VERSIONES");
+    }
+
+    return generado;
+  };
+
   if (detalle) {
     return (
       <DetalleInformeVersion
@@ -133,7 +143,7 @@ export default function InformesPeriodoPanel({
           anio={anio}
           categorias={data.categorias}
           procesando={procesando}
-          onSubmit={onGenerate}
+          onSubmit={generar}
         />
       ) : (
         <VersionesInformePeriodo
