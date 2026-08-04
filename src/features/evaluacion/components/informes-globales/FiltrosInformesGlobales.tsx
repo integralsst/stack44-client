@@ -4,6 +4,7 @@ import {
   FilePlus2,
   Search,
 } from "lucide-react";
+import type { ReactNode } from "react";
 
 import AppButton from "../../../../components/ui/AppButton";
 import AppSelect from "../../../../components/ui/AppSelect";
@@ -213,7 +214,7 @@ function FilterField({
   children,
 }: {
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <label>
