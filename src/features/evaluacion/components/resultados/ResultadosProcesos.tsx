@@ -32,18 +32,13 @@ export default function ResultadosProcesos({ procesos }: Props) {
             </span>
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="mt-4">
             <ScoreBlock
-              label="Administrativo"
+              label="Resultado administrativo"
               value={`${proceso.cumplimientoAdministrativo.toFixed(2)} / 5`}
               percentage={
                 (proceso.cumplimientoAdministrativo / 5) * 100
               }
-            />
-            <ScoreBlock
-              label="Ministerial"
-              value={`${proceso.calificacionMinisterial.toFixed(2)} / ${proceso.calificacionMinisterialMaxima.toFixed(2)}`}
-              percentage={proceso.porcentajeMinisterial}
             />
           </div>
 
@@ -51,14 +46,20 @@ export default function ResultadosProcesos({ procesos }: Props) {
             <span className="rounded-lg border border-neutral-800 bg-neutral-900 px-2.5 py-1.5 text-neutral-400">
               Cobertura {proceso.coberturaPorcentaje.toFixed(1)}%
             </span>
+            <span className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1.5 text-cyan-300">
+              {proceso.estandaresRelacionados} estándares relacionados
+            </span>
             <span className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1.5 text-emerald-300">
-              {proceso.estandaresCumplidos}/{proceso.totalEstandares} estándares
+              {proceso.estados.cumplidos} cumplidos
             </span>
             <span className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-2.5 py-1.5 text-amber-300">
               {proceso.estados.parciales} parciales
             </span>
             <span className="rounded-lg border border-red-500/20 bg-red-500/10 px-2.5 py-1.5 text-red-300">
               {proceso.estados.noCumplidos} no cumplen
+            </span>
+            <span className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-2.5 py-1.5 text-blue-300">
+              {proceso.estados.noAplica} no aplica
             </span>
             <span className="rounded-lg border border-neutral-800 bg-neutral-900 px-2.5 py-1.5 text-neutral-500">
               {proceso.estados.sinEvaluar} sin evaluar
