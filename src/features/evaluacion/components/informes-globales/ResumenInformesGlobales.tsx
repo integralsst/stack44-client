@@ -3,6 +3,7 @@ import {
   Clock3,
   Files,
 } from "lucide-react";
+import type { ReactNode } from "react";
 
 import type { InformesGlobalesResponse } from "../../types/informes-globales.types";
 
@@ -41,7 +42,7 @@ function Metric({
   label,
   value,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   value: string;
 }) {
