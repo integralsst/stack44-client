@@ -21,6 +21,15 @@ export interface GrupoMinisterialResultado {
   id: number;
   codigo: Exclude<GrupoResultadosEvaluacion, "TODOS">;
   nombre: string;
+  porcentajeEvaluable: number;
+}
+
+export interface ValidacionGrupoResultado {
+  codigo: Exclude<GrupoResultadosEvaluacion, "TODOS">;
+  nombre: string;
+  maximoConfigurado: number;
+  maximoCalculado: number;
+  coincide: boolean;
 }
 
 export interface ResumenEmpresaResultado {
@@ -47,11 +56,7 @@ export interface ResultadoProceso {
   coberturaPorcentaje: number;
   cumplimientoAdministrativo: number;
   estados: ConteoEstadosResultado;
-  totalEstandares: number;
-  estandaresCumplidos: number;
-  calificacionMinisterial: number;
-  calificacionMinisterialMaxima: number;
-  porcentajeMinisterial: number;
+  estandaresRelacionados: number;
 }
 
 export interface ResultadoEstandar {
@@ -109,6 +114,7 @@ export interface ResultadosEvaluacionResponse {
   } | null;
   grupo: GrupoResultadosEvaluacion;
   gruposDisponibles: GrupoMinisterialResultado[];
+  validacionGrupo: ValidacionGrupoResultado | null;
   resumenEmpresa: ResumenEmpresaResultado | null;
   procesos: ResultadoProceso[];
   estandares: ResultadoEstandar[];
