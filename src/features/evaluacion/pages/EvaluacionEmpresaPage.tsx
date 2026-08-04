@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   BarChart3,
   ClipboardCheck,
+  FileClock,
   History,
   Plus,
   ShieldCheck,
@@ -22,12 +23,14 @@ import AppAlert from "../components/feedback/AppAlert";
 import EvaluacionPageSkeleton from "../components/feedback/EvaluacionPageSkeleton";
 import AppSpinner from "../components/feedback/AppSpinner";
 import HistorialGestionesEmpresa from "../components/gestiones/HistorialGestionesEmpresa";
+import InformesPeriodoPanel from "../components/informes/InformesPeriodoPanel";
 import MatrizEvaluacion from "../components/MatrizEvaluacion";
 import NuevaGestionModal from "../components/NuevaGestionModal";
 import ResumenEvaluacion from "../components/ResumenEvaluacion";
 import ResultadosEvaluacionPanel from "../components/resultados/ResultadosEvaluacionPanel";
 import RevisionesTecnicasPeriodo from "../components/revisiones/RevisionesTecnicasPeriodo";
 import { useEvaluacionEmpresa } from "../hooks/useEvaluacionEmpresa";
+import { useInformesPeriodo } from "../hooks/useInformesPeriodo";
 import { useResultadosEvaluacion } from "../hooks/useResultadosEvaluacion";
 import { useRevisionesTecnicas } from "../hooks/useRevisionesTecnicas";
 import type { RevisionTecnicaEvaluacionItem } from "../types/revision-tecnica.types";
@@ -82,6 +85,8 @@ export default function EvaluacionEmpresaPage() {
     useState(false);
   const [resultadosModalOpen, setResultadosModalOpen] =
     useState(false);
+  const [informesModalOpen, setInformesModalOpen] =
+    useState(false);
   const [tareaDetalleId, setTareaDetalleId] =
     useState<number | null>(null);
   const [revisionCorreccion, setRevisionCorreccion] =
@@ -121,6 +126,12 @@ export default function EvaluacionEmpresaPage() {
     empresaId,
     anio,
     resultadosModalOpen && Boolean(contexto?.periodo)
+  );
+
+  const informes = useInformesPeriodo(
+    empresaId,
+    anio,
+    informesModalOpen && Boolean(contexto?.periodo)
   );
 
   const finalizarConRevisiones = async () => {
@@ -342,6 +353,15 @@ export default function EvaluacionEmpresaPage() {
                 Resultados
               </button>
 
+              <button
+                type="button"
+                onClick={() => setInformesModalOpen(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-700 bg-[#08090a] px-4 py-2.5 text-sm font-semibold text-neutral-200 transition hover:border-cyan-500/40 hover:bg-cyan-500/5 hover:text-cyan-200 sm:w-auto"
+              >
+                <FileClock size={17} />
+                Informes
+              </button>
+
               {puedeVerRevisiones && (
                 <button
                   type="button"
@@ -484,6 +504,39 @@ export default function EvaluacionEmpresaPage() {
             error={resultados.error}
             onGrupoChange={resultados.setGrupo}
             onReload={resultados.recargar}
+          />
+        </AppModal>
+      )}
+
+      {contexto.periodo && (
+        <AppModal
+          open={informesModalOpen}
+          title={`Informes enero a diciembre · ${anio}`}
+          description={`Crea y consulta fotografías históricas de ${contexto.empresa.nombre} sin cerrar ni bloquear el periodo.`}
+          onClose={() => {
+            if (!informes.procesando) {
+              informes.cerrarDetalle();
+              setInformesModalOpen(false);
+            }
+          }}
+          busy={informes.procesando}
+          size="2xl"
+        >
+          <InformesPeriodoPanel
+            anio={anio}
+            data={informes.data}
+            detalle={informes.detalle}
+            cargando={informes.cargando}
+            cargandoDetalle={informes.cargandoDetalle}
+            procesando={informes.procesando}
+            error={informes.error}
+            puedeGenerar={puedeEvaluar}
+            onReload={informes.recargar}
+            onGenerate={async (input) =>
+              Boolean(await informes.generar(input))
+            }
+            onOpen={informes.abrirDetalle}
+            onCloseDetail={informes.cerrarDetalle}
           />
         </AppModal>
       )}
