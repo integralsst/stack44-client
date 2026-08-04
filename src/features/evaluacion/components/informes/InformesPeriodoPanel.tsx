@@ -3,7 +3,10 @@ import {
   History,
   RefreshCw,
 } from "lucide-react";
-import { useState } from "react";
+import {
+  useState,
+  type ReactNode,
+} from "react";
 
 import AppButton from "../../../../components/ui/AppButton";
 import type {
@@ -151,7 +154,7 @@ function TabButton({
   onClick,
 }: {
   active: boolean;
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   onClick: () => void;
 }) {
