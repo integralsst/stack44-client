@@ -6,6 +6,8 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import AppIconButton from "../../../components/ui/AppIconButton";
+import AppSelect from "../../../components/ui/AppSelect";
 import type {
   EmpresaEvaluacion,
   PeriodoEvaluacion,
@@ -38,15 +40,11 @@ export default function EvaluacionEmpresaHeader({
     <header className="rounded-2xl border border-neutral-800 bg-[#101112] p-3 shadow-xl sm:p-4">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex min-w-0 items-start gap-2.5 sm:gap-3">
-          <button
-            type="button"
+          <AppIconButton
+            icon={<ArrowLeft size={17} />}
+            label="Volver a empresas"
             onClick={onVolver}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-neutral-800 bg-[#08090a] text-neutral-400 transition hover:border-neutral-700 hover:bg-neutral-900 hover:text-white sm:h-10 sm:w-10"
-            title="Volver a empresas"
-            aria-label="Volver a empresas"
-          >
-            <ArrowLeft size={17} />
-          </button>
+          />
 
           <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-300 sm:flex">
             <Building2 size={19} />
@@ -87,19 +85,22 @@ export default function EvaluacionEmpresaHeader({
               Periodo
             </span>
 
-            <select
+            <AppSelect
               value={anio}
               onChange={(event) =>
                 onAnioChange(Number(event.target.value))
               }
-              className="mt-1 w-full bg-transparent text-sm font-semibold text-white outline-none [color-scheme:dark]"
+              selectSize="sm"
+              containerClassName="mt-1"
+              className="border-transparent bg-transparent px-0 pr-8 font-semibold hover:border-transparent focus:border-transparent focus:ring-0"
+              aria-label="Seleccionar periodo"
             >
               {years.map((year) => (
                 <option key={year} value={year}>
                   {year}
                 </option>
               ))}
-            </select>
+            </AppSelect>
           </label>
 
           <div className="min-w-0 rounded-xl border border-neutral-800 bg-[#08090a] px-3 py-2.5">
