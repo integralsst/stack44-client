@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  BarChart3,
   ClipboardCheck,
   History,
   Plus,
@@ -24,8 +25,10 @@ import HistorialGestionesEmpresa from "../components/gestiones/HistorialGestione
 import MatrizEvaluacion from "../components/MatrizEvaluacion";
 import NuevaGestionModal from "../components/NuevaGestionModal";
 import ResumenEvaluacion from "../components/ResumenEvaluacion";
+import ResultadosEvaluacionPanel from "../components/resultados/ResultadosEvaluacionPanel";
 import RevisionesTecnicasPeriodo from "../components/revisiones/RevisionesTecnicasPeriodo";
 import { useEvaluacionEmpresa } from "../hooks/useEvaluacionEmpresa";
+import { useResultadosEvaluacion } from "../hooks/useResultadosEvaluacion";
 import { useRevisionesTecnicas } from "../hooks/useRevisionesTecnicas";
 import type { RevisionTecnicaEvaluacionItem } from "../types/revision-tecnica.types";
 
@@ -77,6 +80,8 @@ export default function EvaluacionEmpresaPage() {
     useState(false);
   const [revisionesModalOpen, setRevisionesModalOpen] =
     useState(false);
+  const [resultadosModalOpen, setResultadosModalOpen] =
+    useState(false);
   const [tareaDetalleId, setTareaDetalleId] =
     useState<number | null>(null);
   const [revisionCorreccion, setRevisionCorreccion] =
@@ -112,15 +117,25 @@ export default function EvaluacionEmpresaPage() {
     puedeVerRevisiones ? contexto?.periodo?.id : null
   );
 
+  const resultados = useResultadosEvaluacion(
+    empresaId,
+    anio,
+    resultadosModalOpen && Boolean(contexto?.periodo)
+  );
+
   const finalizarConRevisiones = async () => {
     await finalizar();
-    await revisiones.recargar();
+    await Promise.all([
+      revisiones.recargar(),
+      resultados.recargar(),
+    ]);
   };
 
   const recargarDespuesDeInvalidar = async () => {
     await Promise.all([
       recargar(),
       revisiones.recargar(),
+      resultados.recargar(),
     ]);
   };
 
@@ -318,6 +333,15 @@ export default function EvaluacionEmpresaPage() {
             )}
 
             <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setResultadosModalOpen(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-700 bg-[#08090a] px-4 py-2.5 text-sm font-semibold text-neutral-200 transition hover:border-cyan-500/40 hover:bg-cyan-500/5 hover:text-cyan-200 sm:w-auto"
+              >
+                <BarChart3 size={17} />
+                Resultados
+              </button>
+
               {puedeVerRevisiones && (
                 <button
                   type="button"
@@ -444,6 +468,25 @@ export default function EvaluacionEmpresaPage() {
         onClose={() => setGestionModalOpen(false)}
         onSubmit={crearGestion}
       />
+
+      {contexto.periodo && (
+        <AppModal
+          open={resultadosModalOpen}
+          title={`Resultados de evaluación · ${anio}`}
+          description={`Consolidado oficial de ${contexto.empresa.nombre} por empresa, proceso y estándar.`}
+          onClose={() => setResultadosModalOpen(false)}
+          size="2xl"
+        >
+          <ResultadosEvaluacionPanel
+            data={resultados.data}
+            grupo={resultados.grupo}
+            cargando={resultados.cargando}
+            error={resultados.error}
+            onGrupoChange={resultados.setGrupo}
+            onReload={resultados.recargar}
+          />
+        </AppModal>
+      )}
 
       {contexto.periodo && (
         <AppModal
