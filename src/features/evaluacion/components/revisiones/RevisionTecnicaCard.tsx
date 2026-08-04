@@ -2,13 +2,18 @@ import {
   AlertTriangle,
   ArrowRight,
   CalendarDays,
+  ChevronDown,
+  ChevronUp,
   ExternalLink,
   FileCheck2,
   MessageSquareText,
+  Paperclip,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
+import { useState } from "react";
 
+import AppButton from "../../../../components/ui/AppButton";
 import type { RevisionTecnicaEvaluacionItem } from "../../types/revision-tecnica.types";
 import RevisionTecnicaEstadoBadge from "./RevisionTecnicaEstadoBadge";
 
@@ -23,25 +28,29 @@ export default function RevisionTecnicaCard({
   onResolver,
   onCorregir,
 }: Props) {
+  const [expanded, setExpanded] = useState(false);
   const evaluacion = revision.evaluacion;
   const urgente = revision.estadoFlujo === "REQUIERE_AJUSTES";
+  const enCorreccion = revision.estadoFlujo === "EN_CORRECCION";
+  const puedeCorregir =
+    revision.puedeCorregir && (urgente || enCorreccion);
 
   return (
     <article
-      className={`rounded-2xl border p-4 shadow-lg sm:p-5 ${
+      className={`rounded-2xl border p-4 transition sm:p-5 ${
         urgente
-          ? "revision-alert-pulse border-red-500/35 bg-red-500/[0.045]"
-          : revision.estadoFlujo === "EN_CORRECCION"
+          ? "border-red-500/35 bg-red-500/[0.045] ring-1 ring-red-500/10"
+          : enCorreccion
             ? "border-cyan-500/25 bg-cyan-500/[0.035]"
             : "border-neutral-800 bg-[#0b0c0d]"
       }`}
     >
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <RevisionTecnicaEstadoBadge estado={revision.estadoFlujo} />
             <span className="text-[10px] text-neutral-600">
-              Solicitada {formatDateTime(revision.solicitadaEn)}
+              {formatDateTime(revision.solicitadaEn)}
             </span>
           </div>
 
@@ -54,73 +63,63 @@ export default function RevisionTecnicaCard({
               : ""}
             {evaluacion.aspecto.estandar.nombre}
           </p>
+
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-neutral-400">
+            <Meta icon={UserRound} text={evaluacion.gestion.profesional} />
+            <Meta
+              icon={FileCheck2}
+              text={`${estadoLabel(evaluacion.estadoCumplimiento)} · Nota ${evaluacion.calificacionAdministrativa.toFixed(2)}`}
+            />
+            <Meta
+              icon={Paperclip}
+              text={`${evaluacion.evidencias.length} evidencia${evaluacion.evidencias.length === 1 ? "" : "s"}`}
+            />
+          </div>
         </div>
 
-        <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
-          {revision.puedeCorregir &&
-            (revision.estadoFlujo === "REQUIERE_AJUSTES" ||
-              revision.estadoFlujo === "EN_CORRECCION") && (
-              <button
-                type="button"
-                onClick={() => onCorregir(revision)}
-                className="flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-red-400 lg:w-auto"
-              >
-                <AlertTriangle size={16} />
-                {revision.estadoFlujo === "EN_CORRECCION"
-                  ? "Continuar corrección"
-                  : "Corregir evaluación"}
-                <ArrowRight size={15} />
-              </button>
-            )}
+        <div className="flex w-full flex-wrap gap-2 xl:w-auto xl:justify-end">
+          {puedeCorregir && (
+            <AppButton
+              size="sm"
+              variant="danger"
+              leadingIcon={<AlertTriangle size={15} />}
+              trailingIcon={<ArrowRight size={14} />}
+              onClick={() => onCorregir(revision)}
+              className="flex-1 sm:flex-none"
+            >
+              {enCorreccion ? "Continuar" : "Corregir"}
+            </AppButton>
+          )}
 
           {revision.puedeResolver && (
-            <button
-              type="button"
+            <AppButton
+              size="sm"
+              variant="primary"
+              leadingIcon={<ShieldCheck size={15} />}
               onClick={() => onResolver(revision)}
-              className="flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black transition hover:bg-neutral-200 lg:w-auto"
+              className="flex-1 sm:flex-none"
             >
-              <ShieldCheck size={16} />
               Emitir concepto
-            </button>
+            </AppButton>
           )}
+
+          <AppButton
+            size="sm"
+            variant="ghost"
+            trailingIcon={
+              expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />
+            }
+            onClick={() => setExpanded((current) => !current)}
+            className="flex-1 sm:flex-none"
+          >
+            {expanded ? "Ocultar" : "Ver detalles"}
+          </AppButton>
         </div>
-      </div>
-
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Fact
-          icon={CalendarDays}
-          label="Gestión original"
-          value={`${formatDate(evaluacion.gestion.fechaGestion)} · ${evaluacion.gestion.tipoActividad}`}
-        />
-        <Fact
-          icon={UserRound}
-          label="Profesional"
-          value={evaluacion.gestion.profesional}
-        />
-        <Fact
-          icon={FileCheck2}
-          label="Evaluación"
-          value={`${estadoLabel(evaluacion.estadoCumplimiento)} · Nota ${evaluacion.calificacionAdministrativa.toFixed(2)}`}
-        />
-        <Fact
-          icon={MessageSquareText}
-          label="Solicitó"
-          value={revision.solicitadaPor.nombre}
-        />
-      </div>
-
-      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-        <TextBlock title="Motivo de la solicitud" text={revision.motivoSolicitud} />
-        <TextBlock
-          title="Observación de la evaluación"
-          text={evaluacion.observacion || "La evaluación no tiene observación adicional."}
-          muted={!evaluacion.observacion}
-        />
       </div>
 
       {revision.conceptoTecnico && (
         <div
-          className={`mt-4 rounded-2xl border p-4 ${
+          className={`mt-4 rounded-xl border p-3.5 ${
             urgente
               ? "border-red-500/25 bg-red-500/10"
               : "border-cyan-500/15 bg-cyan-500/5"
@@ -132,83 +131,136 @@ export default function RevisionTecnicaCard({
                 urgente ? "text-red-300" : "text-cyan-400"
               }`}
             >
-              Concepto técnico
+              {urgente ? "Qué debe corregirse" : "Concepto técnico"}
             </p>
             <span className="text-[10px] text-neutral-500">
               {revision.revisadaPor?.nombre ?? "Revisor"}
-              {revision.revisadaEn
-                ? ` · ${formatDateTime(revision.revisadaEn)}`
-                : ""}
             </span>
           </div>
-          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-neutral-200">
+          <p
+            className={`mt-2 whitespace-pre-wrap text-sm leading-6 text-neutral-200 ${
+              expanded ? "" : "line-clamp-3"
+            }`}
+          >
             {revision.conceptoTecnico}
           </p>
         </div>
       )}
 
-      {revision.gestionCorreccion && (
-        <div className="mt-4 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-300">
-            Trazabilidad de la corrección
-          </p>
-          <p className="mt-2 text-sm font-semibold text-white">
-            {revision.gestionCorreccion.tipoActividad}
-          </p>
-          <p className="mt-1 text-xs leading-5 text-neutral-400">
-            {formatDate(revision.gestionCorreccion.fechaGestion)} · {revision.gestionCorreccion.profesional}
-          </p>
-          {revision.evaluacionCorrectiva && (
-            <p className="mt-2 text-xs text-neutral-300">
-              Nueva evaluación: {estadoLabel(revision.evaluacionCorrectiva.estadoCumplimiento)} · Nota {revision.evaluacionCorrectiva.calificacionAdministrativa.toFixed(2)}
-            </p>
-          )}
-        </div>
-      )}
-
-      {revision.motivoAnulacion && (
-        <div className="mt-4 rounded-2xl border border-neutral-700 bg-neutral-900/70 p-4">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-            Motivo de anulación
-          </p>
-          <p className="mt-2 text-sm leading-6 text-neutral-300">
-            {revision.motivoAnulacion}
-          </p>
-        </div>
-      )}
-
-      <div className="mt-4 border-t border-neutral-800 pt-4">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-xs font-semibold text-neutral-300">
-            Evidencias revisables ({evaluacion.evidencias.length})
-          </p>
-          <span className="text-[10px] text-neutral-600">
-            Los enlaces se abren en una pestaña nueva
-          </span>
-        </div>
-
-        {evaluacion.evidencias.length > 0 ? (
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            {evaluacion.evidencias.map((evidencia) => (
-              <a
-                key={evidencia.id}
-                href={evidencia.url}
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-between gap-3 rounded-xl border border-neutral-800 bg-[#090a0b] px-3 py-3 text-sm text-neutral-300 transition hover:border-cyan-500/30 hover:text-cyan-200"
-              >
-                <span className="min-w-0 truncate">{evidencia.nombre}</span>
-                <ExternalLink size={14} className="shrink-0" />
-              </a>
-            ))}
+      {expanded && (
+        <div className="mt-4 space-y-4 border-t border-neutral-800 pt-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Fact
+              icon={CalendarDays}
+              label="Gestión original"
+              value={`${formatDate(evaluacion.gestion.fechaGestion)} · ${evaluacion.gestion.tipoActividad}`}
+            />
+            <Fact
+              icon={UserRound}
+              label="Profesional"
+              value={evaluacion.gestion.profesional}
+            />
+            <Fact
+              icon={MessageSquareText}
+              label="Solicitó"
+              value={revision.solicitadaPor.nombre}
+            />
+            <Fact
+              icon={ShieldCheck}
+              label="Revisó"
+              value={revision.revisadaPor?.nombre ?? "Pendiente"}
+            />
           </div>
-        ) : (
-          <p className="mt-3 text-xs text-neutral-600">
-            Esta evaluación no tiene evidencias activas asociadas.
-          </p>
-        )}
-      </div>
+
+          <div className="grid gap-3 lg:grid-cols-2">
+            <TextBlock
+              title="Motivo de la solicitud"
+              text={revision.motivoSolicitud}
+            />
+            <TextBlock
+              title="Observación de la evaluación"
+              text={
+                evaluacion.observacion ||
+                "La evaluación no tiene observación adicional."
+              }
+              muted={!evaluacion.observacion}
+            />
+          </div>
+
+          {revision.gestionCorreccion && (
+            <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-300">
+                Corrección registrada
+              </p>
+              <p className="mt-2 text-sm font-semibold text-white">
+                {revision.gestionCorreccion.tipoActividad}
+              </p>
+              <p className="mt-1 text-xs leading-5 text-neutral-400">
+                {formatDate(revision.gestionCorreccion.fechaGestion)} · {revision.gestionCorreccion.profesional}
+              </p>
+              {revision.evaluacionCorrectiva && (
+                <p className="mt-2 text-xs text-neutral-300">
+                  {estadoLabel(
+                    revision.evaluacionCorrectiva.estadoCumplimiento
+                  )} · Nota {revision.evaluacionCorrectiva.calificacionAdministrativa.toFixed(2)}
+                </p>
+              )}
+            </div>
+          )}
+
+          {revision.motivoAnulacion && (
+            <TextBlock
+              title="Motivo de anulación"
+              text={revision.motivoAnulacion}
+            />
+          )}
+
+          <div>
+            <p className="text-xs font-semibold text-neutral-300">
+              Evidencias ({evaluacion.evidencias.length})
+            </p>
+
+            {evaluacion.evidencias.length > 0 ? (
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {evaluacion.evidencias.map((evidencia) => (
+                  <a
+                    key={evidencia.id}
+                    href={evidencia.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-neutral-800 bg-[#090a0b] px-3 py-3 text-sm text-neutral-300 transition hover:border-cyan-500/30 hover:text-cyan-200"
+                  >
+                    <span className="min-w-0 truncate">
+                      {evidencia.nombre}
+                    </span>
+                    <ExternalLink size={14} className="shrink-0" />
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <p className="mt-2 text-xs text-neutral-600">
+                Sin evidencias asociadas.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </article>
+  );
+}
+
+function Meta({
+  icon: Icon,
+  text,
+}: {
+  icon: typeof UserRound;
+  text: string;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <Icon size={13} className="text-neutral-600" />
+      {text}
+    </span>
   );
 }
 
