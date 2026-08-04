@@ -3,6 +3,7 @@ import {
   Building2,
   ChevronLeft,
   ChevronRight,
+  FileText,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -78,6 +79,8 @@ export default function DashboardLayout() {
     isInternal ||
     user.role === "PROFESSIONAL";
 
+  const canViewInformes = user.role !== "USER";
+
   const items = [
     {
       to: "/dashboard",
@@ -91,6 +94,13 @@ export default function DashboardLayout() {
       label: "Empresas",
       icon: Building2,
       visible: true,
+      exact: false,
+    },
+    {
+      to: "/dashboard/informes",
+      label: "Informes",
+      icon: FileText,
+      visible: canViewInformes,
       exact: false,
     },
     {

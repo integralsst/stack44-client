@@ -17,6 +17,7 @@ import type { GrupoResultadosEvaluacion } from "../../types/resultados-evaluacio
 
 interface Props {
   anio: number;
+  empresaNombre: string;
   categorias: CategoriaGestionInforme[];
   procesando: boolean;
   onSubmit: (
@@ -36,6 +37,7 @@ const grupos: Array<{
 
 export default function GenerarInformeVersionForm({
   anio,
+  empresaNombre,
   categorias,
   procesando,
   onSubmit,
@@ -46,6 +48,7 @@ export default function GenerarInformeVersionForm({
     useState<CodigoCategoriaGestionInforme[]>([]);
   const [titulo, setTitulo] = useState("");
   const [motivoVersion, setMotivoVersion] = useState("");
+  const tituloSugerido = `Informe SG-SST ${anio} · ${empresaNombre}`;
 
   const toggleCategoria = (
     codigo: CodigoCategoriaGestionInforme
@@ -59,13 +62,14 @@ export default function GenerarInformeVersionForm({
 
   const submit = async () => {
     const generado = await onSubmit({
-      titulo: titulo.trim() || undefined,
+      titulo: titulo.trim() || tituloSugerido,
       grupo,
       categoriasGestion: categoriasSeleccionadas,
       motivoVersion: motivoVersion.trim() || undefined,
     });
 
     if (generado) {
+      setTitulo("");
       setMotivoVersion("");
     }
   };
@@ -77,7 +81,7 @@ export default function GenerarInformeVersionForm({
           <FilePlus2 className="mt-0.5 h-5 w-5 shrink-0 text-cyan-300" />
           <div>
             <h3 className="text-sm font-semibold text-white">
-              Fotografía enero a diciembre de {anio}
+              {empresaNombre} · enero a diciembre de {anio}
             </h3>
             <p className="mt-1 text-xs leading-5 text-neutral-400">
               La versión conserva los resultados disponibles hoy. El periodo seguirá abierto para incorporar información histórica y generar versiones posteriores.
@@ -149,12 +153,12 @@ export default function GenerarInformeVersionForm({
       </Field>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Field label="Título opcional">
+        <Field label="Título">
           <input
             value={titulo}
             onChange={(event) => setTitulo(event.target.value)}
             maxLength={191}
-            placeholder={`Informe SG-SST enero a diciembre ${anio}`}
+            placeholder={tituloSugerido}
             className="h-11 w-full rounded-xl border border-neutral-800 bg-[#090a0b] px-3 text-sm text-white outline-none transition placeholder:text-neutral-600 focus:border-cyan-500/40"
           />
         </Field>
