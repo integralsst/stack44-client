@@ -5,6 +5,8 @@ import {
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
+import AppIconButton from "./AppIconButton";
+
 type ModalSize = "md" | "lg" | "xl" | "2xl";
 
 interface AppModalProps {
@@ -88,21 +90,18 @@ export default function AppModal({
             </h2>
 
             {description && (
-              <p className="mt-1 text-xs leading-5 text-neutral-500 sm:text-sm">
+              <p className="mt-1 max-w-3xl text-xs leading-5 text-neutral-500 sm:text-sm">
                 {description}
               </p>
             )}
           </div>
 
-          <button
-            type="button"
+          <AppIconButton
+            icon={<X size={19} />}
+            label="Cerrar"
             onClick={onClose}
             disabled={busy}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-neutral-800 bg-[#171717] text-neutral-400 transition-colors hover:border-neutral-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label="Cerrar"
-          >
-            <X size={19} />
-          </button>
+          />
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6 sm:py-6">
