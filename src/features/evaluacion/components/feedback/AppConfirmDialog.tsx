@@ -1,6 +1,7 @@
 import { AlertTriangle, X } from "lucide-react";
 
-import AppSpinner from "./AppSpinner";
+import AppButton from "../../../../components/ui/AppButton";
+import AppIconButton from "../../../../components/ui/AppIconButton";
 
 interface Props {
   open: boolean;
@@ -52,41 +53,37 @@ export default function AppConfirmDialog({
             </p>
           </div>
 
-          <button
-            type="button"
+          <AppIconButton
+            icon={<X size={17} />}
+            label="Cerrar"
+            variant="ghost"
+            size="sm"
             onClick={onCancel}
             disabled={busy}
-            className="rounded-xl p-2 text-neutral-500 transition hover:bg-white/5 hover:text-white disabled:opacity-40"
-            aria-label="Cerrar"
-          >
-            <X size={17} />
-          </button>
+          />
         </div>
 
         <div className="grid grid-cols-2 gap-2 p-4">
-          <button
-            type="button"
+          <AppButton
+            variant="secondary"
+            size="lg"
+            fullWidth
             onClick={onCancel}
             disabled={busy}
-            className="min-h-11 rounded-xl border border-neutral-700 bg-neutral-900 px-4 text-sm font-semibold text-neutral-300 transition hover:border-neutral-600 hover:text-white disabled:opacity-40"
           >
             {cancelLabel}
-          </button>
+          </AppButton>
 
-          <button
-            type="button"
+          <AppButton
+            variant="primary"
+            size="lg"
+            fullWidth
             onClick={onConfirm}
-            disabled={busy}
-            className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-black transition hover:bg-neutral-200 disabled:opacity-50"
+            loading={busy}
+            loadingLabel="Procesando"
           >
-            {busy && (
-              <AppSpinner
-                size="sm"
-                className="text-black"
-              />
-            )}
             {confirmLabel}
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
