@@ -32,6 +32,7 @@ export default function DetalleInformeVersion({
   const [vista, setVista] = useState<Vista>("EMPRESA");
   const resultado = detalle.snapshot.resultado;
   const resumen = resultado.resumenEmpresa;
+  const empresa = resultado.empresa;
 
   return (
     <div className="space-y-4">
@@ -48,6 +49,14 @@ export default function DetalleInformeVersion({
           <h3 className="mt-2 text-base font-semibold text-white">
             {detalle.titulo}
           </h3>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-neutral-400">
+            <span className="inline-flex items-center gap-1.5 font-medium text-neutral-200">
+              <Building2 size={14} />
+              {empresa.nombre}
+            </span>
+            <span>NIT {empresa.nit}</span>
+            <span>Periodo {detalle.anio}</span>
+          </div>
           {detalle.motivoVersion && (
             <p className="mt-2 max-w-4xl text-xs leading-5 text-neutral-400">
               {detalle.motivoVersion}
