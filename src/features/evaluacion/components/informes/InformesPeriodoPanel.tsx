@@ -141,6 +141,7 @@ export default function InformesPeriodoPanel({
       ) : puedeGenerar && vista === "GENERAR" ? (
         <GenerarInformeVersionForm
           anio={anio}
+          empresaNombre={data.empresa.nombre}
           categorias={data.categorias}
           procesando={procesando}
           onSubmit={generar}
