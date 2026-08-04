@@ -12,10 +12,7 @@ import {
 import AppButton from "../../../components/ui/AppButton";
 import AppSelect from "../../../components/ui/AppSelect";
 
-interface OptionItem {
-  id: number;
-  nombre: string;
-}
+type OptionItem = [number, string];
 
 interface Props {
   busqueda: string;
@@ -174,9 +171,9 @@ export default function MatrizEvaluacionToolbar({
               aria-label="Filtrar por proceso"
             >
               <option value="">Todos los procesos</option>
-              {procesos.map((proceso) => (
-                <option key={proceso.id} value={proceso.id}>
-                  {proceso.nombre}
+              {procesos.map(([id, nombre]) => (
+                <option key={id} value={id}>
+                  {nombre}
                 </option>
               ))}
             </AppSelect>
@@ -188,9 +185,9 @@ export default function MatrizEvaluacionToolbar({
               aria-label="Filtrar por estándar"
             >
               <option value="">Todos los estándares</option>
-              {estandares.map((estandar) => (
-                <option key={estandar.id} value={estandar.id}>
-                  {estandar.nombre}
+              {estandares.map(([id, nombre]) => (
+                <option key={id} value={id}>
+                  {nombre}
                 </option>
               ))}
             </AppSelect>
