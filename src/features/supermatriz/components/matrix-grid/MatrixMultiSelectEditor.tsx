@@ -9,6 +9,7 @@ import {
 import type {
   ManagementCategory,
 } from "../../types/supermatriz.types";
+import "../../../../styles/dashboard-contrast.css";
 import MatrixCellMenu from "./MatrixCellMenu";
 
 interface Props {
@@ -66,10 +67,9 @@ export default function MatrixMultiSelectEditor({
     }
   }
 
-  const display = categories
-    .filter((item) => selectedIds.includes(item.id))
-    .map((item) => item.nombre)
-    .join(" · ") || "Sin categoría";
+  const selectedCategories = categories.filter((item) =>
+    selectedIds.includes(item.id)
+  );
 
   return (
     <MatrixCellMenu
@@ -77,7 +77,24 @@ export default function MatrixMultiSelectEditor({
       onOpenChange={setOpen}
       disabled={!canEdit}
       title="Categorías de gestión"
-      label={<span className="text-violet-200">{display}</span>}
+      label={
+        selectedCategories.length > 0 ? (
+          <span className="flex flex-wrap gap-1.5">
+            {selectedCategories.map((category) => (
+              <span
+                key={category.id}
+                className="inline-flex rounded-md border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-bold leading-4 text-violet-800"
+              >
+                {category.nombre}
+              </span>
+            ))}
+          </span>
+        ) : (
+          <span className="inline-flex rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+            Sin categoría
+          </span>
+        )
+      }
       minWidth={360}
     >
       <div className="space-y-3">
@@ -89,8 +106,8 @@ export default function MatrixMultiSelectEditor({
                 key={category.id}
                 className={`flex cursor-pointer items-start gap-3 rounded-xl border px-3 py-3 text-sm transition ${
                   checked
-                    ? "border-violet-500/30 bg-violet-500/10 text-violet-100"
-                    : "border-neutral-800 text-neutral-400 hover:border-neutral-700"
+                    ? "border-violet-300 bg-violet-50 text-violet-900"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                 }`}
               >
                 <input
@@ -99,14 +116,14 @@ export default function MatrixMultiSelectEditor({
                   onChange={() => toggle(category.id)}
                   className="mt-0.5"
                 />
-                <span>{category.nombre}</span>
+                <span className="font-medium">{category.nombre}</span>
               </label>
             );
           })}
         </div>
 
         {error && (
-          <p className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-800">
             {error}
           </p>
         )}
@@ -116,7 +133,7 @@ export default function MatrixMultiSelectEditor({
             type="button"
             disabled={saving}
             onClick={() => setOpen(false)}
-            className="rounded-xl border border-neutral-700 px-3 py-2 text-xs text-neutral-300"
+            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
           >
             Cancelar
           </button>
@@ -124,7 +141,7 @@ export default function MatrixMultiSelectEditor({
             type="button"
             disabled={saving}
             onClick={() => void save()}
-            className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-bold text-black disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl bg-cyan-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-cyan-700 disabled:opacity-60"
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
             Guardar

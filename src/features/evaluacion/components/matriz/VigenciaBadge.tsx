@@ -14,6 +14,7 @@ import type {
   DetalleVigenciaEvaluacion,
   EstadoVigenciaEvaluacion,
 } from "../../../../types/evaluacion.types";
+import "../../../../styles/dashboard-contrast.css";
 
 interface Props {
   detalle: DetalleVigenciaEvaluacion;
@@ -32,42 +33,42 @@ const config: Record<
   SIN_REVISION: {
     icon: Clock3,
     className:
-      "border-neutral-700 bg-neutral-800/70 text-neutral-300",
+      "border-slate-300 bg-slate-100 text-slate-700",
   },
   NO_APLICA: {
     icon: Ban,
     className:
-      "border-sky-400/20 bg-sky-400/10 text-sky-200",
+      "border-sky-200 bg-sky-50 text-sky-800",
   },
   VIGENTE_PERMANENTE: {
     icon: InfinityIcon,
     className:
-      "border-emerald-400/20 bg-emerald-400/10 text-emerald-200",
+      "border-emerald-200 bg-emerald-50 text-emerald-800",
   },
   FALTA_FECHA_DOCUMENTO: {
     icon: CalendarX2,
     className:
-      "border-amber-400/20 bg-amber-400/10 text-amber-200",
+      "border-amber-200 bg-amber-50 text-amber-800",
   },
   PERIODICIDAD_NO_CONFIGURADA: {
     icon: Settings2,
     className:
-      "border-violet-400/20 bg-violet-400/10 text-violet-200",
+      "border-violet-200 bg-violet-50 text-violet-800",
   },
   VIGENTE: {
     icon: CheckCircle2,
     className:
-      "border-emerald-400/20 bg-emerald-400/10 text-emerald-200",
+      "border-emerald-200 bg-emerald-50 text-emerald-800",
   },
   POR_VENCER: {
     icon: CalendarClock,
     className:
-      "border-amber-400/20 bg-amber-400/10 text-amber-200",
+      "border-amber-200 bg-amber-50 text-amber-800",
   },
   VENCIDO: {
     icon: AlertTriangle,
     className:
-      "border-red-400/20 bg-red-400/10 text-red-200",
+      "border-red-200 bg-red-50 text-red-800",
   },
 };
 
@@ -99,7 +100,7 @@ export default function VigenciaBadge({
             : "Se quitó la fecha del documento. El cambio todavía no se ha guardado."
         }
       >
-        <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-1 text-[9px] font-bold text-cyan-200">
+        <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-2 py-1 text-[9px] font-bold text-cyan-800">
           <CalendarCheck2
             size={11}
             className="shrink-0"
@@ -112,7 +113,7 @@ export default function VigenciaBadge({
         </span>
 
         {!compact && (
-          <p className="mt-1.5 text-[8px] font-semibold uppercase tracking-wider text-cyan-400">
+          <p className="mt-1.5 text-[8px] font-semibold uppercase tracking-wider text-cyan-700">
             Vigencia pendiente de recalcular
           </p>
         )}
@@ -143,7 +144,7 @@ export default function VigenciaBadge({
       {!compact && (
         <div className="mt-1.5 space-y-0.5">
           {detalle.fechaVencimiento && (
-            <p className="text-[9px] leading-4 text-neutral-500">
+            <p className="text-[9px] leading-4 text-slate-600">
               Vence{" "}
               {formatDate(
                 detalle.fechaVencimiento
@@ -152,7 +153,7 @@ export default function VigenciaBadge({
           )}
 
           {detalle.provisional && (
-            <p className="text-[8px] font-semibold uppercase tracking-wider text-cyan-400">
+            <p className="text-[8px] font-semibold uppercase tracking-wider text-cyan-700">
               Borrador
             </p>
           )}
