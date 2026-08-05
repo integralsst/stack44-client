@@ -25,6 +25,7 @@ import {
 } from "react";
 
 import { useAuth } from "../../features/auth/context/AuthContext";
+import "../../styles/dashboard-light.css";
 
 const internalRoles = new Set([
   "ADMIN",
@@ -63,6 +64,17 @@ export default function DashboardLayout() {
       String(collapsed)
     );
   }, [collapsed]);
+
+  useEffect(() => {
+    const previousColorScheme = document.body.style.colorScheme;
+    document.body.classList.add("stack44-admin-light-body");
+    document.body.style.colorScheme = "light";
+
+    return () => {
+      document.body.classList.remove("stack44-admin-light-body");
+      document.body.style.colorScheme = previousColorScheme;
+    };
+  }, []);
 
   if (!user) {
     return null;
@@ -179,7 +191,7 @@ export default function DashboardLayout() {
   ) => (
     <div className="flex h-full w-full flex-col">
       <div
-        className={`flex h-20 shrink-0 items-center border-b border-neutral-800/60 ${
+        className={`flex h-20 shrink-0 items-center border-b border-slate-200 ${
           compact
             ? "justify-center px-3"
             : "justify-between px-5"
@@ -187,11 +199,11 @@ export default function DashboardLayout() {
       >
         {!compact && (
           <div className="min-w-0">
-            <h2 className="truncate text-lg font-bold tracking-tight text-white">
+            <h2 className="truncate text-lg font-bold tracking-tight text-slate-900">
               Panel de control
             </h2>
 
-            <p className="mt-0.5 text-[11px] text-neutral-500">
+            <p className="mt-0.5 text-[11px] text-slate-500">
               Administración Stack44
             </p>
           </div>
@@ -206,7 +218,7 @@ export default function DashboardLayout() {
                   !current
               )
             }
-            className="hidden h-9 w-9 items-center justify-center rounded-xl border border-neutral-800 bg-[#151515] text-neutral-400 transition-colors hover:border-neutral-700 hover:text-white lg:flex"
+            className="hidden h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 lg:flex"
             title={
               compact
                 ? "Expandir menú"
@@ -236,7 +248,7 @@ export default function DashboardLayout() {
             onClick={() =>
               setMobileOpen(false)
             }
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-neutral-800 bg-[#151515] text-neutral-400 transition-colors hover:text-white"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors hover:text-slate-900"
             aria-label="Cerrar menú"
           >
             <X size={18} />
@@ -277,8 +289,8 @@ export default function DashboardLayout() {
                     : "gap-3 px-4"
                 } ${
                   active
-                    ? "border border-cyan-500/15 bg-cyan-500/10 text-cyan-400"
-                    : "border border-transparent text-neutral-400 hover:bg-neutral-800/50 hover:text-white"
+                    ? "border border-cyan-200 bg-cyan-50 text-cyan-700"
+                    : "border border-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
                 <Icon
@@ -298,29 +310,29 @@ export default function DashboardLayout() {
       </nav>
 
       <div
-        className={`shrink-0 border-t border-neutral-800/60 ${
+        className={`shrink-0 border-t border-slate-200 ${
           compact
             ? "p-2"
             : "p-4"
         }`}
       >
         {!compact ? (
-          <div className="mb-3 rounded-2xl border border-neutral-800 bg-[#141414] px-4 py-3">
-            <p className="truncate text-sm font-medium text-white">
+          <div className="mb-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <p className="truncate text-sm font-medium text-slate-900">
               {user.name}
             </p>
 
-            <p className="mt-0.5 truncate text-xs text-neutral-500">
+            <p className="mt-0.5 truncate text-xs text-slate-500">
               {user.email}
             </p>
 
-            <p className="mt-2 text-[10px] font-bold tracking-wider text-cyan-500">
+            <p className="mt-2 text-[10px] font-bold tracking-wider text-cyan-600">
               {user.role}
             </p>
           </div>
         ) : (
           <div
-            className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-800 bg-[#151515] text-sm font-bold text-cyan-400"
+            className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-200 bg-cyan-50 text-sm font-bold text-cyan-700"
             title={`${user.name} · ${user.role}`}
           >
             {user.name
@@ -337,7 +349,7 @@ export default function DashboardLayout() {
               ? "Cerrar sesión"
               : undefined
           }
-          className={`flex w-full items-center rounded-xl py-3 text-red-400 transition-colors hover:bg-red-400/10 ${
+          className={`flex w-full items-center rounded-xl py-3 text-red-600 transition-colors hover:bg-red-50 ${
             compact
               ? "justify-center px-3"
               : "gap-3 px-4"
@@ -359,9 +371,9 @@ export default function DashboardLayout() {
   );
 
   return (
-    <div className="flex h-[100dvh] min-w-0 overflow-hidden bg-[#090909] text-white">
+    <div className="stack44-admin-light flex h-[100dvh] min-w-0 overflow-hidden bg-[#f4f7fb] text-slate-900">
       <aside
-        className={`relative z-40 hidden shrink-0 border-r border-neutral-800/60 bg-[#0b0b0b] transition-[width] duration-300 lg:flex ${
+        className={`relative z-40 hidden shrink-0 border-r border-slate-200 bg-white shadow-sm transition-[width] duration-300 lg:flex ${
           collapsed
             ? "w-[76px]"
             : "w-64"
@@ -380,10 +392,10 @@ export default function DashboardLayout() {
             onClick={() =>
               setMobileOpen(false)
             }
-            className="fixed inset-0 z-40 bg-black/70 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-40 bg-slate-950/35 backdrop-blur-sm lg:hidden"
           />
 
-          <aside className="fixed inset-y-0 left-0 z-50 w-[min(86vw,18rem)] border-r border-neutral-800 bg-[#0b0b0b] shadow-2xl lg:hidden">
+          <aside className="fixed inset-y-0 left-0 z-50 w-[min(86vw,18rem)] border-r border-slate-200 bg-white shadow-2xl lg:hidden">
             {renderSidebar(
               false,
               true
@@ -393,25 +405,25 @@ export default function DashboardLayout() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-neutral-800/60 bg-[#0b0b0b]/90 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
+        <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white/90 px-4 shadow-sm backdrop-blur-xl sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
               onClick={() =>
                 setMobileOpen(true)
               }
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-neutral-800 bg-[#151515] text-neutral-300 transition-colors hover:text-white lg:hidden"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900 lg:hidden"
               aria-label="Abrir menú"
             >
               <Menu size={20} />
             </button>
 
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-white sm:text-base">
+              <p className="truncate text-sm font-semibold text-slate-900 sm:text-base">
                 {currentPage}
               </p>
 
-              <p className="hidden truncate text-xs text-neutral-500 sm:block">
+              <p className="hidden truncate text-xs text-slate-500 sm:block">
                 {user.company?.name ??
                   (user.professional
                     ? "Panel profesional"
@@ -420,20 +432,19 @@ export default function DashboardLayout() {
             </div>
           </div>
 
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-neutral-800 bg-[#151515] text-xs font-bold text-cyan-400 sm:h-10 sm:w-10">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-200 bg-cyan-50 text-xs font-bold text-cyan-700 sm:h-10 sm:w-10">
             {user.name
               .charAt(0)
               .toUpperCase()}
           </div>
         </header>
 
-        <main className="relative min-h-0 min-w-0 flex-1 overflow-y-auto">
+        <main className="relative min-h-0 min-w-0 flex-1 overflow-y-auto bg-[#f4f7fb]">
           <div
-            className="pointer-events-none absolute inset-0 opacity-[0.025]"
+            className="pointer-events-none absolute inset-0 opacity-[0.035]"
             style={{
               backgroundImage:
-                "linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)",
-
+                "linear-gradient(to right, #0f172a 1px, transparent 1px), linear-gradient(to bottom, #0f172a 1px, transparent 1px)",
               backgroundSize:
                 "40px 40px",
             }}

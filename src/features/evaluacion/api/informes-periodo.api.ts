@@ -1,4 +1,7 @@
-import { apiRequest } from "../../../lib/api";
+import {
+  apiDownloadFile,
+  apiRequest,
+} from "../../../lib/api";
 import type {
   GenerarInformePeriodoInput,
   InformePeriodoDetalle,
@@ -49,6 +52,16 @@ export function obtenerDetalleInformePeriodo(
   return apiRequest<InformePeriodoDetalle>(
     `/api/evaluacion/informes/${informeId}`,
     {},
+    token
+  );
+}
+
+export function descargarPdfInformePeriodo(
+  informeId: string,
+  token: string
+) {
+  return apiDownloadFile(
+    `/api/evaluacion/informes/${informeId}/pdf`,
     token
   );
 }
