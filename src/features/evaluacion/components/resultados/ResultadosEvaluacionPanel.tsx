@@ -55,7 +55,7 @@ export default function ResultadosEvaluacionPanel({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 rounded-2xl border border-neutral-800 bg-[#090a0b] p-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap gap-2">
           {grupos.map((item) => (
             <button
@@ -64,8 +64,8 @@ export default function ResultadosEvaluacionPanel({
               onClick={() => onGrupoChange(item.value)}
               className={`rounded-xl border px-3 py-2 text-xs font-semibold transition ${
                 grupo === item.value
-                  ? "border-cyan-500/35 bg-cyan-500/10 text-cyan-200"
-                  : "border-neutral-800 bg-neutral-900 text-neutral-500 hover:border-neutral-700 hover:text-neutral-300"
+                  ? "border-cyan-300 bg-cyan-50 text-cyan-800 shadow-sm"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
               }`}
             >
               {item.label}
@@ -85,7 +85,7 @@ export default function ResultadosEvaluacionPanel({
         </AppButton>
       </div>
 
-      <div className="flex gap-1 overflow-x-auto border-b border-neutral-800">
+      <div className="flex gap-1 overflow-x-auto border-b border-slate-200">
         <TabButton
           active={vista === "EMPRESA"}
           icon={<Building2 size={15} />}
@@ -115,19 +115,19 @@ export default function ResultadosEvaluacionPanel({
       )}
 
       {cargando && !data ? (
-        <div className="flex min-h-64 items-center justify-center rounded-2xl border border-neutral-800 bg-[#090a0b]">
-          <div className="flex flex-col items-center gap-3 text-neutral-500">
+        <div className="flex min-h-64 items-center justify-center rounded-2xl border border-slate-200 bg-white">
+          <div className="flex flex-col items-center gap-3 text-slate-600">
             <AppSpinner />
             <p className="text-xs">Calculando resultados oficiales...</p>
           </div>
         </div>
       ) : !data?.periodo || !data.resumenEmpresa ? (
-        <div className="rounded-2xl border border-dashed border-neutral-800 bg-[#090a0b] px-5 py-14 text-center">
-          <ClipboardCheck className="mx-auto h-8 w-8 text-neutral-700" />
-          <p className="mt-3 text-sm font-medium text-neutral-300">
+        <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-5 py-14 text-center">
+          <ClipboardCheck className="mx-auto h-8 w-8 text-slate-400" />
+          <p className="mt-3 text-sm font-medium text-slate-800">
             El periodo todavía no tiene resultados
           </p>
-          <p className="mt-1 text-xs text-neutral-600">
+          <p className="mt-1 text-xs text-slate-600">
             Abre el periodo y finaliza evaluaciones para generar el consolidado.
           </p>
         </div>
@@ -137,8 +137,8 @@ export default function ResultadosEvaluacionPanel({
             <div
               className={`flex flex-col gap-2 rounded-xl border px-3 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between ${
                 data.validacionGrupo.coincide
-                  ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-200"
-                  : "border-amber-500/30 bg-amber-500/10 text-amber-200"
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                  : "border-amber-200 bg-amber-50 text-amber-800"
               }`}
             >
               <div className="flex items-center gap-2">
@@ -173,7 +173,7 @@ export default function ResultadosEvaluacionPanel({
             <ResultadosEstandares estandares={data.estandares} />
           )}
 
-          <p className="text-center text-[10px] leading-4 text-neutral-600">
+          <p className="text-center text-[10px] leading-4 text-slate-600">
             Administrativo: promedio de aspectos evaluados. Los procesos no reciben calificación ministerial. El puntaje ministerial se calcula por estándar y se consolida para la empresa.
           </p>
         </>
@@ -199,8 +199,8 @@ function TabButton({
       onClick={onClick}
       className={`inline-flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-xs font-semibold transition ${
         active
-          ? "border-cyan-400 text-cyan-300"
-          : "border-transparent text-neutral-500 hover:text-neutral-300"
+          ? "border-cyan-500 text-cyan-800"
+          : "border-transparent text-slate-500 hover:text-slate-900"
       }`}
     >
       {icon}
