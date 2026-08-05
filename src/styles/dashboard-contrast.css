@@ -1,0 +1,114 @@
+/*
+ * FASE 4D.2
+ * Ajustes de contraste para tags, estados, controles deshabilitados
+ * y columnas pastel dentro del panel administrativo.
+ */
+
+/* Columnas pastel con separación y contraste suficientes */
+body.stack44-admin-light-body [class~="bg-[#2a2110]"] {
+  background-color: #fff4e6 !important;
+}
+
+body.stack44-admin-light-body [class~="bg-[#191326]"] {
+  background-color: #f3f0ff !important;
+}
+
+body.stack44-admin-light-body [class~="bg-[#0b2427]"] {
+  background-color: #e8fbfd !important;
+}
+
+body.stack44-admin-light-body [class~="bg-[#101928]"] {
+  background-color: #edf5ff !important;
+}
+
+/* Textos heredados de dark mode que quedaban demasiado claros */
+body.stack44-admin-light-body [class~="text-amber-100"],
+body.stack44-admin-light-body [class~="text-amber-200"] {
+  color: #92400e !important;
+}
+
+body.stack44-admin-light-body [class~="text-violet-100"],
+body.stack44-admin-light-body [class~="text-violet-200"],
+body.stack44-admin-light-body [class~="text-violet-300"] {
+  color: #5b21b6 !important;
+}
+
+body.stack44-admin-light-body [class~="text-sky-100"],
+body.stack44-admin-light-body [class~="text-sky-200"],
+body.stack44-admin-light-body [class~="text-sky-300"] {
+  color: #075985 !important;
+}
+
+/* Tags semánticos compactos: fondo claro, borde visible y texto oscuro */
+body.stack44-admin-light-body span[class*="rounded"][class*="bg-cyan-500/10"],
+body.stack44-admin-light-body span[class*="rounded"][class*="bg-cyan-400/10"] {
+  background-color: #ecfeff !important;
+  border-color: #a5f3fc !important;
+  color: #155e75 !important;
+}
+
+body.stack44-admin-light-body span[class*="rounded"][class*="bg-emerald-500/10"],
+body.stack44-admin-light-body span[class*="rounded"][class*="bg-emerald-400/10"] {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #065f46 !important;
+}
+
+body.stack44-admin-light-body span[class*="rounded"][class*="bg-amber-500/10"],
+body.stack44-admin-light-body span[class*="rounded"][class*="bg-amber-400/10"] {
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #92400e !important;
+}
+
+body.stack44-admin-light-body span[class*="rounded"][class*="bg-red-500/10"],
+body.stack44-admin-light-body span[class*="rounded"][class*="bg-red-400/10"] {
+  background-color: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #991b1b !important;
+}
+
+body.stack44-admin-light-body span[class*="rounded"][class*="bg-violet-500/10"],
+body.stack44-admin-light-body span[class*="rounded"][class*="bg-violet-400/10"] {
+  background-color: #f5f3ff !important;
+  border-color: #ddd6fe !important;
+  color: #5b21b6 !important;
+}
+
+body.stack44-admin-light-body span[class*="rounded"][class*="bg-sky-400/10"] {
+  background-color: #f0f9ff !important;
+  border-color: #bae6fd !important;
+  color: #075985 !important;
+}
+
+body.stack44-admin-light-body span[class*="rounded"][class*="bg-neutral-800/70"],
+body.stack44-admin-light-body span[class*="rounded"][class*="bg-neutral-800"] {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+/* Los campos de solo lectura deben seguir siendo claramente legibles */
+body.stack44-admin-light-body input:disabled,
+body.stack44-admin-light-body select:disabled,
+body.stack44-admin-light-body textarea:disabled {
+  opacity: 1 !important;
+  background-color: #f8fafc !important;
+  border-color: #d5dee9 !important;
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+}
+
+body.stack44-admin-light-body input:disabled::placeholder,
+body.stack44-admin-light-body textarea:disabled::placeholder {
+  color: #94a3b8 !important;
+  -webkit-text-fill-color: #94a3b8 !important;
+  opacity: 1 !important;
+}
+
+/* Etiquetas pequeñas de las matrices */
+body.stack44-admin-light-body span[class*="text-[8px]"][class*="bg-cyan-500/10"],
+body.stack44-admin-light-body span[class*="text-[9px]"][class*="bg-cyan-500/10"] {
+  box-shadow: inset 0 0 0 1px #bae6fd;
+  font-weight: 700 !important;
+}
