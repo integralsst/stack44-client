@@ -22,13 +22,23 @@ export default {
           backgroundImage: "none !important",
         },
 
-        ".admin-light-scope .bg-neutral-800, .admin-light-scope [class~='bg-neutral-800/80'], .admin-light-scope [class~='bg-neutral-800/70'], .admin-light-scope [class~='bg-neutral-800/60'], .admin-light-scope [class~='bg-neutral-800/50'], .admin-light-scope [class~='bg-neutral-800/30'], .admin-light-scope [class~='bg-white/5']": {
+        ".admin-light-scope .bg-neutral-800, .admin-light-scope [class~='bg-neutral-800/80'], .admin-light-scope [class~='bg-neutral-800/70'], .admin-light-scope [class~='bg-neutral-800/60'], .admin-light-scope [class~='bg-neutral-800/50'], .admin-light-scope [class~='bg-neutral-800/30'], .admin-light-scope [class~='bg-neutral-800/20'], .admin-light-scope [class~='bg-neutral-900/70'], .admin-light-scope [class~='bg-neutral-900/60'], .admin-light-scope [class~='bg-white/5']": {
           backgroundColor: "#f1f5f9 !important",
         },
 
-        ".admin-light-scope [class~='bg-[#05080a]'], .admin-light-scope [class~='bg-[#080808]'], .admin-light-scope [class~='bg-[#090909]'], .admin-light-scope [class~='bg-[#090a0b]'], .admin-light-scope [class~='bg-[#0a0a0a]'], .admin-light-scope [class~='bg-[#0a0b0c]'], .admin-light-scope [class~='bg-[#0b0b0b]'], .admin-light-scope [class~='bg-[#0d0d0d]'], .admin-light-scope [class~='bg-[#101010]'], .admin-light-scope [class~='bg-[#101112]'], .admin-light-scope [class~='bg-[#111111]'], .admin-light-scope [class~='bg-[#121212]'], .admin-light-scope [class~='bg-[#141414]'], .admin-light-scope [class~='bg-[#151515]'], .admin-light-scope [class~='bg-[#181818]']": {
+        ".admin-light-scope [class~='bg-black/20']": {
+          backgroundColor: "#f8fafc !important",
+        },
+
+        ".admin-light-scope [class~='bg-[#05080a]'], .admin-light-scope [class~='bg-[#080808]'], .admin-light-scope [class~='bg-[#090909]'], .admin-light-scope [class~='bg-[#090a0b]'], .admin-light-scope [class~='bg-[#0a0a0a]'], .admin-light-scope [class~='bg-[#0a0b0c]'], .admin-light-scope [class~='bg-[#0b0b0b]'], .admin-light-scope [class~='bg-[#0b0c0d]'], .admin-light-scope [class~='bg-[#0d0d0d]'], .admin-light-scope [class~='bg-[#101010]'], .admin-light-scope [class~='bg-[#101112]'], .admin-light-scope [class~='bg-[#111111]'], .admin-light-scope [class~='bg-[#121212]'], .admin-light-scope [class~='bg-[#141414]'], .admin-light-scope [class~='bg-[#151515]'], .admin-light-scope [class~='bg-[#181818]']": {
           backgroundColor: "#ffffff !important",
           backgroundImage: "none !important",
+        },
+
+        ".admin-light-scope section[class~='bg-[#101112]'], .admin-light-scope div[class~='bg-[#101112]']": {
+          backgroundColor: "#ffffff !important",
+          borderColor: "#cbd5e1 !important",
+          boxShadow: "0 10px 30px rgb(15 23 42 / 0.08) !important",
         },
 
         ".admin-light-scope [class~='bg-[#08090a]'], .admin-light-scope [class~='bg-[#171717]']": {
@@ -42,6 +52,13 @@ export default {
         ".admin-light-scope [class~='bg-[#101010]/95'], .admin-light-scope [class~='bg-[#0b0b0b]/90']": {
           backgroundColor: "rgb(255 255 255 / 0.96) !important",
           backgroundImage: "none !important",
+        },
+
+        ".admin-light-scope [class~='bg-red-500/[0.045]']": {
+          backgroundColor: "#fff1f2 !important",
+        },
+        ".admin-light-scope [class~='bg-cyan-500/[0.035]']": {
+          backgroundColor: "#ecfeff !important",
         },
 
         ".admin-light-scope [class~='bg-[#0b2427]']": {
@@ -134,11 +151,12 @@ export default {
 
         ".admin-light-scope table": {
           color: "#1e293b",
+          backgroundColor: "#ffffff",
         },
         ".admin-light-scope td, .admin-light-scope th": {
           borderColor: "#cbd5e1 !important",
         },
-        ".admin-light-scope thead[class*='bg-[#'], .admin-light-scope th[class*='bg-[#']": {
+        ".admin-light-scope thead, .admin-light-scope thead[class*='bg-[#'], .admin-light-scope th[class*='bg-[#']": {
           backgroundColor: "#eef2f7 !important",
           color: "#334155 !important",
         },
