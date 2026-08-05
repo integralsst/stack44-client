@@ -72,14 +72,14 @@ export default function MatrizEvaluacionToolbar({
   const hayBusquedaOFiltros = Boolean(busqueda.trim()) || filtrosActivos > 0;
 
   return (
-    <div className="border-b border-neutral-800 bg-[#0b0c0d] p-3 sm:p-4">
+    <div className="border-b border-slate-200 bg-white p-3 sm:p-4">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-white sm:text-base">
+            <h2 className="text-sm font-semibold text-slate-900 sm:text-base">
               Matriz de evaluación
             </h2>
-            <p className="mt-0.5 text-[11px] text-neutral-500">
+            <p className="mt-0.5 text-[11px] text-slate-500">
               Registra el estado, la nota y los soportes de cada aspecto.
             </p>
           </div>
@@ -120,14 +120,14 @@ export default function MatrizEvaluacionToolbar({
             <Search
               size={15}
               aria-hidden="true"
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
             />
             <input
               type="search"
               value={busqueda}
               onChange={(event) => setBusqueda(event.target.value)}
               placeholder="Buscar aspecto, estándar o proceso"
-              className="min-h-10 w-full rounded-xl border border-neutral-700 bg-[#090a0b] py-2 pl-9 pr-3 text-sm text-white outline-none transition-colors [color-scheme:dark] placeholder:text-neutral-600 hover:border-neutral-600 focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/10"
+              className="min-h-10 w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition-colors [color-scheme:light] placeholder:text-slate-400 hover:border-slate-400 focus:border-cyan-500/70 focus:ring-2 focus:ring-cyan-500/10"
             />
           </div>
 
@@ -163,7 +163,7 @@ export default function MatrizEvaluacionToolbar({
         </div>
 
         {mostrarFiltros && (
-          <div className="grid gap-2 rounded-xl border border-neutral-800 bg-[#090a0b] p-2.5 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="grid gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2.5 sm:grid-cols-2 xl:grid-cols-5">
             <AppSelect
               selectSize="sm"
               value={procesoId}
@@ -237,15 +237,15 @@ export default function MatrizEvaluacionToolbar({
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-neutral-800/80 pt-2 text-[10px] text-neutral-500">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-2 text-[10px] text-slate-500">
           <span>
             {Math.min(visibles, totalFiltradas)} de {totalFiltradas} aspectos
           </span>
           <span
             className={
               cambiosPendientes > 0
-                ? "font-semibold text-cyan-300"
-                : "text-neutral-600"
+                ? "font-semibold text-cyan-700"
+                : "text-slate-500"
             }
           >
             {cambiosPendientes > 0
