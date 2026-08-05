@@ -27,17 +27,17 @@ interface AppButtonProps
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "border-white bg-white text-black hover:border-neutral-200 hover:bg-neutral-200",
+    "border-cyan-600 bg-cyan-600 text-white hover:border-cyan-700 hover:bg-cyan-700",
   secondary:
-    "border-neutral-700 bg-neutral-900 text-neutral-200 hover:border-neutral-600 hover:bg-neutral-800 hover:text-white",
+    "border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900",
   success:
-    "border-cyan-500/25 bg-cyan-500/10 text-cyan-200 hover:border-cyan-500/40 hover:bg-cyan-500/15",
+    "border-emerald-300 bg-emerald-50 text-emerald-800 hover:border-emerald-400 hover:bg-emerald-100",
   warning:
-    "border-amber-500/30 bg-amber-500/10 text-amber-200 hover:border-amber-500/45 hover:bg-amber-500/15",
+    "border-amber-300 bg-amber-50 text-amber-900 hover:border-amber-400 hover:bg-amber-100",
   danger:
-    "border-red-500/30 bg-red-500/10 text-red-200 hover:border-red-500/45 hover:bg-red-500/15",
+    "border-red-300 bg-red-50 text-red-800 hover:border-red-400 hover:bg-red-100",
   ghost:
-    "border-transparent bg-transparent text-neutral-400 hover:bg-white/5 hover:text-white",
+    "border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -68,7 +68,7 @@ export default function AppButton({
       type={type}
       disabled={isDisabled}
       aria-busy={loading || undefined}
-      className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden border font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-45 ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? "w-full" : ""} ${className}`}
+      className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden border font-semibold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-55 ${variantClasses[variant]} ${sizeClasses[size]} ${fullWidth ? "w-full" : ""} ${className}`}
     >
       <span
         className={`inline-flex items-center justify-center gap-2 ${

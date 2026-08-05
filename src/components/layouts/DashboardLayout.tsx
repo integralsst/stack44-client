@@ -25,7 +25,7 @@ import {
 } from "react";
 
 import { useAuth } from "../../features/auth/context/AuthContext";
-import "../../styles/dashboard-light.css";
+import { ADMIN_LIGHT_SCOPE_CLASSES } from "../ui/adminLightTheme";
 
 const internalRoles = new Set([
   "ADMIN",
@@ -64,17 +64,6 @@ export default function DashboardLayout() {
       String(collapsed)
     );
   }, [collapsed]);
-
-  useEffect(() => {
-    const previousColorScheme = document.body.style.colorScheme;
-    document.body.classList.add("stack44-admin-light-body");
-    document.body.style.colorScheme = "light";
-
-    return () => {
-      document.body.classList.remove("stack44-admin-light-body");
-      document.body.style.colorScheme = previousColorScheme;
-    };
-  }, []);
 
   if (!user) {
     return null;
@@ -371,7 +360,9 @@ export default function DashboardLayout() {
   );
 
   return (
-    <div className="stack44-admin-light flex h-[100dvh] min-w-0 overflow-hidden bg-[#f4f7fb] text-slate-900">
+    <div
+      className={`${ADMIN_LIGHT_SCOPE_CLASSES} flex h-[100dvh] min-w-0 overflow-hidden bg-[#f4f7fb] text-slate-900`}
+    >
       <aside
         className={`relative z-40 hidden shrink-0 border-r border-slate-200 bg-white shadow-sm transition-[width] duration-300 lg:flex ${
           collapsed

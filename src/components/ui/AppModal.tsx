@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 import AppIconButton from "./AppIconButton";
+import { ADMIN_LIGHT_SCOPE_CLASSES } from "./adminLightTheme";
 
 type ModalSize = "md" | "lg" | "xl" | "2xl";
 
@@ -63,7 +64,7 @@ export default function AppModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/75 p-0 backdrop-blur-md sm:items-center sm:p-4"
+      className={`${ADMIN_LIGHT_SCOPE_CLASSES} fixed inset-0 z-[9999] flex items-end justify-center bg-slate-950/55 p-0 backdrop-blur-md sm:items-center sm:p-4`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="app-modal-title"
@@ -78,19 +79,19 @@ export default function AppModal({
       />
 
       <section
-        className={`relative z-10 flex h-[100dvh] w-full flex-col overflow-hidden border-neutral-800 bg-[#101010] shadow-2xl sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:rounded-3xl sm:border ${sizeClasses[size]}`}
+        className={`relative z-10 flex h-[100dvh] w-full flex-col overflow-hidden border-slate-200 bg-white shadow-2xl sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:rounded-3xl sm:border ${sizeClasses[size]}`}
       >
-        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-neutral-800 bg-[#101010]/95 px-4 py-4 backdrop-blur-xl sm:px-6 sm:py-5">
+        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 bg-white/95 px-4 py-4 backdrop-blur-xl sm:px-6 sm:py-5">
           <div className="min-w-0">
             <h2
               id="app-modal-title"
-              className="truncate text-lg font-bold text-white sm:text-xl"
+              className="truncate text-lg font-bold text-slate-900 sm:text-xl"
             >
               {title}
             </h2>
 
             {description && (
-              <p className="mt-1 max-w-3xl text-xs leading-5 text-neutral-500 sm:text-sm">
+              <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-500 sm:text-sm">
                 {description}
               </p>
             )}
@@ -109,7 +110,7 @@ export default function AppModal({
         </div>
 
         {footer && (
-          <footer className="shrink-0 border-t border-neutral-800 bg-[#101010]/95 px-4 py-4 backdrop-blur-xl sm:px-6">
+          <footer className="shrink-0 border-t border-slate-200 bg-white/95 px-4 py-4 backdrop-blur-xl sm:px-6">
             {footer}
           </footer>
         )}
