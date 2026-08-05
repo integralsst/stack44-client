@@ -46,17 +46,17 @@ export default function ResumenResultadosEmpresa({
         />
       </div>
 
-      <section className="rounded-2xl border border-neutral-800 bg-[#0a0b0c] p-4">
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-sm font-semibold text-white">
+            <h3 className="text-sm font-semibold text-slate-900">
               Estado de los aspectos
             </h3>
-            <p className="mt-1 text-xs text-neutral-500">
+            <p className="mt-1 text-xs text-slate-600">
               Última evaluación finalizada y válida de cada aspecto.
             </p>
           </div>
-          <span className="text-xs text-neutral-500">
+          <span className="text-xs font-medium text-slate-600">
             {resumen.totalAspectos} aspectos
           </span>
         </div>
@@ -65,27 +65,27 @@ export default function ResumenResultadosEmpresa({
           <StatePill
             label="Cumplidos"
             value={resumen.estados.cumplidos}
-            className="border-emerald-500/25 bg-emerald-500/10 text-emerald-300"
+            className="border-emerald-200 bg-emerald-50 text-emerald-800"
           />
           <StatePill
             label="Parciales"
             value={resumen.estados.parciales}
-            className="border-amber-500/25 bg-amber-500/10 text-amber-300"
+            className="border-amber-200 bg-amber-50 text-amber-800"
           />
           <StatePill
             label="No cumplen"
             value={resumen.estados.noCumplidos}
-            className="border-red-500/25 bg-red-500/10 text-red-300"
+            className="border-red-200 bg-red-50 text-red-800"
           />
           <StatePill
             label="No aplica"
             value={resumen.estados.noAplica}
-            className="border-cyan-500/25 bg-cyan-500/10 text-cyan-300"
+            className="border-cyan-200 bg-cyan-50 text-cyan-800"
           />
           <StatePill
             label="Sin evaluar"
             value={resumen.estados.sinEvaluar}
-            className="border-neutral-700 bg-neutral-900 text-neutral-400"
+            className="border-slate-200 bg-slate-50 text-slate-700"
           />
         </div>
       </section>
@@ -107,22 +107,24 @@ function MetricCard({
   detail: string;
 }) {
   return (
-    <article className="rounded-2xl border border-neutral-800 bg-[#0a0b0c] p-4">
+    <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-xs font-semibold text-neutral-500">
+        <span className="text-xs font-semibold text-slate-600">
           {label}
         </span>
-        <Icon size={16} className="text-cyan-400" />
+        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-50 text-cyan-700">
+          <Icon size={16} />
+        </span>
       </div>
-      <p className="mt-3 text-2xl font-bold text-white">
+      <p className="mt-3 text-2xl font-bold text-slate-900">
         {value}{" "}
         {suffix && (
-          <span className="text-sm font-medium text-neutral-500">
+          <span className="text-sm font-medium text-slate-500">
             {suffix}
           </span>
         )}
       </p>
-      <p className="mt-1 text-xs text-neutral-500">{detail}</p>
+      <p className="mt-1 text-xs text-slate-600">{detail}</p>
     </article>
   );
 }

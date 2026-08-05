@@ -60,20 +60,22 @@ export default function ResumenEvaluacion({
       {cards.map(({ label, value, detail, icon: Icon }) => (
         <article
           key={label}
-          className="min-w-0 rounded-xl border border-neutral-800 bg-[#101112] p-3 shadow-lg"
+          className="min-w-0 rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
         >
           <div className="flex items-center justify-between gap-2">
-            <p className="truncate text-[9px] font-bold uppercase tracking-wider text-neutral-500 sm:text-[10px]">
+            <p className="truncate text-[9px] font-bold uppercase tracking-wider text-slate-600 sm:text-[10px]">
               {label}
             </p>
-            <Icon size={14} className="shrink-0 text-neutral-500" />
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-slate-500">
+              <Icon size={14} />
+            </span>
           </div>
 
-          <p className="mt-1.5 text-lg font-bold leading-none text-white sm:text-xl">
+          <p className="mt-1.5 text-lg font-bold leading-none text-slate-900 sm:text-xl">
             {value}
           </p>
 
-          <p className="mt-1 truncate text-[10px] text-neutral-500 sm:text-[11px]">
+          <p className="mt-1 truncate text-[10px] text-slate-600 sm:text-[11px]">
             {detail}
           </p>
         </article>
