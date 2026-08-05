@@ -14,6 +14,8 @@ import {
   type ReactNode,
 } from "react";
 
+import { ADMIN_LIGHT_SCOPE_CLASSES } from "../../../../components/ui/adminLightTheme";
+
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -112,31 +114,31 @@ export default function MatrixCellMenu({
         type="button"
         disabled={disabled}
         onClick={() => onOpenChange(!open)}
-        className={`group flex w-full items-start justify-between gap-2 rounded-lg px-2 py-1.5 text-left transition hover:bg-white/[0.05] disabled:cursor-default ${triggerClassName}`}
+        className={`group flex w-full items-start justify-between gap-2 rounded-lg px-2 py-1.5 text-left transition hover:bg-slate-100 disabled:cursor-default ${triggerClassName}`}
       >
         <span className="min-w-0 flex-1 whitespace-pre-wrap break-words">
           {label}
         </span>
         {!disabled && (
-          <ChevronDown className="mt-0.5 h-3.5 w-3.5 shrink-0 text-neutral-600 transition group-hover:text-neutral-300" />
+          <ChevronDown className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500 transition group-hover:text-slate-700" />
         )}
       </button>
 
       {open && typeof document !== "undefined" &&
         createPortal(
-          <div className="pointer-events-none fixed inset-0 z-[10050]">
+          <div className={`${ADMIN_LIGHT_SCOPE_CLASSES} pointer-events-none fixed inset-0 z-[10050]`}>
             <div
               ref={panelRef}
               style={position}
-              className="pointer-events-auto fixed max-h-[min(430px,calc(100dvh-24px))] overflow-hidden rounded-2xl border border-neutral-700 bg-[#121212] shadow-[0_24px_80px_rgba(0,0,0,.55)]"
+              className="pointer-events-auto fixed max-h-[min(430px,calc(100dvh-24px))] overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-[0_24px_80px_rgba(15,23,42,.18)]"
             >
               {title && (
-                <div className="flex items-center justify-between gap-3 border-b border-neutral-800 px-4 py-3">
-                  <p className="text-xs font-semibold text-white">{title}</p>
+                <div className="flex items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-xs font-semibold text-slate-900">{title}</p>
                   <button
                     type="button"
                     onClick={() => onOpenChange(false)}
-                    className="rounded-lg p-1 text-neutral-500 hover:bg-neutral-800 hover:text-white"
+                    className="rounded-lg p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-900"
                     aria-label="Cerrar"
                   >
                     <X size={15} />
