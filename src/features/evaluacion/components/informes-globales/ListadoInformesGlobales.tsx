@@ -3,12 +3,14 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  Download,
   Eye,
   FileText,
   UserRound,
 } from "lucide-react";
 
 import AppButton from "../../../../components/ui/AppButton";
+import { useDescargaInformePdf } from "../../hooks/useDescargaInformePdf";
 import type {
   CodigoCategoriaGestionInforme,
 } from "../../types/informe-periodo.types";
@@ -51,6 +53,12 @@ export default function ListadoInformesGlobales({
   onOpen,
   onPageChange,
 }: Props) {
+  const {
+    descargar,
+    descargandoId,
+    errorDescarga,
+  } = useDescargaInformePdf();
+
   if (versiones.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-neutral-800 bg-[#101112] px-6 py-16 text-center">
@@ -67,6 +75,12 @@ export default function ListadoInformesGlobales({
 
   return (
     <div className="space-y-3">
+      {errorDescarga && (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium text-red-700">
+          {errorDescarga}
+        </div>
+      )}
+
       {versiones.map((version) => {
         const categorias = version.categoriasGestion.length
           ? version.categoriasGestion
@@ -153,18 +167,38 @@ export default function ListadoInformesGlobales({
                   />
                 </div>
 
-                <AppButton
-                  size="sm"
-                  variant="secondary"
-                  loading={
-                    cargandoDetalle && selectedId === version.id
-                  }
-                  loadingLabel="Abriendo"
-                  leadingIcon={<Eye size={14} />}
-                  onClick={() => void onOpen(version.id)}
-                >
-                  Ver
-                </AppButton>
+                <div className="flex gap-2">
+                  <AppButton
+                    size="sm"
+                    variant="primary"
+                    loading={descargandoId === version.id}
+                    loadingLabel="PDF"
+                    leadingIcon={<Download size={14} />}
+                    onClick={() =>
+                      void descargar({
+                        id: version.id,
+                        empresaNombre: version.empresa.nombre,
+                        anio: version.periodo.anio,
+                        numeroVersion: version.numeroVersion,
+                      })
+                    }
+                  >
+                    PDF
+                  </AppButton>
+
+                  <AppButton
+                    size="sm"
+                    variant="secondary"
+                    loading={
+                      cargandoDetalle && selectedId === version.id
+                    }
+                    loadingLabel="Abriendo"
+                    leadingIcon={<Eye size={14} />}
+                    onClick={() => void onOpen(version.id)}
+                  >
+                    Ver
+                  </AppButton>
+                </div>
               </div>
             </div>
           </article>
