@@ -14,7 +14,6 @@ import type {
   DetalleVigenciaEvaluacion,
   EstadoVigenciaEvaluacion,
 } from "../../../../types/evaluacion.types";
-import "../../../../styles/dashboard-contrast.css";
 
 interface Props {
   detalle: DetalleVigenciaEvaluacion;
