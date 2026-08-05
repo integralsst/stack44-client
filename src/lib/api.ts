@@ -13,6 +13,11 @@ interface ApiErrorPayload {
   [key: string]: unknown;
 }
 
+export interface ApiDownloadResult {
+  blob: Blob;
+  filename: string | null;
+}
+
 export class ApiError extends Error {
   readonly status: number;
   readonly code?: string;
@@ -101,6 +106,22 @@ function getErrorMessage(
   return `La solicitud no pudo completarse (HTTP ${status}).`;
 }
 
+function filenameFromDisposition(value: string | null): string | null {
+  if (!value) return null;
+
+  const encodedMatch = value.match(/filename\*=UTF-8''([^;]+)/i);
+  if (encodedMatch?.[1]) {
+    try {
+      return decodeURIComponent(encodedMatch[1].trim());
+    } catch {
+      return encodedMatch[1].trim();
+    }
+  }
+
+  const plainMatch = value.match(/filename="?([^";]+)"?/i);
+  return plainMatch?.[1]?.trim() ?? null;
+}
+
 export async function apiRequest<T = unknown>(
   path: string,
   options: RequestInit = {},
@@ -153,4 +174,52 @@ export async function apiRequest<T = unknown>(
   }
 
   return payload as T;
+}
+
+export async function apiDownloadFile(
+  path: string,
+  token?: string | null
+): Promise<ApiDownloadResult> {
+  const headers = new Headers();
+  headers.set("Accept", "application/pdf, application/octet-stream");
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+
+  let response: Response;
+
+  try {
+    response = await fetch(buildUrl(path), {
+      method: "GET",
+      headers,
+    });
+  } catch (error) {
+    throw new Error(
+      error instanceof Error
+        ? `No fue posible conectar con el servidor: ${error.message}`
+        : "No fue posible conectar con el servidor."
+    );
+  }
+
+  if (!response.ok) {
+    const payload = await readResponseBody(response);
+    const errorPayload =
+      payload && typeof payload === "object"
+        ? (payload as ApiErrorPayload)
+        : undefined;
+
+    throw new ApiError(
+      getErrorMessage(payload, response.status),
+      response.status,
+      errorPayload
+    );
+  }
+
+  return {
+    blob: await response.blob(),
+    filename: filenameFromDisposition(
+      response.headers.get("content-disposition")
+    ),
+  };
 }
