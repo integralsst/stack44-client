@@ -72,6 +72,48 @@ body.stack44-admin-light-body [class~="text-slate-600"] {
   color: #8290a3 !important;
 }
 
+body.stack44-admin-light-body [class~="text-cyan-200"],
+body.stack44-admin-light-body [class~="text-cyan-300"],
+body.stack44-admin-light-body [class~="text-cyan-400"] {
+  color: #0e7490 !important;
+}
+
+body.stack44-admin-light-body [class~="text-emerald-200"],
+body.stack44-admin-light-body [class~="text-emerald-300"],
+body.stack44-admin-light-body [class~="text-emerald-400"] {
+  color: #047857 !important;
+}
+
+body.stack44-admin-light-body [class~="text-amber-200"],
+body.stack44-admin-light-body [class~="text-amber-300"],
+body.stack44-admin-light-body [class~="text-amber-400"] {
+  color: #b45309 !important;
+}
+
+body.stack44-admin-light-body [class~="text-red-200"],
+body.stack44-admin-light-body [class~="text-red-300"],
+body.stack44-admin-light-body [class~="text-red-400"] {
+  color: #b91c1c !important;
+}
+
+body.stack44-admin-light-body [class~="text-blue-400"] {
+  color: #1d4ed8 !important;
+}
+
+body.stack44-admin-light-body [class~="text-purple-400"] {
+  color: #7e22ce !important;
+}
+
+body.stack44-admin-light-body [class~="text-white"][class*="bg-cyan-"],
+body.stack44-admin-light-body [class~="text-white"][class*="bg-blue-"],
+body.stack44-admin-light-body [class~="text-white"][class*="bg-emerald-"],
+body.stack44-admin-light-body [class~="text-white"][class*="bg-green-"],
+body.stack44-admin-light-body [class~="text-white"][class*="bg-red-"],
+body.stack44-admin-light-body [class~="text-white"][class*="bg-purple-"],
+body.stack44-admin-light-body [class~="text-white"][class*="bg-slate-900"] {
+  color: #ffffff !important;
+}
+
 body.stack44-admin-light-body [class~="hover:text-white"]:hover,
 body.stack44-admin-light-body [class~="hover:text-neutral-200"]:hover,
 body.stack44-admin-light-body [class~="hover:text-neutral-300"]:hover {
