@@ -22,11 +22,11 @@ interface AppIconButtonProps
 
 const variantClasses: Record<IconButtonVariant, string> = {
   secondary:
-    "border-neutral-800 bg-[#171717] text-neutral-400 hover:border-neutral-700 hover:bg-neutral-900 hover:text-white",
+    "border-slate-300 bg-white text-slate-600 hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900",
   ghost:
-    "border-transparent bg-transparent text-neutral-500 hover:bg-white/5 hover:text-white",
+    "border-transparent bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-900",
   danger:
-    "border-red-500/25 bg-red-500/10 text-red-300 hover:border-red-500/40 hover:bg-red-500/15",
+    "border-red-300 bg-red-50 text-red-700 hover:border-red-400 hover:bg-red-100",
 };
 
 const sizeClasses: Record<IconButtonSize, string> = {
@@ -54,7 +54,7 @@ export default function AppIconButton({
       aria-label={label}
       title={props.title ?? label}
       aria-busy={loading || undefined}
-      className={`inline-flex shrink-0 items-center justify-center border outline-none transition-colors focus-visible:ring-2 focus-visible:ring-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-40 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center border outline-none transition-colors focus-visible:ring-2 focus-visible:ring-cyan-500/30 disabled:cursor-not-allowed disabled:opacity-55 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
     >
       {loading ? (
         <LoaderCircle
