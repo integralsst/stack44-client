@@ -9,7 +9,6 @@ import {
 import type {
   ManagementCategory,
 } from "../../types/supermatriz.types";
-import "../../../../styles/dashboard-contrast.css";
 import MatrixCellMenu from "./MatrixCellMenu";
 
 interface Props {
