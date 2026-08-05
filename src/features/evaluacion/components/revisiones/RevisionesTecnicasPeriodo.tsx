@@ -92,22 +92,22 @@ export default function RevisionesTecnicasPeriodo({
   return (
     <>
       <div className="space-y-3">
-        <div className="flex flex-col gap-3 rounded-2xl border border-neutral-800 bg-[#090a0b] p-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="text-sm font-semibold text-white">
+              <p className="text-sm font-semibold text-slate-900">
                 {revisiones.length} revisión
                 {revisiones.length === 1 ? "" : "es"}
               </p>
 
               {accionesPendientes > 0 && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/25 bg-red-500/10 px-2.5 py-1 text-[10px] font-bold text-red-300">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[10px] font-bold text-red-700">
                   <AlertTriangle size={12} />
                   {accionesPendientes} por atender
                 </span>
               )}
             </div>
-            <p className="mt-1 text-xs text-neutral-500">
+            <p className="mt-1 text-xs text-slate-500">
               Selecciona un estado para filtrar.
             </p>
           </div>
@@ -194,8 +194,8 @@ export default function RevisionesTecnicasPeriodo({
         )}
 
         {cargando && !data ? (
-          <div className="flex min-h-48 items-center justify-center rounded-2xl border border-neutral-800 bg-[#090a0b]">
-            <div className="flex items-center gap-3 text-neutral-500">
+          <div className="flex min-h-48 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="flex items-center gap-3 text-slate-500">
               <AppSpinner />
               <p className="text-xs">Cargando revisiones</p>
             </div>
@@ -212,9 +212,9 @@ export default function RevisionesTecnicasPeriodo({
             ))}
           </div>
         ) : (
-          <div className="rounded-2xl border border-dashed border-neutral-800 bg-[#090a0b] px-5 py-12 text-center">
-            <ShieldCheck className="mx-auto h-7 w-7 text-neutral-700" />
-            <p className="mt-3 text-sm font-medium text-neutral-300">
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-12 text-center">
+            <ShieldCheck className="mx-auto h-7 w-7 text-slate-400" />
+            <p className="mt-3 text-sm font-medium text-slate-700">
               Sin revisiones en este estado
             </p>
           </div>
@@ -260,11 +260,11 @@ function FilterChip({
   onClick: () => void;
 }) {
   const activeClass: Record<FilterTone, string> = {
-    danger: "border-red-500/35 bg-red-500/10 text-red-200",
-    warning: "border-amber-500/30 bg-amber-500/10 text-amber-200",
-    info: "border-cyan-500/30 bg-cyan-500/10 text-cyan-200",
-    success: "border-emerald-500/30 bg-emerald-500/10 text-emerald-200",
-    neutral: "border-neutral-600 bg-neutral-800 text-neutral-200",
+    danger: "border-red-300 bg-red-50 text-red-800",
+    warning: "border-amber-300 bg-amber-50 text-amber-900",
+    info: "border-cyan-300 bg-cyan-50 text-cyan-800",
+    success: "border-emerald-300 bg-emerald-50 text-emerald-800",
+    neutral: "border-slate-300 bg-slate-100 text-slate-700",
   };
 
   return (
@@ -275,12 +275,16 @@ function FilterChip({
       className={`inline-flex min-h-9 items-center gap-2 rounded-full border px-3 text-xs font-semibold transition ${
         active
           ? activeClass[tone]
-          : "border-neutral-800 bg-[#0b0c0d] text-neutral-500 hover:border-neutral-700 hover:text-neutral-300"
+          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
       }`}
     >
       <Icon size={13} />
       {label}
-      <span className="rounded-full bg-black/20 px-1.5 py-0.5 text-[10px]">
+      <span
+        className={`rounded-full px-1.5 py-0.5 text-[10px] ${
+          active ? "bg-white/70" : "bg-slate-100"
+        }`}
+      >
         {value}
       </span>
     </button>
