@@ -37,7 +37,7 @@ export default function EvaluacionEmpresaHeader({
   const periodoAbierto = periodo?.estado === "ABIERTO";
 
   return (
-    <header className="rounded-2xl border border-neutral-800 bg-[#101112] p-3 shadow-xl sm:p-4">
+    <header className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex min-w-0 items-start gap-2.5 sm:gap-3">
           <AppIconButton
@@ -46,23 +46,23 @@ export default function EvaluacionEmpresaHeader({
             onClick={onVolver}
           />
 
-          <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-300 sm:flex">
+          <div className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-200 bg-cyan-50 text-cyan-700 sm:flex">
             <Building2 size={19} />
           </div>
 
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-400">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-700">
               Evaluación SG-SST
             </p>
 
             <h1
-              className="mt-1 truncate text-lg font-bold text-white sm:text-xl lg:text-2xl"
+              className="mt-1 truncate text-lg font-bold text-slate-900 sm:text-xl lg:text-2xl"
               title={empresa.nombre}
             >
               {empresa.nombre}
             </h1>
 
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-neutral-400 sm:text-xs">
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-600 sm:text-xs">
               <span className="font-mono">NIT {empresa.nit}</span>
 
               <span className="flex items-center gap-1.5">
@@ -79,8 +79,8 @@ export default function EvaluacionEmpresaHeader({
         </div>
 
         <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 xl:w-auto xl:min-w-[430px]">
-          <label className="rounded-xl border border-neutral-800 bg-[#08090a] px-3 py-2.5">
-            <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+          <label className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+            <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600">
               <CalendarDays size={12} />
               Periodo
             </span>
@@ -92,7 +92,7 @@ export default function EvaluacionEmpresaHeader({
               }
               selectSize="sm"
               containerClassName="mt-1"
-              className="border-transparent bg-transparent px-0 pr-8 font-semibold hover:border-transparent focus:border-transparent focus:ring-0"
+              className="border-transparent bg-white px-2 pr-8 font-semibold text-slate-900 hover:border-slate-300 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/10"
               aria-label="Seleccionar periodo"
             >
               {years.map((year) => (
@@ -103,26 +103,26 @@ export default function EvaluacionEmpresaHeader({
             </AppSelect>
           </label>
 
-          <div className="min-w-0 rounded-xl border border-neutral-800 bg-[#08090a] px-3 py-2.5">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+          <div className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
               Estado del periodo
             </p>
 
             <div className="mt-1 flex min-w-0 items-center gap-2">
               <span
-                className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-bold ${
+                className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-bold ${
                   periodoAbierto
-                    ? "bg-emerald-500/10 text-emerald-300"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                     : periodo
-                      ? "bg-neutral-700 text-neutral-300"
-                      : "bg-amber-500/10 text-amber-300"
+                      ? "border-slate-200 bg-white text-slate-700"
+                      : "border-amber-200 bg-amber-50 text-amber-800"
                 }`}
               >
                 {periodo?.estado ?? "SIN ABRIR"}
               </span>
 
               <span
-                className="min-w-0 truncate text-[11px] text-neutral-500"
+                className="min-w-0 truncate text-[11px] text-slate-600"
                 title={
                   periodo?.versionSupermatriz.nombre ??
                   "Sin versión asignada"
