@@ -4,6 +4,7 @@ import {
   CalendarClock,
   ClipboardCheck,
   Database,
+  Download,
   Layers3,
   UserRound,
 } from "lucide-react";
@@ -13,6 +14,7 @@ import {
 } from "react";
 
 import AppButton from "../../../../components/ui/AppButton";
+import { useDescargaInformePdf } from "../../hooks/useDescargaInformePdf";
 import type { InformePeriodoDetalle } from "../../types/informe-periodo.types";
 import ResumenResultadosEmpresa from "../resultados/ResumenResultadosEmpresa";
 import ResultadosEstandares from "../resultados/ResultadosEstandares";
@@ -30,6 +32,11 @@ export default function DetalleInformeVersion({
   onBack,
 }: Props) {
   const [vista, setVista] = useState<Vista>("EMPRESA");
+  const {
+    descargar,
+    descargandoId,
+    errorDescarga,
+  } = useDescargaInformePdf();
   const resultado = detalle.snapshot.resultado;
   const resumen = resultado.resumenEmpresa;
   const empresa = resultado.empresa;
@@ -62,16 +69,41 @@ export default function DetalleInformeVersion({
               {detalle.motivoVersion}
             </p>
           )}
+          {errorDescarga && (
+            <p className="mt-2 text-xs font-medium text-red-500">
+              {errorDescarga}
+            </p>
+          )}
         </div>
 
-        <AppButton
-          size="sm"
-          variant="secondary"
-          leadingIcon={<ArrowLeft size={14} />}
-          onClick={onBack}
-        >
-          Volver a versiones
-        </AppButton>
+        <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+          <AppButton
+            size="sm"
+            variant="primary"
+            loading={descargandoId === detalle.id}
+            loadingLabel="Preparando PDF"
+            leadingIcon={<Download size={14} />}
+            onClick={() =>
+              void descargar({
+                id: detalle.id,
+                empresaNombre: empresa.nombre,
+                anio: detalle.anio,
+                numeroVersion: detalle.numeroVersion,
+              })
+            }
+          >
+            Descargar PDF
+          </AppButton>
+
+          <AppButton
+            size="sm"
+            variant="secondary"
+            leadingIcon={<ArrowLeft size={14} />}
+            onClick={onBack}
+          >
+            Volver a versiones
+          </AppButton>
+        </div>
       </div>
 
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
