@@ -20,37 +20,37 @@ const CONFIG: Record<
   PENDIENTE: {
     label: "Pendiente",
     className:
-      "border-amber-500/30 bg-amber-500/10 text-amber-300",
+      "border-amber-300 bg-amber-50 text-amber-800",
     icon: Clock3,
   },
   APROBADA: {
     label: "Aprobada",
     className:
-      "border-emerald-500/30 bg-emerald-500/10 text-emerald-300",
+      "border-emerald-300 bg-emerald-50 text-emerald-800",
     icon: CheckCircle2,
   },
   REQUIERE_AJUSTES: {
     label: "Requiere corrección",
     className:
-      "border-red-500/35 bg-red-500/10 text-red-300",
+      "border-red-300 bg-red-50 text-red-800",
     icon: Wrench,
   },
   EN_CORRECCION: {
     label: "En corrección",
     className:
-      "border-cyan-500/30 bg-cyan-500/10 text-cyan-300",
+      "border-cyan-300 bg-cyan-50 text-cyan-800",
     icon: LoaderCircle,
   },
   SUBSANADA: {
     label: "Subsanada",
     className:
-      "border-teal-500/30 bg-teal-500/10 text-teal-300",
+      "border-teal-300 bg-teal-50 text-teal-800",
     icon: ShieldCheck,
   },
   ANULADA: {
     label: "Anulada",
     className:
-      "border-neutral-700 bg-neutral-800/70 text-neutral-400",
+      "border-slate-300 bg-slate-100 text-slate-700",
     icon: Ban,
   },
 };

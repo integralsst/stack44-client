@@ -37,34 +37,34 @@ export default function RevisionTecnicaCard({
 
   return (
     <article
-      className={`rounded-2xl border p-4 transition sm:p-5 ${
+      className={`rounded-2xl border p-4 shadow-sm transition sm:p-5 ${
         urgente
-          ? "border-red-500/35 bg-red-500/[0.045] ring-1 ring-red-500/10"
+          ? "border-red-200 bg-red-50/70 ring-1 ring-red-100"
           : enCorreccion
-            ? "border-cyan-500/25 bg-cyan-500/[0.035]"
-            : "border-neutral-800 bg-[#0b0c0d]"
+            ? "border-cyan-200 bg-cyan-50/70"
+            : "border-slate-200 bg-white"
       }`}
     >
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <RevisionTecnicaEstadoBadge estado={revision.estadoFlujo} />
-            <span className="text-[10px] text-neutral-600">
+            <span className="text-[10px] text-slate-500">
               {formatDateTime(revision.solicitadaEn)}
             </span>
           </div>
 
-          <h3 className="mt-3 text-base font-bold leading-6 text-white">
+          <h3 className="mt-3 text-base font-bold leading-6 text-slate-900">
             {evaluacion.aspecto.nombre}
           </h3>
-          <p className="mt-1 text-xs leading-5 text-neutral-500">
+          <p className="mt-1 text-xs leading-5 text-slate-600">
             {evaluacion.aspecto.estandar.codigo
               ? `${evaluacion.aspecto.estandar.codigo} · `
               : ""}
             {evaluacion.aspecto.estandar.nombre}
           </p>
 
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-neutral-400">
+          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-600">
             <Meta icon={UserRound} text={evaluacion.gestion.profesional} />
             <Meta
               icon={FileCheck2}
@@ -121,24 +121,24 @@ export default function RevisionTecnicaCard({
         <div
           className={`mt-4 rounded-xl border p-3.5 ${
             urgente
-              ? "border-red-500/25 bg-red-500/10"
-              : "border-cyan-500/15 bg-cyan-500/5"
+              ? "border-red-200 bg-red-50"
+              : "border-cyan-200 bg-cyan-50"
           }`}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p
               className={`text-[10px] font-bold uppercase tracking-wider ${
-                urgente ? "text-red-300" : "text-cyan-400"
+                urgente ? "text-red-700" : "text-cyan-700"
               }`}
             >
               {urgente ? "Qué debe corregirse" : "Concepto técnico"}
             </p>
-            <span className="text-[10px] text-neutral-500">
+            <span className="text-[10px] text-slate-500">
               {revision.revisadaPor?.nombre ?? "Revisor"}
             </span>
           </div>
           <p
-            className={`mt-2 whitespace-pre-wrap text-sm leading-6 text-neutral-200 ${
+            className={`mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700 ${
               expanded ? "" : "line-clamp-3"
             }`}
           >
@@ -148,7 +148,7 @@ export default function RevisionTecnicaCard({
       )}
 
       {expanded && (
-        <div className="mt-4 space-y-4 border-t border-neutral-800 pt-4">
+        <div className="mt-4 space-y-4 border-t border-slate-200 pt-4">
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <Fact
               icon={CalendarDays}
@@ -188,18 +188,18 @@ export default function RevisionTecnicaCard({
           </div>
 
           {revision.gestionCorreccion && (
-            <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-300">
+            <div className="rounded-xl border border-cyan-200 bg-cyan-50 p-4">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-700">
                 Corrección registrada
               </p>
-              <p className="mt-2 text-sm font-semibold text-white">
+              <p className="mt-2 text-sm font-semibold text-slate-900">
                 {revision.gestionCorreccion.tipoActividad}
               </p>
-              <p className="mt-1 text-xs leading-5 text-neutral-400">
+              <p className="mt-1 text-xs leading-5 text-slate-600">
                 {formatDate(revision.gestionCorreccion.fechaGestion)} · {revision.gestionCorreccion.profesional}
               </p>
               {revision.evaluacionCorrectiva && (
-                <p className="mt-2 text-xs text-neutral-300">
+                <p className="mt-2 text-xs text-slate-700">
                   {estadoLabel(
                     revision.evaluacionCorrectiva.estadoCumplimiento
                   )} · Nota {revision.evaluacionCorrectiva.calificacionAdministrativa.toFixed(2)}
@@ -216,7 +216,7 @@ export default function RevisionTecnicaCard({
           )}
 
           <div>
-            <p className="text-xs font-semibold text-neutral-300">
+            <p className="text-xs font-semibold text-slate-700">
               Evidencias ({evaluacion.evidencias.length})
             </p>
 
@@ -228,7 +228,7 @@ export default function RevisionTecnicaCard({
                     href={evidencia.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center justify-between gap-3 rounded-xl border border-neutral-800 bg-[#090a0b] px-3 py-3 text-sm text-neutral-300 transition hover:border-cyan-500/30 hover:text-cyan-200"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
                   >
                     <span className="min-w-0 truncate">
                       {evidencia.nombre}
@@ -238,7 +238,7 @@ export default function RevisionTecnicaCard({
                 ))}
               </div>
             ) : (
-              <p className="mt-2 text-xs text-neutral-600">
+              <p className="mt-2 text-xs text-slate-500">
                 Sin evidencias asociadas.
               </p>
             )}
@@ -258,7 +258,7 @@ function Meta({
 }) {
   return (
     <span className="inline-flex items-center gap-1.5">
-      <Icon size={13} className="text-neutral-600" />
+      <Icon size={13} className="text-slate-400" />
       {text}
     </span>
   );
@@ -274,12 +274,12 @@ function Fact({
   value: string;
 }) {
   return (
-    <div className="rounded-xl border border-neutral-800 bg-[#090a0b] p-3">
-      <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-neutral-600">
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+      <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
         <Icon size={13} />
         {label}
       </p>
-      <p className="mt-2 text-xs leading-5 text-neutral-300">{value}</p>
+      <p className="mt-2 text-xs leading-5 text-slate-700">{value}</p>
     </div>
   );
 }
@@ -294,13 +294,13 @@ function TextBlock({
   muted?: boolean;
 }) {
   return (
-    <div className="rounded-xl border border-neutral-800 bg-[#090a0b] p-4">
-      <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-600">
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
         {title}
       </p>
       <p
         className={`mt-2 whitespace-pre-wrap text-sm leading-6 ${
-          muted ? "text-neutral-600" : "text-neutral-300"
+          muted ? "text-slate-500" : "text-slate-700"
         }`}
       >
         {text}
