@@ -1,0 +1,176 @@
+body.stack44-admin-light-body {
+  background: #f4f7fb;
+  color: #172033;
+  color-scheme: light;
+}
+
+body.stack44-admin-light-body .stack44-admin-light {
+  color: #172033;
+  color-scheme: light;
+}
+
+/* Superficies oscuras históricas del panel */
+body.stack44-admin-light-body [class~="bg-[#05080a]"],
+body.stack44-admin-light-body [class~="bg-[#080808]"],
+body.stack44-admin-light-body [class~="bg-[#090909]"],
+body.stack44-admin-light-body [class~="bg-[#090a0b]"],
+body.stack44-admin-light-body [class~="bg-[#0a0a0a]"],
+body.stack44-admin-light-body [class~="bg-[#0b0b0b]"],
+body.stack44-admin-light-body [class~="bg-[#101010]"],
+body.stack44-admin-light-body [class~="bg-[#101112]"],
+body.stack44-admin-light-body [class~="bg-[#111111]"],
+body.stack44-admin-light-body [class~="bg-[#121212]"],
+body.stack44-admin-light-body [class~="bg-[#141414]"],
+body.stack44-admin-light-body [class~="bg-[#151515]"],
+body.stack44-admin-light-body [class~="bg-neutral-950"],
+body.stack44-admin-light-body [class~="bg-neutral-900"] {
+  background-color: #ffffff !important;
+}
+
+body.stack44-admin-light-body [class~="bg-[#0b0b0b]/90"],
+body.stack44-admin-light-body [class~="bg-[#101010]/95"],
+body.stack44-admin-light-body [class~="bg-neutral-900/90"],
+body.stack44-admin-light-body [class~="bg-neutral-900/80"] {
+  background-color: rgb(255 255 255 / 0.94) !important;
+}
+
+body.stack44-admin-light-body [class~="bg-neutral-800"],
+body.stack44-admin-light-body [class~="bg-neutral-800/50"],
+body.stack44-admin-light-body [class~="bg-white/5"] {
+  background-color: #f1f5f9 !important;
+}
+
+body.stack44-admin-light-body [class~="hover:bg-neutral-800/50"]:hover,
+body.stack44-admin-light-body [class~="hover:bg-neutral-800"]:hover,
+body.stack44-admin-light-body [class~="hover:bg-white/5"]:hover {
+  background-color: #e8eef5 !important;
+}
+
+/* Tipografía neutra */
+body.stack44-admin-light-body [class~="text-white"],
+body.stack44-admin-light-body [class~="text-slate-100"],
+body.stack44-admin-light-body [class~="text-slate-200"],
+body.stack44-admin-light-body [class~="text-neutral-100"],
+body.stack44-admin-light-body [class~="text-neutral-200"] {
+  color: #172033 !important;
+}
+
+body.stack44-admin-light-body [class~="text-neutral-300"],
+body.stack44-admin-light-body [class~="text-neutral-400"],
+body.stack44-admin-light-body [class~="text-slate-300"],
+body.stack44-admin-light-body [class~="text-slate-400"] {
+  color: #526174 !important;
+}
+
+body.stack44-admin-light-body [class~="text-neutral-500"],
+body.stack44-admin-light-body [class~="text-slate-500"] {
+  color: #64748b !important;
+}
+
+body.stack44-admin-light-body [class~="text-neutral-600"],
+body.stack44-admin-light-body [class~="text-slate-600"] {
+  color: #8290a3 !important;
+}
+
+body.stack44-admin-light-body [class~="hover:text-white"]:hover,
+body.stack44-admin-light-body [class~="hover:text-neutral-200"]:hover,
+body.stack44-admin-light-body [class~="hover:text-neutral-300"]:hover {
+  color: #0f172a !important;
+}
+
+/* Bordes y divisores */
+body.stack44-admin-light-body [class~="border-neutral-900"],
+body.stack44-admin-light-body [class~="border-neutral-800"],
+body.stack44-admin-light-body [class~="border-neutral-800/60"],
+body.stack44-admin-light-body [class~="border-neutral-700"] {
+  border-color: #dbe3ec !important;
+}
+
+body.stack44-admin-light-body [class~="hover:border-neutral-700"]:hover,
+body.stack44-admin-light-body [class~="hover:border-neutral-600"]:hover {
+  border-color: #b8c5d3 !important;
+}
+
+body.stack44-admin-light-body [class~="divide-neutral-800"] > :not([hidden]) ~ :not([hidden]),
+body.stack44-admin-light-body [class~="divide-neutral-700"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: #e2e8f0 !important;
+}
+
+/* Campos, selects y áreas de texto */
+body.stack44-admin-light-body input:not([type="checkbox"]):not([type="radio"]),
+body.stack44-admin-light-body select,
+body.stack44-admin-light-body textarea {
+  background-color: #ffffff !important;
+  border-color: #cfd9e5 !important;
+  color: #172033 !important;
+  color-scheme: light;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+body.stack44-admin-light-body input::placeholder,
+body.stack44-admin-light-body textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+body.stack44-admin-light-body input:focus,
+body.stack44-admin-light-body select:focus,
+body.stack44-admin-light-body textarea:focus {
+  border-color: rgb(6 182 212 / 0.7) !important;
+  box-shadow: 0 0 0 3px rgb(6 182 212 / 0.1) !important;
+}
+
+/* Botones compartidos */
+body.stack44-admin-light-body button[class~="bg-white"][class~="text-black"] {
+  background-color: #0891b2 !important;
+  border-color: #0891b2 !important;
+  color: #ffffff !important;
+}
+
+body.stack44-admin-light-body button[class~="bg-white"][class~="text-black"]:hover {
+  background-color: #0e7490 !important;
+  border-color: #0e7490 !important;
+}
+
+body.stack44-admin-light-body button[class~="bg-neutral-900"] {
+  background-color: #ffffff !important;
+  border-color: #cfd9e5 !important;
+  color: #334155 !important;
+}
+
+body.stack44-admin-light-body button[class~="bg-neutral-900"]:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Elevación más suave para tarjetas y modales */
+body.stack44-admin-light-body [class~="shadow-xl"],
+body.stack44-admin-light-body [class~="shadow-2xl"] {
+  box-shadow: 0 18px 50px rgb(15 23 42 / 0.1) !important;
+}
+
+body.stack44-admin-light-body [class*="shadow-[0_18px_50px"] {
+  box-shadow: 0 16px 42px rgb(15 23 42 / 0.09) !important;
+}
+
+/* Scrollbars del panel */
+body.stack44-admin-light-body * {
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+body.stack44-admin-light-body *::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+body.stack44-admin-light-body *::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+body.stack44-admin-light-body *::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
