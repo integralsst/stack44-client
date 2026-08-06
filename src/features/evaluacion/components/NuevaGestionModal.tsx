@@ -3,10 +3,10 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import AppButton from "../../../components/ui/AppButton";
 import AppModal from "../../../components/ui/AppModal";
 import AppSelect from "../../../components/ui/AppSelect";
 import AppAlert from "./feedback/AppAlert";
-import AppSpinner from "./feedback/AppSpinner";
 import type {
   CategoriaGestionEvaluacion,
   CrearGestionInput,
@@ -27,7 +27,7 @@ interface Props {
 }
 
 const inputClass =
-  "w-full rounded-xl border border-neutral-800 bg-[#090909] px-3 py-2.5 text-sm text-white outline-none transition [color-scheme:dark] placeholder:text-neutral-600 focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/10";
+  "w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition [color-scheme:light] placeholder:text-slate-400 hover:border-slate-400 focus:border-cyan-500/70 focus:ring-2 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:bg-slate-100";
 
 function todayInput(): string {
   const now = new Date();
@@ -121,28 +121,27 @@ export default function NuevaGestionModal({
       size="lg"
       footer={
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <button
-            type="button"
+          <AppButton
+            variant="secondary"
+            size="lg"
             onClick={onClose}
             disabled={busy}
-            className="rounded-xl border border-neutral-700 bg-neutral-800 px-5 py-2.5 text-sm font-medium text-neutral-300 transition hover:bg-neutral-700 disabled:opacity-50"
           >
             Cancelar
-          </button>
-          <button
+          </AppButton>
+
+          <AppButton
             type="submit"
             form="nueva-gestion-form"
-            disabled={busy}
-            className="flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-black transition hover:bg-neutral-200 disabled:opacity-50"
+            variant="primary"
+            size="lg"
+            loading={busy}
+            loadingLabel="Creando"
           >
-            {busy && (
-              <AppSpinner
-                size="sm"
-                className="text-black"
-              />
-            )}
-            {correctionContext ? "Crear y corregir" : "Crear y comenzar"}
-          </button>
+            {correctionContext
+              ? "Crear y corregir"
+              : "Crear y comenzar"}
+          </AppButton>
         </div>
       }
     >
@@ -161,11 +160,11 @@ export default function NuevaGestionModal({
         )}
 
         {correctionContext && (
-          <div className="sm:col-span-2 rounded-2xl border border-red-500/25 bg-red-500/10 p-4">
-            <p className="text-xs font-bold uppercase tracking-wider text-red-300">
+          <div className="sm:col-span-2 rounded-2xl border border-red-200 bg-red-50 p-4">
+            <p className="text-xs font-bold uppercase tracking-wider text-red-800">
               Concepto técnico que debes corregir
             </p>
-            <p className="mt-2 text-sm leading-6 text-neutral-200">
+            <p className="mt-2 text-sm leading-6 text-slate-700">
               {correctionContext.conceptoTecnico ||
                 "El revisor solicitó una nueva evaluación del aspecto."}
             </p>
@@ -173,7 +172,7 @@ export default function NuevaGestionModal({
         )}
 
         <label>
-          <span className="mb-1.5 block text-xs font-medium text-neutral-400">
+          <span className="mb-1.5 block text-xs font-medium text-slate-600">
             Fecha de la gestión *
           </span>
           <input
@@ -188,7 +187,7 @@ export default function NuevaGestionModal({
         </label>
 
         <label>
-          <span className="mb-1.5 block text-xs font-medium text-neutral-400">
+          <span className="mb-1.5 block text-xs font-medium text-slate-600">
             Modalidad *
           </span>
           <AppSelect
@@ -209,7 +208,7 @@ export default function NuevaGestionModal({
         </label>
 
         <label className="sm:col-span-2">
-          <span className="mb-1.5 block text-xs font-medium text-neutral-400">
+          <span className="mb-1.5 block text-xs font-medium text-slate-600">
             Actividad realizada *
           </span>
           <input
@@ -224,7 +223,7 @@ export default function NuevaGestionModal({
         </label>
 
         <label className="sm:col-span-2">
-          <span className="mb-1.5 block text-xs font-medium text-neutral-400">
+          <span className="mb-1.5 block text-xs font-medium text-slate-600">
             Categoría principal de gestión
           </span>
           <AppSelect
@@ -243,7 +242,7 @@ export default function NuevaGestionModal({
         </label>
 
         <label className="sm:col-span-2">
-          <span className="mb-1.5 block text-xs font-medium text-neutral-400">
+          <span className="mb-1.5 block text-xs font-medium text-slate-600">
             Observación general
           </span>
           <textarea
