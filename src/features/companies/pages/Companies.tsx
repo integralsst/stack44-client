@@ -113,6 +113,7 @@ export default function Companies() {
 
   const canOpenEvaluation = hasRole(
     "PROFESSIONAL",
+    "COORDINATOR",
     "ADMIN",
     "OWNER",
     "SUPERADMIN"
