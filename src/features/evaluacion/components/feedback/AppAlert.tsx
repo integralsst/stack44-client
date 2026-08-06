@@ -31,35 +31,27 @@ const styles: Record<
 > = {
   info: {
     icon: Info,
-    wrapper:
-      "border-cyan-400/15 bg-cyan-400/[0.07]",
-    iconBox:
-      "border-cyan-400/20 bg-cyan-400/10 text-cyan-300",
-    title: "text-cyan-100",
+    wrapper: "border-cyan-200 bg-cyan-50",
+    iconBox: "border-cyan-200 bg-white text-cyan-700",
+    title: "text-cyan-900",
   },
   success: {
     icon: CheckCircle2,
-    wrapper:
-      "border-emerald-400/15 bg-emerald-400/[0.07]",
-    iconBox:
-      "border-emerald-400/20 bg-emerald-400/10 text-emerald-300",
-    title: "text-emerald-100",
+    wrapper: "border-emerald-200 bg-emerald-50",
+    iconBox: "border-emerald-200 bg-white text-emerald-700",
+    title: "text-emerald-900",
   },
   warning: {
     icon: AlertTriangle,
-    wrapper:
-      "border-amber-400/15 bg-amber-400/[0.07]",
-    iconBox:
-      "border-amber-400/20 bg-amber-400/10 text-amber-300",
-    title: "text-amber-100",
+    wrapper: "border-amber-200 bg-amber-50",
+    iconBox: "border-amber-200 bg-white text-amber-700",
+    title: "text-amber-950",
   },
   error: {
     icon: AlertCircle,
-    wrapper:
-      "border-red-400/15 bg-red-400/[0.07]",
-    iconBox:
-      "border-red-400/20 bg-red-400/10 text-red-300",
-    title: "text-red-100",
+    wrapper: "border-red-200 bg-red-50",
+    iconBox: "border-red-200 bg-white text-red-700",
+    title: "text-red-900",
   },
 };
 
@@ -75,30 +67,31 @@ export default function AppAlert({
 
   return (
     <div
-      className={`rounded-2xl border p-3 shadow-[0_18px_50px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:p-4 ${current.wrapper} ${className}`}
+      role={tone === "error" ? "alert" : "status"}
+      className={`rounded-2xl border p-3 shadow-[0_12px_32px_rgba(15,23,42,0.08)] sm:p-4 ${current.wrapper} ${className}`}
     >
       <div className="flex items-start gap-3">
         <div
           className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border ${current.iconBox}`}
         >
-          <Icon size={16} />
+          <Icon size={16} aria-hidden="true" />
         </div>
 
         <div className="min-w-0 flex-1">
           <p
-            className={`text-sm font-semibold ${current.title}`}
+            className={`break-words text-sm font-semibold ${current.title}`}
           >
             {title}
           </p>
 
           {description && (
-            <p className="mt-1 text-xs leading-5 text-neutral-400">
+            <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-5 text-slate-600">
               {description}
             </p>
           )}
 
           {children && (
-            <div className="mt-2">{children}</div>
+            <div className="mt-3">{children}</div>
           )}
         </div>
       </div>
