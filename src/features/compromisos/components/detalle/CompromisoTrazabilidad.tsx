@@ -139,8 +139,8 @@ function TraceSection({
   const hasItems = items.some(Boolean);
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center gap-2">
+    <details className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <summary className="flex cursor-pointer list-none items-center gap-2">
         <Icon
           size={18}
           className="text-cyan-700"
@@ -148,7 +148,10 @@ function TraceSection({
         <h2 className="text-base font-bold text-slate-950">
           {title}
         </h2>
-      </div>
+        <span className="ml-auto text-xs font-semibold text-slate-500">
+          Ver detalle
+        </span>
+      </summary>
       <div className="mt-4 space-y-3">
         {hasItems ? (
           children
@@ -158,7 +161,7 @@ function TraceSection({
           </p>
         )}
       </div>
-    </section>
+    </details>
   );
 }
 
