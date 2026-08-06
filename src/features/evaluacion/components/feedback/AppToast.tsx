@@ -95,7 +95,7 @@ export default function AppToast({
   const Icon = current.icon;
 
   return createPortal(
-    <div className="pointer-events-none fixed inset-x-3 top-3 z-[12000] flex justify-center sm:inset-x-auto sm:right-5 sm:top-5 sm:block">
+    <div className="pointer-events-none fixed left-3 right-3 top-3 z-[12000] flex justify-center sm:left-auto sm:right-5 sm:top-5 sm:w-[32rem] sm:max-w-[calc(100vw-2.5rem)] sm:block">
       <div
         role={tone === "error" ? "alert" : "status"}
         aria-live={tone === "error" ? "assertive" : "polite"}
