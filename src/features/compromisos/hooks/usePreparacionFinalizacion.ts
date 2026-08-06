@@ -35,7 +35,9 @@ export function usePreparacionFinalizacion() {
   const cargar = useCallback(
     async (gestionId: string) => {
       if (!token) {
-        return null;
+        throw new Error(
+          "No hay una sesión activa para preparar la finalización."
+        );
       }
 
       setCargando(true);
