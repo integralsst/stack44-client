@@ -1,6 +1,7 @@
 import {
   BriefcaseBusiness,
   Building2,
+  ClipboardList,
   ChevronLeft,
   ChevronRight,
   FileText,
@@ -83,6 +84,14 @@ export default function DashboardLayout() {
 
   const canViewInformes = user.role !== "USER";
 
+  const canSuperviseCommitments =
+    isInternal ||
+    user.role === "COORDINATOR";
+
+  const canViewOwnCommitments =
+    canSuperviseCommitments ||
+    user.role === "PROFESSIONAL";
+
   const items = [
     {
       to: "/dashboard",
@@ -103,6 +112,20 @@ export default function DashboardLayout() {
       label: "Informes",
       icon: FileText,
       visible: canViewInformes,
+      exact: false,
+    },
+    {
+      to: "/dashboard/compromisos",
+      label: "Compromisos",
+      icon: ClipboardList,
+      visible: canSuperviseCommitments,
+      exact: true,
+    },
+    {
+      to: "/dashboard/mis-compromisos",
+      label: "Mis compromisos",
+      icon: ClipboardList,
+      visible: canViewOwnCommitments,
       exact: false,
     },
     {
