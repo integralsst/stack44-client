@@ -107,6 +107,7 @@ const USER_MANAGEMENT_ROLES: UserRole[] = [
 
 const SUPERMATRIZ_ROLES: UserRole[] = [
   "PROFESSIONAL",
+  "COORDINATOR",
   "ADMIN",
   "OWNER",
   "SUPERADMIN",
@@ -114,6 +115,7 @@ const SUPERMATRIZ_ROLES: UserRole[] = [
 
 const EVALUACION_ROLES: UserRole[] = [
   "PROFESSIONAL",
+  "COORDINATOR",
   "ADMIN",
   "OWNER",
   "SUPERADMIN",
@@ -123,6 +125,7 @@ const INFORMES_ROLES: UserRole[] = [
   "CLIENT_USER",
   "CLIENT_ADMIN",
   "PROFESSIONAL",
+  "COORDINATOR",
   "ADMIN",
   "OWNER",
   "SUPERADMIN",
