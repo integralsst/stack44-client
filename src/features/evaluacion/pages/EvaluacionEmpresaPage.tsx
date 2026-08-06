@@ -17,6 +17,9 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import AppModal from "../../../components/ui/AppModal";
 import { useAuth } from "../../auth/context/AuthContext";
+import CompromisosFinalizacionModal from "../../compromisos/components/finalizacion/CompromisosFinalizacionModal";
+import { usePreparacionFinalizacion } from "../../compromisos/hooks/usePreparacionFinalizacion";
+import type { CompromisoFinalizacionInput } from "../../compromisos/types/compromiso.types";
 import DetalleAspectoDrawer from "../components/detalle/DetalleAspectoDrawer";
 import EvaluacionEmpresaHeader from "../components/EvaluacionEmpresaHeader";
 import AppAlert from "../components/feedback/AppAlert";
@@ -101,11 +104,14 @@ export default function EvaluacionEmpresaPage() {
     abrirPeriodo,
     crearGestion,
     guardar,
-    finalizar,
   } = useEvaluacionEmpresa(empresaId, anio);
+
+  const finalizacionCompromisos =
+    usePreparacionFinalizacion();
 
   const puedeEvaluar = hasRole(
     "PROFESSIONAL",
+    "COORDINATOR",
     "ADMIN",
     "OWNER",
     "SUPERADMIN"
@@ -113,6 +119,7 @@ export default function EvaluacionEmpresaPage() {
 
   const puedeVerRevisiones = hasRole(
     "PROFESSIONAL",
+    "COORDINATOR",
     "ADMIN",
     "OWNER",
     "SUPERADMIN"
@@ -134,12 +141,55 @@ export default function EvaluacionEmpresaPage() {
     informesModalOpen && Boolean(contexto?.periodo)
   );
 
-  const finalizarConRevisiones = async () => {
-    await finalizar();
+  const recargarDespuesDeFinalizar = async () => {
     await Promise.all([
+      recargar(),
       revisiones.recargar(),
       resultados.recargar(),
     ]);
+  };
+
+  const completarFinalizacion = async (
+    compromisos: CompromisoFinalizacionInput[]
+  ) => {
+    const gestionId = contexto?.gestionActiva?.id;
+
+    if (!gestionId) {
+      throw new Error(
+        "No hay una gestión en borrador para finalizar."
+      );
+    }
+
+    await finalizacionCompromisos.finalizar(
+      gestionId,
+      {
+        compromisos,
+      }
+    );
+    await recargarDespuesDeFinalizar();
+  };
+
+  const prepararFinalizacion = async () => {
+    const gestionId = contexto?.gestionActiva?.id;
+
+    if (!gestionId) {
+      throw new Error(
+        "No hay una gestión en borrador para finalizar."
+      );
+    }
+
+    const preparacion =
+      await finalizacionCompromisos.cargar(gestionId);
+
+    if (!preparacion) {
+      throw new Error(
+        "No fue posible preparar la finalización."
+      );
+    }
+
+    if (preparacion.totalNuevos === 0) {
+      await completarFinalizacion([]);
+    }
   };
 
   const recargarDespuesDeInvalidar = async () => {
@@ -449,15 +499,32 @@ export default function EvaluacionEmpresaPage() {
           <MatrizEvaluacion
             filas={contexto.filas}
             gestionActiva={Boolean(contexto.gestionActiva)}
-            procesando={procesando}
+            procesando={
+              procesando ||
+              finalizacionCompromisos.cargando ||
+              finalizacionCompromisos.finalizando
+            }
             onGuardar={guardar}
-            onFinalizar={finalizarConRevisiones}
+            onFinalizar={prepararFinalizacion}
             onAbrirDetalle={(fila) =>
               setTareaDetalleId(fila.tareaId)
             }
           />
         </>
       )}
+
+      {finalizacionCompromisos.preparacion &&
+        finalizacionCompromisos.preparacion.totalNuevos > 0 && (
+          <CompromisosFinalizacionModal
+            preparacion={
+              finalizacionCompromisos.preparacion
+            }
+            busy={finalizacionCompromisos.finalizando}
+            error={finalizacionCompromisos.error}
+            onClose={finalizacionCompromisos.limpiar}
+            onSubmit={completarFinalizacion}
+          />
+        )}
 
       <NuevaGestionModal
         open={gestionModalOpen}
