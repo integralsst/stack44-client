@@ -13,7 +13,11 @@ import {
   useEffect,
   useState,
 } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import {
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 
 import AppModal from "../../../components/ui/AppModal";
 import { useAuth } from "../../auth/context/AuthContext";
@@ -75,10 +79,22 @@ function enfocarAspectoEnMatriz(aspectoNombre: string) {
 export default function EvaluacionEmpresaPage() {
   const { empresaId } = useParams<{ empresaId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { hasRole } = useAuth();
+  const anioSolicitado = Number(
+    searchParams.get("anio")
+  );
+  const aspectoParaRecalificar =
+    searchParams.get("aspecto")?.trim() || null;
+  const compromisoParaRecalificar =
+    searchParams.get("compromiso")?.trim() || null;
 
-  const [anio, setAnio] = useState(
-    new Date().getFullYear()
+  const [anio, setAnio] = useState(() =>
+    Number.isInteger(anioSolicitado) &&
+    anioSolicitado >= 2000 &&
+    anioSolicitado <= 2100
+      ? anioSolicitado
+      : new Date().getFullYear()
   );
   const [gestionModalOpen, setGestionModalOpen] =
     useState(false);
@@ -220,6 +236,37 @@ export default function EvaluacionEmpresaPage() {
   );
 
   useEffect(() => {
+    if (
+      Number.isInteger(anioSolicitado) &&
+      anioSolicitado >= 2000 &&
+      anioSolicitado <= 2100 &&
+      anioSolicitado !== anio
+    ) {
+      setAnio(anioSolicitado);
+    }
+  }, [anio, anioSolicitado]);
+
+  useEffect(() => {
+    if (
+      !contexto?.gestionActiva ||
+      !aspectoParaRecalificar
+    ) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      enfocarAspectoEnMatriz(
+        aspectoParaRecalificar
+      );
+    }, 500);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    aspectoParaRecalificar,
+    contexto?.gestionActiva,
+  ]);
+
+  useEffect(() => {
     if (!contexto?.gestionActiva || !revisionCorreccion) {
       return;
     }
@@ -291,6 +338,51 @@ export default function EvaluacionEmpresaPage() {
       )}
 
       <ResumenEvaluacion resumen={contexto.resumen} />
+
+      {aspectoParaRecalificar && puedeEvaluar && (
+        <AppAlert
+          tone="warning"
+          title={`Recalificación pendiente: ${aspectoParaRecalificar}`}
+          description={
+            contexto.gestionActiva
+              ? "Ya tienes una gestión en borrador. Ve directamente al aspecto, registra la nueva calificación en 5 y finaliza la gestión."
+              : "Crea una nueva gestión de seguimiento; después la aplicación resaltará el aspecto exacto que debes recalificar en 5."
+          }
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            <button
+              type="button"
+              onClick={() => {
+                if (contexto.gestionActiva) {
+                  enfocarAspectoEnMatriz(
+                    aspectoParaRecalificar
+                  );
+                } else {
+                  setGestionModalOpen(true);
+                }
+              }}
+              className="rounded-xl bg-amber-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-amber-800"
+            >
+              {contexto.gestionActiva
+                ? "Ir al aspecto"
+                : "Crear gestión para recalificar"}
+            </button>
+            {compromisoParaRecalificar && (
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    `/dashboard/compromisos/${compromisoParaRecalificar}`
+                  )
+                }
+                className="rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-bold text-amber-900 transition hover:bg-amber-50"
+              >
+                Ver compromiso
+              </button>
+            )}
+          </div>
+        </AppAlert>
+      )}
 
       {(contexto.resumen.pendientesVigencia ?? 0) > 0 && (
         <AppAlert
@@ -540,7 +632,15 @@ export default function EvaluacionEmpresaPage() {
                     .categoriaGestion?.id ?? null,
                 observacionGeneral: `Corrección solicitada mediante revisión técnica.\n\nConcepto: ${revisionCorreccion.conceptoTecnico ?? "Pendiente de corrección."}`,
               }
-            : null
+            : aspectoParaRecalificar
+              ? {
+                  modalidad: "SEGUIMIENTO_PUNTUAL",
+                  tipoActividad: `Recalificación de compromiso · ${aspectoParaRecalificar}`,
+                  categoriaGestionId: null,
+                  observacionGeneral:
+                    "Seguimiento para verificar el cumplimiento del compromiso y registrar la calificación posterior.",
+                }
+              : null
         }
         correctionContext={
           revisionCorreccion
