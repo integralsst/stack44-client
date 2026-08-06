@@ -1,5 +1,7 @@
 import {
   CheckCheck,
+  CheckCircle2,
+  Circle,
   CornerDownLeft,
   Send,
 } from "lucide-react";
@@ -33,6 +35,11 @@ export default function CierreCompromisoPanel({
   const pendiente = compromiso.solicitudesCierre.find(
     (solicitud) => solicitud.estado === "PENDIENTE"
   );
+  const puedeVerSolicitud =
+    compromiso.estado === "EN_EJECUCION" &&
+    (compromiso.operacion.esSupervisor ||
+      compromiso.operacion
+        .puedeRegistrarSeguimiento);
 
   const decidir = async (
     decision: "APROBAR" | "DEVOLVER"
@@ -61,7 +68,7 @@ export default function CierreCompromisoPanel({
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-cyan-700">
-            Cierre formal
+            Paso 4 · Cierre formal
           </p>
           <h2 className="mt-1 text-base font-bold text-slate-950">
             Solicitud y decisión de cierre
@@ -70,8 +77,7 @@ export default function CierreCompromisoPanel({
             Una recalificación en 5 no cierra automáticamente el compromiso. Primero deben completarse las actividades y luego un supervisor diferente debe revisar la solicitud.
           </p>
         </div>
-        {compromiso.operacion
-          .puedeSolicitarCierre && (
+        {puedeVerSolicitud && (
           <AppButton
             variant="success"
             leadingIcon={<Send size={16} />}
@@ -80,21 +86,63 @@ export default function CierreCompromisoPanel({
             }
             loadingLabel="Solicitando"
             onClick={() => void onRequestClose()}
+            disabled={
+              Boolean(procesando) ||
+              !compromiso.operacion
+                .puedeSolicitarCierre
+            }
           >
-            Solicitar cierre
+            {compromiso.operacion.esUsuarioCliente
+              ? "Solicitar revisión de cierre"
+              : "Solicitar cierre"}
           </AppButton>
         )}
       </div>
 
       {!pendiente &&
-        compromiso.estado === "EN_EJECUCION" &&
-        !compromiso.operacion
-          .puedeSolicitarCierre && (
-          <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-            {compromiso.operacion
-              .motivoBloqueoCierre ??
-              "El cierre todavía no está disponible."}
-          </p>
+        compromiso.estado === "EN_EJECUCION" && (
+          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm font-bold text-slate-900">
+              Requisitos para habilitar la solicitud
+            </p>
+            <div className="mt-3 grid gap-2 md:grid-cols-2">
+              <Requisito
+                listo={
+                  compromiso.progreso
+                    .actividadesTotal > 0 &&
+                  compromiso.progreso
+                    .actividadesPendientes === 0
+                }
+                texto={
+                  compromiso.progreso
+                    .actividadesPendientes === 0
+                    ? "Todas las actividades están completas."
+                    : "Faltan " +
+                      compromiso.progreso
+                        .actividadesPendientes +
+                      " actividad(es) por completar."
+                }
+              />
+              <Requisito
+                listo={
+                  compromiso.progreso
+                    .aspectoRecalificadoEnCinco
+                }
+                texto={
+                  compromiso.progreso
+                    .aspectoRecalificadoEnCinco
+                    ? "El aspecto ya fue recalificado en 5."
+                    : "Falta una evaluación posterior del aspecto en 5."
+                }
+              />
+            </div>
+            {!compromiso.operacion
+              .puedeSolicitarCierre && (
+              <p className="mt-3 text-xs leading-5 text-slate-600">
+                El botón permanecerá deshabilitado hasta cumplir ambos requisitos. Las evidencias son soporte recomendado, no un requisito automático.
+              </p>
+            )}
+          </div>
         )}
 
       {pendiente && (
@@ -169,5 +217,37 @@ export default function CierreCompromisoPanel({
         </p>
       )}
     </section>
+  );
+}
+
+function Requisito({
+  listo,
+  texto,
+}: {
+  listo: boolean;
+  texto: string;
+}) {
+  return (
+    <div
+      className={
+        "flex items-start gap-2 rounded-lg border p-3 text-sm " +
+        (listo
+          ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+          : "border-amber-200 bg-amber-50 text-amber-900")
+      }
+    >
+      {listo ? (
+        <CheckCircle2
+          size={17}
+          className="mt-0.5 shrink-0"
+        />
+      ) : (
+        <Circle
+          size={17}
+          className="mt-0.5 shrink-0"
+        />
+      )}
+      <span>{texto}</span>
+    </div>
   );
 }

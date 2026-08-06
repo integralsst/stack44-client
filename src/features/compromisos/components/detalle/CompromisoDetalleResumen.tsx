@@ -1,4 +1,5 @@
 import {
+  BadgeCheck,
   Building2,
   CalendarClock,
   ClipboardCheck,
@@ -42,6 +43,41 @@ export default function CompromisoDetalleResumen({
         <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-slate-700">
           {compromiso.descripcion}
         </p>
+        <div className="mt-4 rounded-xl border border-cyan-200 bg-cyan-50 p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-cyan-700 shadow-sm">
+              <BadgeCheck size={18} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold uppercase tracking-wide text-cyan-800">
+                Calificación de origen
+              </p>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                <p className="text-sm text-slate-700">
+                  Nota administrativa:{" "}
+                  <strong className="text-slate-950">
+                    {compromiso.evaluacionOrigen.calificacionAdministrativa}
+                  </strong>
+                </p>
+                <p className="text-sm text-slate-700">
+                  Resultado:{" "}
+                  <strong className="text-slate-950">
+                    {formatearEstadoOrigen(
+                      compromiso.evaluacionOrigen
+                        .estadoCumplimiento
+                    )}
+                  </strong>
+                </p>
+              </div>
+              {compromiso.evaluacionOrigen.observacion && (
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                  Observación original:{" "}
+                  {compromiso.evaluacionOrigen.observacion}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
         {compromiso.recursos && (
           <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -90,6 +126,22 @@ export default function CompromisoDetalleResumen({
         />
       </section>
     </div>
+  );
+}
+
+function formatearEstadoOrigen(
+  estado: string
+): string {
+  const etiquetas: Record<string, string> = {
+    CUMPLIDO: "Cumplido",
+    PARCIAL: "Parcial",
+    NO_CUMPLE: "No cumple",
+    NO_APLICA: "No aplica",
+  };
+
+  return (
+    etiquetas[estado] ??
+    estado.replaceAll("_", " ").toLowerCase()
   );
 }
 

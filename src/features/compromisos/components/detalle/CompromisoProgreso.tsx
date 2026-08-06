@@ -23,7 +23,7 @@ export default function CompromisoProgreso({
           Estado real del compromiso
         </h2>
         <p className="mt-1 text-sm text-slate-600">
-          El avance se construye con actividades, evidencias y recalificación; no se diligencia un porcentaje manual.
+          El cierre exige completar todas las actividades y contar con una recalificación posterior en 5. Las evidencias respaldan la gestión, pero no son un requisito automático de cierre.
         </p>
       </div>
 
@@ -39,9 +39,14 @@ export default function CompromisoProgreso({
         />
         <ProgressCard
           icon={FileCheck2}
-          label="Evidencias vinculadas"
-          value={String(progreso.evidencias)}
+          label="Evidencia de soporte"
+          value={
+            progreso.evidencias > 0
+              ? String(progreso.evidencias)
+              : "Opcional"
+          }
           ready={progreso.evidencias > 0}
+          optional
         />
         <ProgressCard
           icon={RefreshCcw}
@@ -65,6 +70,7 @@ interface ProgressCardProps {
   label: string;
   value: string;
   ready: boolean;
+  optional?: boolean;
 }
 
 function ProgressCard({
@@ -72,12 +78,15 @@ function ProgressCard({
   label,
   value,
   ready,
+  optional = false,
 }: ProgressCardProps) {
   return (
     <article
       className={`rounded-xl border p-4 ${
         ready
           ? "border-emerald-200 bg-emerald-50"
+          : optional
+            ? "border-slate-200 bg-slate-50"
           : "border-amber-200 bg-amber-50"
       }`}
     >
@@ -87,6 +96,8 @@ function ProgressCard({
           className={
             ready
               ? "text-emerald-700"
+              : optional
+                ? "text-slate-500"
               : "text-amber-700"
           }
         />

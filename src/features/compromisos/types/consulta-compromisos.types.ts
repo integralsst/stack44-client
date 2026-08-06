@@ -221,6 +221,7 @@ export interface CompromisoDetalle
     puedeSolicitarCierre: boolean;
     puedeDecidirCierre: boolean;
     esSupervisor: boolean;
+    esUsuarioCliente: boolean;
     usuarioId: string;
     motivoBloqueoCierre: string | null;
   };

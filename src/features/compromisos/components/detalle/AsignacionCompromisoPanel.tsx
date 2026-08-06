@@ -95,11 +95,11 @@ export default function AsignacionCompromisoPanel({
   };
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <details className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <summary className="cursor-pointer list-none">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-cyan-700">
-            Asignación
+            Más acciones
           </p>
           <h2 className="mt-1 text-base font-bold text-slate-950">
             Rechazo y reasignación
@@ -108,20 +108,24 @@ export default function AsignacionCompromisoPanel({
             La fecha límite continúa corriendo y cada cambio conserva su trazabilidad.
           </p>
         </div>
+      </summary>
+
+      <div className="mt-4 border-t border-slate-200 pt-4">
         {compromiso.operacion
           .puedeRechazarAsignacion && (
-          <AppButton
-            variant="danger"
-            leadingIcon={<UserRoundX size={16} />}
-            onClick={() =>
-              setMostrarRechazo((current) => !current)
-            }
-            disabled={Boolean(procesando)}
-          >
-            Rechazar asignación
-          </AppButton>
+          <div className="flex justify-end">
+            <AppButton
+              variant="danger"
+              leadingIcon={<UserRoundX size={16} />}
+              onClick={() =>
+                setMostrarRechazo((current) => !current)
+              }
+              disabled={Boolean(procesando)}
+            >
+              Rechazar asignación
+            </AppButton>
+          </div>
         )}
-      </div>
 
       {mostrarRechazo && (
         <form
@@ -228,6 +232,7 @@ export default function AsignacionCompromisoPanel({
           {error}
         </p>
       )}
-    </section>
+      </div>
+    </details>
   );
 }

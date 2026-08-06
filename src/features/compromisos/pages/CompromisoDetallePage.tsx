@@ -13,9 +13,9 @@ import AsignacionCompromisoPanel from "../components/detalle/AsignacionCompromis
 import CierreCompromisoPanel from "../components/detalle/CierreCompromisoPanel";
 import CompromisoProgreso from "../components/detalle/CompromisoProgreso";
 import CompromisoResponsables from "../components/detalle/CompromisoResponsables";
+import CompromisoRutaTrabajo from "../components/detalle/CompromisoRutaTrabajo";
 import CompromisoTrazabilidad from "../components/detalle/CompromisoTrazabilidad";
-import EvidenciaCompromisoForm from "../components/detalle/EvidenciaCompromisoForm";
-import SeguimientoCompromisoForm from "../components/detalle/SeguimientoCompromisoForm";
+import RegistroAvanceCompromiso from "../components/detalle/RegistroAvanceCompromiso";
 import AppToast from "../../evaluacion/components/feedback/AppToast";
 import { useCompromisoDetalle } from "../hooks/useCompromisoDetalle";
 import { useOperacionesCompromiso } from "../hooks/useOperacionesCompromiso";
@@ -121,6 +121,9 @@ export default function CompromisoDetallePage() {
       <CompromisoDetalleResumen
         compromiso={detalle.data}
       />
+      <CompromisoRutaTrabajo
+        compromiso={detalle.data}
+      />
       <CompromisoProgreso
         progreso={detalle.data.progreso}
       />
@@ -134,38 +137,16 @@ export default function CompromisoDetallePage() {
           operaciones.cambiarActividad
         }
       />
-      {(detalle.data.operacion
-        .puedeRegistrarSeguimiento ||
-        detalle.data.operacion
-          .puedeCargarEvidencia) && (
-        <div className="grid gap-4 xl:grid-cols-2">
-          {detalle.data.operacion
-            .puedeRegistrarSeguimiento && (
-            <SeguimientoCompromisoForm
-              compromiso={detalle.data}
-              busy={
-                operaciones.procesando ===
-                "seguimiento"
-              }
-              onSubmit={
-                operaciones.crearSeguimiento
-              }
-            />
-          )}
-          {detalle.data.operacion
-            .puedeCargarEvidencia && (
-            <EvidenciaCompromisoForm
-              busy={
-                operaciones.procesando ===
-                "evidencia"
-              }
-              onSubmit={
-                operaciones.crearEvidencia
-              }
-            />
-          )}
-        </div>
-      )}
+      <RegistroAvanceCompromiso
+        compromiso={detalle.data}
+        procesando={operaciones.procesando}
+        onCreateFollowUp={
+          operaciones.crearSeguimiento
+        }
+        onCreateEvidence={
+          operaciones.crearEvidencia
+        }
+      />
       <AsignacionCompromisoPanel
         compromiso={detalle.data}
         procesando={operaciones.procesando}
