@@ -957,6 +957,7 @@ function roleLabel(role: UserRole): string {
     CLIENT_USER: "Usuario cliente",
     CLIENT_ADMIN: "Administrador cliente",
     PROFESSIONAL: "Profesional",
+    COORDINATOR: "Coordinador",
     ADMIN: "Administrador interno",
     OWNER: "Propietario",
     SUPERADMIN: "Superadministrador",
@@ -979,6 +980,8 @@ function RoleBadge({
       "border-blue-500/20 bg-blue-500/10 text-blue-400",
     PROFESSIONAL:
       "border-emerald-500/20 bg-emerald-500/10 text-emerald-400",
+    COORDINATOR:
+      "border-cyan-500/20 bg-cyan-500/10 text-cyan-400",
     ADMIN:
       "border-indigo-500/20 bg-indigo-500/10 text-indigo-400",
     OWNER:

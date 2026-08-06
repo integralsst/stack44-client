@@ -78,7 +78,8 @@ export default function DashboardLayout() {
 
   const canViewSupermatriz =
     isInternal ||
-    user.role === "PROFESSIONAL";
+    user.role === "PROFESSIONAL" ||
+    user.role === "COORDINATOR";
 
   const canViewInformes = user.role !== "USER";
 

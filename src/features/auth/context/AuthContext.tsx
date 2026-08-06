@@ -17,6 +17,7 @@ export type UserRole =
   | "CLIENT_USER"
   | "CLIENT_ADMIN"
   | "PROFESSIONAL"
+  | "COORDINATOR"
   | "ADMIN"
   | "OWNER"
   | "SUPERADMIN";
@@ -24,6 +25,17 @@ export type UserRole =
 // ======================================================
 // TIPOS RELACIONADOS
 // ======================================================
+
+export type BackendUserRole =
+  | "USUARIO"
+  | "USUARIO_CLIENTE"
+  | "ADMIN_CLIENTE"
+  | "PROFESIONAL"
+  | "COORDINADOR"
+  | "ADMIN"
+  | "PROPIETARIO"
+  | "SUPERADMIN";
+
 
 export interface CompanySummary {
   id: string;
@@ -47,6 +59,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  rol?: BackendUserRole;
 
   companyId: string | null;
   professionalId: string | null;
@@ -104,6 +117,31 @@ const API_URL = (
   import.meta.env.VITE_API_URL as string | undefined
 )?.replace(/\/$/, "");
 
+const USER_ROLE_BY_BACKEND_ROLE: Record<
+  BackendUserRole,
+  UserRole
+> = {
+  USUARIO: "USER",
+  USUARIO_CLIENTE: "CLIENT_USER",
+  ADMIN_CLIENTE: "CLIENT_ADMIN",
+  PROFESIONAL: "PROFESSIONAL",
+  COORDINADOR: "COORDINATOR",
+  ADMIN: "ADMIN",
+  PROPIETARIO: "OWNER",
+  SUPERADMIN: "SUPERADMIN",
+};
+
+function normalizeUser(user: User): User {
+  const role = user.rol
+    ? USER_ROLE_BY_BACKEND_ROLE[user.rol]
+    : user.role;
+
+  return {
+    ...user,
+    role,
+  };
+}
+
 function saveSession(user: User, token: string): void {
   localStorage.setItem(TOKEN_STORAGE_KEY, token);
   localStorage.setItem(
@@ -125,7 +163,9 @@ function getStoredUser(): User | null {
   }
 
   try {
-    return JSON.parse(storedUser) as User;
+    return normalizeUser(
+      JSON.parse(storedUser) as User
+    );
   } catch {
     localStorage.removeItem(USER_STORAGE_KEY);
     return null;
@@ -161,9 +201,12 @@ export function AuthProvider({
 
   const login = useCallback(
     (userData: User, newToken: string) => {
-      setUser(userData);
+      const normalizedUser =
+        normalizeUser(userData);
+
+      setUser(normalizedUser);
       setToken(newToken);
-      saveSession(userData, newToken);
+      saveSession(normalizedUser, newToken);
     },
     []
   );
@@ -202,8 +245,9 @@ export function AuthProvider({
         return;
       }
 
-      const currentUser =
-        (await response.json()) as User;
+      const currentUser = normalizeUser(
+        (await response.json()) as User
+      );
 
       setUser(currentUser);
       setToken(storedToken);
@@ -270,7 +314,10 @@ export function AuthProvider({
   }, [hasRole]);
 
   const isProfessional = useMemo(() => {
-    return hasRole("PROFESSIONAL");
+    return hasRole(
+      "PROFESSIONAL",
+      "COORDINATOR"
+    );
   }, [hasRole]);
 
   const isClientUser = useMemo(() => {
