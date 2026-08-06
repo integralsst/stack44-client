@@ -22,18 +22,18 @@ export default function EvidenciaEvaluacionCard({
   onRemove: () => void;
 }) {
   return (
-    <article className="rounded-2xl border border-neutral-800 bg-[#101112] p-4">
+    <article className="rounded-2xl border border-slate-200 bg-white p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h4 className="break-words text-sm font-semibold text-white">
+            <h4 className="break-words text-sm font-semibold text-slate-950">
               {evidence.nombre}
             </h4>
             <span
               className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[8px] font-bold uppercase tracking-wider ${
                 evidence.visibleCliente
-                  ? "bg-emerald-500/10 text-emerald-300"
-                  : "bg-neutral-800 text-neutral-500"
+                  ? "bg-emerald-500/10 text-emerald-800"
+                  : "bg-slate-100 text-slate-600"
               }`}
             >
               {evidence.visibleCliente ? (
@@ -47,7 +47,7 @@ export default function EvidenciaEvaluacionCard({
             </span>
           </div>
           {evidence.descripcion && (
-            <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-neutral-500">
+            <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-slate-600">
               {evidence.descripcion}
             </p>
           )}
@@ -58,7 +58,7 @@ export default function EvidenciaEvaluacionCard({
             <button
               type="button"
               onClick={onEdit}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-neutral-700 bg-neutral-900 text-neutral-400 transition hover:text-white"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 transition hover:text-slate-950"
               aria-label="Editar evidencia"
               title="Editar"
             >
@@ -67,7 +67,7 @@ export default function EvidenciaEvaluacionCard({
             <button
               type="button"
               onClick={onRemove}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-red-500/20 bg-red-500/10 text-red-300 transition hover:bg-red-500/20"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-800 transition hover:bg-red-500/20"
               aria-label="Retirar evidencia"
               title="Retirar"
             >
@@ -77,8 +77,8 @@ export default function EvidenciaEvaluacionCard({
         )}
       </div>
 
-      <div className="mt-4 flex flex-col gap-3 border-t border-neutral-800 pt-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] text-neutral-600">
+      <div className="mt-4 flex flex-col gap-3 border-t border-slate-200 pt-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] text-slate-500">
           <span className="flex items-center gap-1.5">
             <CalendarDays size={12} />
             Documento: {formatDate(evidence.fechaDocumento)}
@@ -91,7 +91,7 @@ export default function EvidenciaEvaluacionCard({
           href={evidence.url}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-300 transition hover:bg-cyan-500/20"
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-500/20"
         >
           Abrir enlace
           <ExternalLink size={13} />
