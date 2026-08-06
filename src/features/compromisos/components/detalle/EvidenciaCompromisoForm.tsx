@@ -12,6 +12,8 @@ import type { CrearEvidenciaCompromisoInput } from "../../types/operacion-compro
 
 interface Props {
   busy: boolean;
+  embedded?: boolean;
+  esUsuarioCliente?: boolean;
   onSubmit: (
     input: CrearEvidenciaCompromisoInput
   ) => Promise<boolean>;
@@ -19,6 +21,8 @@ interface Props {
 
 export default function EvidenciaCompromisoForm({
   busy,
+  embedded = false,
+  esUsuarioCliente = false,
   onSubmit,
 }: Props) {
   const [nombre, setNombre] = useState("");
@@ -66,7 +70,11 @@ export default function EvidenciaCompromisoForm({
   return (
     <form
       onSubmit={(event) => void submit(event)}
-      className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+      className={
+        embedded
+          ? ""
+          : "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+      }
     >
       <div className="flex items-center gap-2">
         <FilePlus2
@@ -145,20 +153,26 @@ export default function EvidenciaCompromisoForm({
         </label>
       </div>
 
-      <label className="mt-3 flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-        <input
-          type="checkbox"
-          checked={visibleCliente}
-          onChange={(event) =>
-            setVisibleCliente(event.target.checked)
-          }
-          disabled={busy}
-          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-cyan-600"
-        />
-        <span className="text-sm text-slate-700">
-          Permitir que el cliente consulte este enlace.
-        </span>
-      </label>
+      {esUsuarioCliente ? (
+        <p className="mt-3 rounded-xl border border-cyan-200 bg-cyan-50 p-3 text-sm text-cyan-900">
+          Esta evidencia quedará visible para tu empresa y para el equipo de SIS.
+        </p>
+      ) : (
+        <label className="mt-3 flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <input
+            type="checkbox"
+            checked={visibleCliente}
+            onChange={(event) =>
+              setVisibleCliente(event.target.checked)
+            }
+            disabled={busy}
+            className="mt-0.5 h-4 w-4 rounded border-slate-300 text-cyan-600"
+          />
+          <span className="text-sm text-slate-700">
+            Permitir que los usuarios autorizados del cliente consulten este enlace.
+          </span>
+        </label>
+      )}
 
       {error && (
         <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
