@@ -4,6 +4,8 @@ import {
   Clock3,
 } from "lucide-react";
 
+import { Link } from "react-router-dom";
+
 import type { CompromisoDetalle } from "../../types/consulta-compromisos.types";
 
 interface Props {
@@ -30,6 +32,18 @@ export default function CompromisoRutaTrabajo({
         responsable.usuarioResponsable.nombre
     )
   );
+  const mostrarAccesoRecalificacion =
+    compromiso.operacion.esSupervisor &&
+    compromiso.estado === "EN_EJECUCION" &&
+    compromiso.progreso.actividadesPendientes === 0 &&
+    !compromiso.progreso.aspectoRecalificadoEnCinco;
+  const rutaRecalificacion =
+    `/dashboard/empresas/${compromiso.empresa.id}/evaluacion?${new URLSearchParams(
+      {
+        compromiso: compromiso.id,
+        aspecto: compromiso.aspecto.nombre,
+      }
+    ).toString()}`;
 
   const pasos = [
     {
@@ -95,13 +109,21 @@ export default function CompromisoRutaTrabajo({
             size={20}
             className="mt-0.5 shrink-0 text-cyan-700"
           />
-          <div>
+          <div className="min-w-0 flex-1">
             <p className="text-xs font-bold uppercase tracking-wider text-cyan-800">
               Siguiente acción
             </p>
             <p className="mt-1 text-sm font-semibold leading-6 text-slate-900">
               {siguienteAccion}
             </p>
+            {mostrarAccesoRecalificacion && (
+              <Link
+                to={rutaRecalificacion}
+                className="mt-3 inline-flex items-center justify-center rounded-xl bg-cyan-700 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-cyan-800"
+              >
+                Ir a recalificar este aspecto
+              </Link>
+            )}
           </div>
         </div>
       </div>
