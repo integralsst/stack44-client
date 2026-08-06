@@ -727,6 +727,7 @@ export default function CompromisosFinalizacionModal({
                               <AppButton
                                 variant="ghost"
                                 size="sm"
+                                aria-label={`Quitar apoyo ${apoyoIndex + 1}`}
                                 leadingIcon={
                                   <Trash2 size={14} />
                                 }
