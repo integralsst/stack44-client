@@ -88,6 +88,27 @@ const InformesGlobalesPage = lazy(
     )
 );
 
+const CompromisosPage = lazy(
+  () =>
+    import(
+      "../features/compromisos/pages/CompromisosPage"
+    )
+);
+
+const MisCompromisosPage = lazy(
+  () =>
+    import(
+      "../features/compromisos/pages/MisCompromisosPage"
+    )
+);
+
+const CompromisoDetallePage = lazy(
+  () =>
+    import(
+      "../features/compromisos/pages/CompromisoDetallePage"
+    )
+);
+
 /* ======================================================
    PERMISOS
 ====================================================== */
@@ -124,6 +145,21 @@ const EVALUACION_ROLES: UserRole[] = [
 const INFORMES_ROLES: UserRole[] = [
   "CLIENT_USER",
   "CLIENT_ADMIN",
+  "PROFESSIONAL",
+  "COORDINATOR",
+  "ADMIN",
+  "OWNER",
+  "SUPERADMIN",
+];
+
+const COMPROMISOS_SUPERVISION_ROLES: UserRole[] = [
+  "COORDINATOR",
+  "ADMIN",
+  "OWNER",
+  "SUPERADMIN",
+];
+
+const MIS_COMPROMISOS_ROLES: UserRole[] = [
   "PROFESSIONAL",
   "COORDINATOR",
   "ADMIN",
@@ -254,6 +290,58 @@ function AppRoutes() {
               element={
                 <RoleGuard allowedRoles={INFORMES_ROLES}>
                   <InformesGlobalesPage />
+                </RoleGuard>
+              }
+            />
+
+            <Route
+              path="compromisos"
+              element={
+                <RoleGuard
+                  allowedRoles={
+                    COMPROMISOS_SUPERVISION_ROLES
+                  }
+                >
+                  <CompromisosPage />
+                </RoleGuard>
+              }
+            />
+
+            <Route
+              path="compromisos/:compromisoId"
+              element={
+                <RoleGuard
+                  allowedRoles={
+                    MIS_COMPROMISOS_ROLES
+                  }
+                >
+                  <CompromisoDetallePage />
+                </RoleGuard>
+              }
+            />
+
+            <Route
+              path="mis-compromisos"
+              element={
+                <RoleGuard
+                  allowedRoles={
+                    MIS_COMPROMISOS_ROLES
+                  }
+                >
+                  <MisCompromisosPage />
+                </RoleGuard>
+              }
+            />
+
+            <Route
+              path="mis-compromisos/:compromisoId"
+              element={
+                <RoleGuard
+                  allowedRoles={
+                    MIS_COMPROMISOS_ROLES
+                  }
+                >
+                  <CompromisoDetallePage />
                 </RoleGuard>
               }
             />
