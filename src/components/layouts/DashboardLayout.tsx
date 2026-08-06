@@ -90,7 +90,9 @@ export default function DashboardLayout() {
 
   const canViewOwnCommitments =
     canSuperviseCommitments ||
-    user.role === "PROFESSIONAL";
+    user.role === "PROFESSIONAL" ||
+    user.role === "CLIENT_ADMIN" ||
+    user.role === "CLIENT_USER";
 
   const items = [
     {
