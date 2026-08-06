@@ -30,9 +30,15 @@ export default function CompromisoResponsables({
 }: Props) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-base font-bold text-slate-950">
-        Responsables y actividades
+      <p className="text-xs font-semibold uppercase tracking-wider text-cyan-700">
+        Paso 1
+      </p>
+      <h2 className="mt-1 text-base font-bold text-slate-950">
+        Completar las actividades asignadas
       </h2>
+      <p className="mt-1 text-sm leading-6 text-slate-600">
+        Cada persona confirma únicamente su propia tarea. Completar una actividad no cierra el compromiso; todas deben quedar completas y después el aspecto debe recalificarse en 5.
+      </p>
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         {responsables.map(
           (responsable) => {
@@ -150,8 +156,12 @@ export default function CompromisoResponsables({
                       }
                     >
                       {atendida
-                        ? "Volver a pendiente"
-                        : "Marcar atendida"}
+                        ? operacion.esSupervisor
+                          ? "Reabrir actividad"
+                          : "Reabrir mi actividad"
+                        : operacion.esSupervisor
+                          ? "Marcar actividad completada"
+                          : "Completar mi actividad"}
                     </AppButton>
                   </div>
                 )}
