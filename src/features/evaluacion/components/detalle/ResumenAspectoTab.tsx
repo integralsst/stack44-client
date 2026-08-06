@@ -73,18 +73,18 @@ export default function ResumenAspectoTab({
 
   return (
     <div className="space-y-4">
-      <section className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4 sm:p-5">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-400">
+      <section className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4 sm:p-5">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-700">
           Estado actual del aspecto
         </p>
         <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="min-w-0">
-            <h3 className="text-lg font-bold leading-7 text-white">
+            <h3 className="text-lg font-bold leading-7 text-slate-950">
               {aspect.nombre}
             </h3>
-            <p className="mt-2 text-sm leading-6 text-neutral-400">
+            <p className="mt-2 text-sm leading-6 text-slate-600">
               Esta fila conecta el aspecto con el proceso{" "}
-              <strong className="text-neutral-200">
+              <strong className="text-slate-800">
                 {task.proceso.nombre}
               </strong>
               . La configuración viene de la Supermatriz y la evaluación corresponde a la empresa seleccionada.
@@ -185,7 +185,7 @@ export default function ResumenAspectoTab({
             label="Responsable sugerido"
             value={
               <span className="flex items-start gap-2">
-                <UserRound size={15} className="mt-1 shrink-0 text-cyan-400" />
+                <UserRound size={15} className="mt-1 shrink-0 text-cyan-700" />
                 {textOrFallback(
                   task.responsableActividad,
                   "No definido"
@@ -197,7 +197,7 @@ export default function ResumenAspectoTab({
             label="Meta esperada"
             value={
               <span className="flex items-start gap-2">
-                <ClipboardCheck size={15} className="mt-1 shrink-0 text-cyan-400" />
+                <ClipboardCheck size={15} className="mt-1 shrink-0 text-cyan-700" />
                 {textOrFallback(task.metasEstandar, "No definida")}
               </span>
             }
@@ -207,7 +207,7 @@ export default function ResumenAspectoTab({
               label="Recursos administrativos"
               value={
                 <span className="flex items-start gap-2">
-                  <Layers3 size={15} className="mt-1 shrink-0 text-cyan-400" />
+                  <Layers3 size={15} className="mt-1 shrink-0 text-cyan-700" />
                   {textOrFallback(
                     task.recursosAdministrativos,
                     "No registrados"
@@ -297,7 +297,7 @@ export default function ResumenAspectoTab({
             label="Evidencia"
             value={
               <span className="flex items-start gap-2">
-                <FileCheck2 size={15} className="mt-1 shrink-0 text-cyan-400" />
+                <FileCheck2 size={15} className="mt-1 shrink-0 text-cyan-700" />
                 {evidence?.requiereEvidencia
                   ? evidence.descripcionEvidencia ||
                     "Se debe adjuntar evidencia."
@@ -309,7 +309,7 @@ export default function ResumenAspectoTab({
             label="Revisión técnica"
             value={
               <span className="flex items-start gap-2">
-                <ShieldCheck size={15} className="mt-1 shrink-0 text-cyan-400" />
+                <ShieldCheck size={15} className="mt-1 shrink-0 text-cyan-700" />
                 {review?.requiereRevisionTecnica
                   ? review.observaciones ||
                     "Requiere validación técnica."
@@ -336,7 +336,7 @@ export default function ResumenAspectoTab({
       >
         <div className="grid gap-5 lg:grid-cols-2">
           <div>
-            <p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-neutral-500">
+            <p className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600">
               <Tag size={14} /> Palabras clave
             </p>
             <div className="flex flex-wrap gap-2">
@@ -344,13 +344,13 @@ export default function ResumenAspectoTab({
                 aspect.palabrasClave.map((item) => (
                   <span
                     key={item.id}
-                    className="rounded-full border border-neutral-700 bg-neutral-900 px-3 py-1.5 text-xs text-neutral-300"
+                    className="rounded-full border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs text-slate-700"
                   >
                     {item.nombre}
                   </span>
                 ))
               ) : (
-                <p className="text-sm text-neutral-600">
+                <p className="text-sm text-slate-500">
                   No hay palabras clave.
                 </p>
               )}
@@ -358,7 +358,7 @@ export default function ResumenAspectoTab({
           </div>
 
           <div>
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-neutral-500">
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-600">
               Requisitos normativos
             </p>
             <div className="space-y-2">
@@ -366,19 +366,19 @@ export default function ResumenAspectoTab({
                 aspect.requisitosNormativos.map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-xl border border-neutral-800 bg-[#090a0b] p-3"
+                    className="rounded-xl border border-slate-200 bg-slate-50 p-3"
                   >
-                    <p className="text-sm font-semibold text-white">
+                    <p className="text-sm font-semibold text-slate-950">
                       {item.norma}
                       {item.articulo ? ` · ${item.articulo}` : ""}
                     </p>
-                    <p className="mt-1 text-xs leading-5 text-neutral-500">
+                    <p className="mt-1 text-xs leading-5 text-slate-600">
                       {item.descripcion || item.clave}
                     </p>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-neutral-600">
+                <p className="text-sm text-slate-500">
                   No hay requisitos normativos asociados.
                 </p>
               )}
