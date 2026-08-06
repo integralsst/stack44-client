@@ -50,6 +50,42 @@ const controlBaseClass =
 const selectClass = `${controlBaseClass} min-h-9 px-2 py-1.5`;
 const inputClass = `${controlBaseClass} min-h-9 px-2 py-1.5`;
 
+const CALIFICACION_POR_ESTADO: Record<
+  EstadoCumplimientoAspecto,
+  0 | 3 | 5
+> = {
+  NO_CUMPLIDO: 0,
+  PARCIAL: 3,
+  CUMPLIDO: 5,
+  NO_APLICA: 5,
+};
+
+function calificacionPorEstado(
+  estado: EstadoCumplimientoAspecto | ""
+): 0 | 3 | 5 | null {
+  return estado
+    ? CALIFICACION_POR_ESTADO[estado]
+    : null;
+}
+
+function estadoPorCalificacion(
+  calificacion: number | null
+): EstadoCumplimientoAspecto | "" {
+  if (calificacion === 0) {
+    return "NO_CUMPLIDO";
+  }
+
+  if (calificacion === 3) {
+    return "PARCIAL";
+  }
+
+  if (calificacion === 5) {
+    return "CUMPLIDO";
+  }
+
+  return "";
+}
+
 function crearBorrador(
   fila: FilaEvaluacion
 ): BorradorEvaluacionAspecto {
@@ -67,8 +103,11 @@ function crearBorrador(
     supermatrizTareaId: fila.tareaId,
     estadoCumplimiento:
       evaluacion?.estadoCumplimiento ?? "",
-    calificacionAdministrativa:
-      evaluacion?.calificacionAdministrativa ?? null,
+    calificacionAdministrativa: evaluacion
+      ? calificacionPorEstado(
+          evaluacion.estadoCumplimiento
+        )
+      : null,
     observacion: evaluacion?.observacion ?? "",
     fechaDocumento: normalizarFechaInput(
       evaluacion?.fechaDocumento
@@ -324,8 +363,11 @@ export default function MatrizEvaluacion({
         ...patch,
       };
 
-      if (patch.estadoCumplimiento === "NO_APLICA") {
-        next.calificacionAdministrativa = 5;
+      if ("estadoCumplimiento" in patch) {
+        next.calificacionAdministrativa =
+          calificacionPorEstado(
+            patch.estadoCumplimiento ?? ""
+          );
       }
 
       if (
@@ -364,6 +406,17 @@ export default function MatrizEvaluacion({
         if (draft.calificacionAdministrativa == null) {
           throw new Error(
             "Todas las filas modificadas deben tener una calificación administrativa."
+          );
+        }
+
+        if (
+          draft.calificacionAdministrativa !==
+          calificacionPorEstado(
+            draft.estadoCumplimiento
+          )
+        ) {
+          throw new Error(
+            "La nota debe corresponder al estado: 0 no cumplido, 3 parcial y 5 cumplido."
           );
         }
 
@@ -775,18 +828,27 @@ export default function MatrizEvaluacion({
                           draft.estadoCumplimiento ===
                             "NO_APLICA"
                         }
-                        onChange={(event) =>
+                        onChange={(event) => {
+                          const calificacion =
+                            event.target.value === ""
+                              ? null
+                              : Number(
+                                  event.target.value
+                                );
+
                           updateDraft(fila, {
                             calificacionAdministrativa:
-                              event.target.value === ""
-                                ? null
-                                : Number(event.target.value),
-                          })
-                        }
+                              calificacion,
+                            estadoCumplimiento:
+                              estadoPorCalificacion(
+                                calificacion
+                              ),
+                          });
+                        }}
                         className={selectClass}
                       >
                         <option value="">Nota</option>
-                        {[0, 1, 2, 3, 4, 5].map(
+                        {[0, 3, 5].map(
                           (score) => (
                             <option
                               key={score}
