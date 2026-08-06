@@ -15,7 +15,8 @@ interface ListarCompromisosParams {
 
 export function listarCompromisos(
   params: ListarCompromisosParams,
-  token: string
+  token: string,
+  signal?: AbortSignal
 ) {
   const query = new URLSearchParams({
     alcance: params.alcance,
@@ -74,7 +75,9 @@ export function listarCompromisos(
   return apiRequest<ConsultaCompromisosResponse>(
     "/api/compromisos?" +
       query.toString(),
-    {},
+    {
+      signal,
+    },
     token
   );
 }

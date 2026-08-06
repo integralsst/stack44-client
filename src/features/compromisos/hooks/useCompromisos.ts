@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -26,11 +27,17 @@ export function useCompromisos(
     useState(true);
   const [error, setError] =
     useState<string | null>(null);
+  const solicitudActual = useRef(0);
 
-  const cargar = useCallback(async () => {
+  const cargar = useCallback(async (
+    signal?: AbortSignal
+  ) => {
     if (!token) {
       return;
     }
+
+    const solicitudId =
+      ++solicitudActual.current;
 
     setCargando(true);
     setError(null);
@@ -43,18 +50,34 @@ export function useCompromisos(
             pagina,
             filtros,
           },
-          token
+          token,
+          signal
         );
 
-      setData(resultado);
+      if (
+        !signal?.aborted &&
+        solicitudId === solicitudActual.current
+      ) {
+        setData(resultado);
+      }
     } catch (currentError) {
-      setError(
-        currentError instanceof Error
-          ? currentError.message
-          : "No fue posible consultar los compromisos."
-      );
+      if (
+        !signal?.aborted &&
+        solicitudId === solicitudActual.current
+      ) {
+        setError(
+          currentError instanceof Error
+            ? currentError.message
+            : "No fue posible consultar los compromisos."
+        );
+      }
     } finally {
-      setCargando(false);
+      if (
+        !signal?.aborted &&
+        solicitudId === solicitudActual.current
+      ) {
+        setCargando(false);
+      }
     }
   }, [
     alcance,
@@ -64,7 +87,12 @@ export function useCompromisos(
   ]);
 
   useEffect(() => {
-    void cargar();
+    const controller = new AbortController();
+    void cargar(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
   }, [cargar]);
 
   const cambiarPagina = useCallback(

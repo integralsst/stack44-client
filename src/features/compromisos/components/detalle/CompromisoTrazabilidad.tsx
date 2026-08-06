@@ -2,6 +2,7 @@ import {
   Clock3,
   FileCheck2,
   History,
+  ShieldCheck,
 } from "lucide-react";
 
 import { formatearFechaHoraCompromiso } from "../../presentacion/fecha-compromiso";
@@ -17,7 +18,7 @@ export default function CompromisoTrazabilidad({
   compromiso,
 }: Props) {
   return (
-    <div className="grid gap-4 xl:grid-cols-3">
+    <div className="grid gap-4 xl:grid-cols-2">
       <TraceSection
         icon={Clock3}
         title="Seguimientos"
@@ -85,6 +86,30 @@ export default function CompromisoTrazabilidad({
               description={
                 registro.descripcion ??
                 registro.usuario.nombre
+              }
+            />
+          )
+        )}
+      </TraceSection>
+
+      <TraceSection
+        icon={ShieldCheck}
+        title="Solicitudes de cierre"
+        empty="Todavía no hay solicitudes de cierre."
+      >
+        {compromiso.solicitudesCierre.map(
+          (solicitud) => (
+            <TraceItem
+              key={solicitud.id}
+              title={`Intento ${solicitud.numeroIntento} · ${solicitud.estado.toLowerCase()}`}
+              date={formatearFechaHoraCompromiso(
+                solicitud.decididaEn ??
+                  solicitud.solicitadaEn
+              )}
+              description={
+                solicitud.mensajeCierre ??
+                solicitud.observacionesDevolucion ??
+                `Solicitada por ${solicitud.solicitadaPor.nombre}.`
               }
             />
           )

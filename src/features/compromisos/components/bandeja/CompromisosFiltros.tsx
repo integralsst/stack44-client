@@ -1,10 +1,12 @@
 import {
+  LoaderCircle,
   Search,
   SlidersHorizontal,
   X,
 } from "lucide-react";
 import {
   useEffect,
+  useMemo,
   useState,
   type FormEvent,
 } from "react";
@@ -35,6 +37,27 @@ export default function CompromisosFiltros({
     setDraft(value);
   }, [value]);
 
+  const hayCambios = useMemo(
+    () =>
+      JSON.stringify(draft) !==
+      JSON.stringify(value),
+    [draft, value]
+  );
+
+  useEffect(() => {
+    if (!hayCambios) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      onApply(draft);
+    }, 550);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [draft, hayCambios, onApply]);
+
   const update = (
     field: keyof FiltrosCompromisos,
     currentValue: string
@@ -57,14 +80,30 @@ export default function CompromisosFiltros({
       onSubmit={submit}
       className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
     >
-      <div className="mb-4 flex items-center gap-2">
-        <SlidersHorizontal
-          size={18}
-          className="text-cyan-700"
-        />
-        <h2 className="text-sm font-semibold text-slate-900">
-          Filtros de auditoría
-        </h2>
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <SlidersHorizontal
+            size={18}
+            className="text-cyan-700"
+          />
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">
+              Filtros de auditoría
+            </h2>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Se aplican automáticamente al dejar de escribir.
+            </p>
+          </div>
+        </div>
+        {busy && (
+          <span className="inline-flex items-center gap-2 self-start rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1.5 text-xs font-semibold text-cyan-800 sm:self-auto">
+            <LoaderCircle
+              size={14}
+              className="animate-spin"
+            />
+            Filtrando
+          </span>
+        )}
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -201,7 +240,13 @@ export default function CompromisosFiltros({
         </label>
       </div>
 
-      <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <div className="mt-4 flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs text-slate-500">
+          {hayCambios
+            ? "Esperando una pausa para consultar…"
+            : "Resultados sincronizados con los filtros."}
+        </p>
+        <div className="flex flex-col-reverse gap-2 sm:flex-row">
         <button
           type="button"
           onClick={() => {
@@ -215,12 +260,20 @@ export default function CompromisosFiltros({
         </button>
         <button
           type="submit"
-          disabled={busy}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+          disabled={busy || !hayCambios}
+          className="inline-flex h-10 min-w-40 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
         >
-          <Search size={16} />
+          {busy ? (
+            <LoaderCircle
+              size={16}
+              className="animate-spin"
+            />
+          ) : (
+            <Search size={16} />
+          )}
           Aplicar filtros
         </button>
+        </div>
       </div>
     </form>
   );
