@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   AlertCircle,
   AlertTriangle,
@@ -26,24 +27,38 @@ const config: Record<
   ToastTone,
   {
     icon: typeof Info;
-    iconClass: string;
+    wrapperClass: string;
+    iconBoxClass: string;
+    accentClass: string;
   }
 > = {
   success: {
     icon: CheckCircle2,
-    iconClass: "text-emerald-300",
+    wrapperClass: "border-emerald-200 bg-white",
+    iconBoxClass:
+      "border-emerald-200 bg-emerald-50 text-emerald-700",
+    accentClass: "bg-emerald-500",
   },
   error: {
     icon: AlertCircle,
-    iconClass: "text-red-300",
+    wrapperClass: "border-red-200 bg-white",
+    iconBoxClass:
+      "border-red-200 bg-red-50 text-red-700",
+    accentClass: "bg-red-500",
   },
   warning: {
     icon: AlertTriangle,
-    iconClass: "text-amber-300",
+    wrapperClass: "border-amber-200 bg-white",
+    iconBoxClass:
+      "border-amber-200 bg-amber-50 text-amber-700",
+    accentClass: "bg-amber-500",
   },
   info: {
     icon: Info,
-    iconClass: "text-cyan-300",
+    wrapperClass: "border-cyan-200 bg-white",
+    iconBoxClass:
+      "border-cyan-200 bg-cyan-50 text-cyan-700",
+    accentClass: "bg-cyan-500",
   },
 };
 
@@ -55,42 +70,55 @@ export default function AppToast({
   duration = 4200,
   onClose,
 }: Props) {
+  const autoCloseDuration =
+    tone === "error" ? 0 : duration;
+
   useEffect(() => {
-    if (!open || duration <= 0) {
+    if (!open || autoCloseDuration <= 0) {
       return;
     }
 
     const timeout = window.setTimeout(
       onClose,
-      duration
+      autoCloseDuration
     );
 
     return () =>
       window.clearTimeout(timeout);
-  }, [duration, onClose, open]);
+  }, [autoCloseDuration, onClose, open]);
 
-  if (!open) {
+  if (!open || typeof document === "undefined") {
     return null;
   }
 
   const current = config[tone];
   const Icon = current.icon;
 
-  return (
-    <div className="fixed inset-x-3 top-3 z-[120] sm:inset-x-auto sm:right-5 sm:top-5 sm:w-[390px]">
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#151617]/95 shadow-[0_24px_90px_rgba(0,0,0,0.55)] backdrop-blur-2xl">
-        <div className="flex items-start gap-3 p-4">
-          <Icon
-            size={19}
-            className={`mt-0.5 shrink-0 ${current.iconClass}`}
-          />
+  return createPortal(
+    <div className="pointer-events-none fixed inset-x-3 top-3 z-[12000] flex justify-center sm:inset-x-auto sm:right-5 sm:top-5 sm:block">
+      <div
+        role={tone === "error" ? "alert" : "status"}
+        aria-live={tone === "error" ? "assertive" : "polite"}
+        className={`pointer-events-auto relative max-h-[calc(100dvh-1.5rem)] w-full max-w-[32rem] overflow-y-auto rounded-2xl border shadow-[0_24px_70px_rgba(15,23,42,0.2)] ${current.wrapperClass}`}
+      >
+        <div
+          aria-hidden="true"
+          className={`absolute inset-y-0 left-0 w-1 ${current.accentClass}`}
+        />
+
+        <div className="flex items-start gap-3 py-4 pl-5 pr-4">
+          <div
+            className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${current.iconBoxClass}`}
+          >
+            <Icon size={18} aria-hidden="true" />
+          </div>
 
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-white">
+            <p className="break-words text-sm font-semibold text-slate-900">
               {title}
             </p>
             {description && (
-              <p className="mt-1 text-xs leading-5 text-neutral-400">
+              <p className="mt-1 whitespace-pre-wrap break-words text-xs leading-5 text-slate-600">
                 {description}
               </p>
             )}
@@ -99,15 +127,14 @@ export default function AppToast({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-1 text-neutral-500 transition hover:bg-white/5 hover:text-white"
+            className="shrink-0 rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/30"
             aria-label="Cerrar notificación"
           >
             <X size={16} />
           </button>
         </div>
-
-        <div className="h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
