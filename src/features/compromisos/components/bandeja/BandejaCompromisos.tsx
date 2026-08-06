@@ -2,6 +2,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import {
+  useCallback,
   useState,
 } from "react";
 
@@ -42,21 +43,21 @@ export default function BandejaCompromisos({
     filtrosAplicados
   );
 
-  const aplicarFiltros = (
+  const aplicarFiltros = useCallback((
     filtros: FiltrosCompromisos
   ) => {
     compromisos.reiniciarPagina();
     setFiltrosAplicados({
       ...filtros,
     });
-  };
+  }, [compromisos.reiniciarPagina]);
 
-  const limpiarFiltros = () => {
+  const limpiarFiltros = useCallback(() => {
     compromisos.reiniciarPagina();
     setFiltrosAplicados({
       ...FILTROS_COMPROMISOS_INICIALES,
     });
-  };
+  }, [compromisos.reiniciarPagina]);
 
   return (
     <div className="flex w-full flex-col gap-5 pb-8">

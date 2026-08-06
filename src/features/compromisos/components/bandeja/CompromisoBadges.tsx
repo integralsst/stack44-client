@@ -19,7 +19,7 @@ export function EstadoCompromisoBadge({
   return (
     <span
       className={
-        "inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold " +
+        "inline-flex min-h-7 items-center justify-center whitespace-nowrap rounded-full border px-3 py-1 text-center text-[11px] font-semibold leading-none " +
         CLASE_ESTADO_COMPROMISO[estado]
       }
     >
@@ -38,7 +38,7 @@ export function SemaforoCompromisoBadge({
   return (
     <span
       className={
-        "inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold " +
+        "inline-flex min-h-7 items-center justify-center whitespace-nowrap rounded-full border px-3 py-1 text-center text-[11px] font-semibold leading-none " +
         CLASE_SEMAFORO_COMPROMISO[
           semaforo
         ]

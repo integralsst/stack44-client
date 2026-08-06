@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   Inbox,
+  LoaderCircle,
 } from "lucide-react";
 import {
   Link,
@@ -57,7 +58,24 @@ export default function CompromisosTable({
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <section
+      className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+      aria-busy={cargando}
+    >
+      {cargando && (
+        <div className="absolute inset-x-0 top-0 z-10 flex h-1 overflow-hidden bg-cyan-100">
+          <span className="h-full w-1/3 animate-pulse rounded-full bg-cyan-600" />
+        </div>
+      )}
+      {cargando && (
+        <div className="pointer-events-none absolute right-4 top-12 z-10 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/95 px-3 py-1.5 text-xs font-semibold text-cyan-800 shadow-sm backdrop-blur">
+          <LoaderCircle
+            size={14}
+            className="animate-spin"
+          />
+          Actualizando resultados
+        </div>
+      )}
       <div className="overflow-x-auto">
         <table className="min-w-[1120px] w-full border-collapse text-left">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
@@ -71,10 +89,10 @@ export default function CompromisosTable({
               <th className="px-4 py-3">
                 Responsable
               </th>
-              <th className="px-4 py-3">
+              <th className="px-4 py-3 text-center">
                 Fecha límite
               </th>
-              <th className="px-4 py-3">
+              <th className="px-4 py-3 text-center">
                 Estado
               </th>
               <th className="px-4 py-3 text-right">
@@ -135,8 +153,8 @@ export default function CompromisosTable({
                         apoyo(s)
                       </p>
                     </td>
-                    <td className="px-4 py-4">
-                      <p className="mb-2 text-sm font-medium text-slate-900">
+                    <td className="px-4 py-4 text-center">
+                      <p className="mb-2 whitespace-nowrap text-sm font-medium text-slate-900">
                         {formatearFechaCompromiso(
                           compromiso.fechaLimite
                         )}
@@ -147,7 +165,7 @@ export default function CompromisosTable({
                         }
                       />
                     </td>
-                    <td className="px-4 py-4">
+                    <td className="px-4 py-4 text-center">
                       <EstadoCompromisoBadge
                         estado={compromiso.estado}
                       />
