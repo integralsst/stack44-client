@@ -132,6 +132,25 @@ export interface CompromisoHistorialAspecto {
   }>;
 }
 
+export interface EvidenciaCompromisoAspecto {
+  id: string;
+  nombre: string;
+  url: string;
+  descripcion: string | null;
+  fechaDocumento: string | null;
+  visibleCliente: boolean;
+  createdAt: string;
+  creadoPor: {
+    id: string;
+    nombre: string;
+  };
+  compromiso: {
+    id: string;
+    descripcion: string;
+    estado: string;
+  };
+}
+
 export interface DetalleAspectoBaseResponse {
   empresa: {
     id: string;
@@ -325,6 +344,7 @@ export interface DetalleAspectoResponse
   historial: HistorialAspectoItem[];
   compromisos: CompromisoHistorialAspecto[];
   evidencias: EvidenciaEvaluacion[];
+  evidenciasCompromiso: EvidenciaCompromisoAspecto[];
   revisionesTecnicas: EvaluacionDetalleAspecto[];
 }
 
@@ -336,6 +356,7 @@ export interface DetalleAspectoHistorialResponse {
 
 export interface DetalleAspectoEvidenciasResponse {
   evidencias: EvidenciaEvaluacion[];
+  evidenciasCompromiso: EvidenciaCompromisoAspecto[];
   evidenciaObjetivo: {
     evaluacionId: string;
     esBorrador: boolean;
