@@ -12,11 +12,11 @@ const stateClass: Record<string, string> = {
   CUMPLIDO:
     "border-emerald-200 bg-emerald-50 text-emerald-800",
   PARCIAL:
-    "border-amber-400/20 bg-amber-400/10 text-amber-800",
+    "border-amber-200 bg-amber-50 text-amber-800",
   NO_CUMPLIDO:
-    "border-red-200 bg-red-400/10 text-red-800",
+    "border-red-200 bg-red-50 text-red-800",
   NO_APLICA:
-    "border-sky-400/20 bg-sky-400/10 text-sky-800",
+    "border-sky-200 bg-sky-50 text-sky-800",
 };
 
 const stateLabel: Record<string, string> = {
@@ -61,7 +61,7 @@ export default function HistorialEvaluacionCard({
             </span>
 
             {invalidada && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-400/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-red-800">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-red-800">
                 <Ban size={11} />
                 Gestión invalidada
               </span>
