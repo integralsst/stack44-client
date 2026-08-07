@@ -1,7 +1,9 @@
 import { useState } from "react";
 import {
+  ExternalLink,
   FilePlus2,
   Info,
+  Paperclip,
 } from "lucide-react";
 
 import type { DetalleAspectoResponse } from "../../types/detalle-aspecto.types";
@@ -13,6 +15,14 @@ import AppConfirmDialog from "../feedback/AppConfirmDialog";
 import EvidenciaEvaluacionCard from "../evidencias/EvidenciaEvaluacionCard";
 import EvidenciaEvaluacionForm from "../evidencias/EvidenciaEvaluacionForm";
 import { EmptyState } from "./DetalleAspectoUi";
+
+const FORMATO_FECHA = new Intl.DateTimeFormat("es-CO", {
+  dateStyle: "medium",
+});
+
+function formatearFecha(fecha: string): string {
+  return FORMATO_FECHA.format(new Date(fecha));
+}
 
 export default function EvidenciasAspectoTab({
   data,
@@ -46,6 +56,9 @@ export default function EvidenciasAspectoTab({
     data.tarea.aspecto.configuracionEvidencia
       ?.visibleClienteDefault
   );
+  const totalEvidencias =
+    data.evidencias.length +
+    data.evidenciasCompromiso.length;
 
   const closeForm = () => {
     if (busy) return;
@@ -59,14 +72,11 @@ export default function EvidenciasAspectoTab({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h3 className="text-sm font-semibold text-slate-950">
-              Evidencias del estado mostrado
+              Evidencias del aspecto
             </h3>
             <p className="mt-1 text-xs leading-5 text-slate-600">
-              {data.evidenciaObjetivo?.esBorrador
-                ? "Se muestran los soportes de la evaluación en borrador de la gestión actual."
-                : data.evidenciaObjetivo
-                  ? "Se muestran los soportes de la última evaluación finalizada."
-                  : "Este aspecto todavía no tiene una evaluación a la cual asociar soportes."}
+              Aquí se muestran los soportes de la evaluación y las evidencias
+              anexadas durante la ejecución de sus compromisos.
             </p>
           </div>
 
@@ -107,17 +117,28 @@ export default function EvidenciasAspectoTab({
         />
       )}
 
-      {data.evidencias.length === 0 ? (
+      {totalEvidencias === 0 && (
         <EmptyState
           title="No hay evidencias registradas"
           description={
             canEdit
               ? "Agrega un enlace de Google Drive o una URL externa como soporte de esta evaluación."
-              : "La evaluación consultada no tiene soportes visibles para tu usuario."
+              : "La evaluación y sus compromisos no tienen soportes visibles para tu usuario."
           }
         />
-      ) : (
-        <div className="space-y-3">
+      )}
+
+      {data.evidencias.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <h4 className="text-sm font-bold text-slate-950">
+              Evidencias de la evaluación
+            </h4>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">
+              {data.evidencias.length}
+            </span>
+          </div>
+
           {data.evidencias.map((evidence) => (
             <EvidenciaEvaluacionCard
               key={evidence.id}
@@ -130,7 +151,86 @@ export default function EvidenciasAspectoTab({
               onRemove={() => setRemoving(evidence)}
             />
           ))}
-        </div>
+        </section>
+      )}
+
+      {data.evidenciasCompromiso.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h4 className="text-sm font-bold text-slate-950">
+                Evidencias de compromisos
+              </h4>
+              <p className="mt-0.5 text-xs text-slate-600">
+                Soportes cargados durante el seguimiento y cierre.
+              </p>
+            </div>
+            <span className="rounded-full bg-cyan-100 px-2.5 py-1 text-xs font-bold text-cyan-800">
+              {data.evidenciasCompromiso.length}
+            </span>
+          </div>
+
+          {data.evidenciasCompromiso.map((evidence) => (
+            <article
+              key={evidence.id}
+              className="rounded-2xl border border-cyan-200 bg-cyan-50/60 p-4 shadow-sm"
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-cyan-700 ring-1 ring-cyan-200">
+                  <Paperclip size={18} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h5 className="break-words text-sm font-bold text-slate-950">
+                      {evidence.nombre}
+                    </h5>
+                    <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-cyan-800 ring-1 ring-cyan-200">
+                      Compromiso
+                    </span>
+                  </div>
+
+                  {evidence.descripcion && (
+                    <p className="mt-2 text-xs leading-5 text-slate-700">
+                      {evidence.descripcion}
+                    </p>
+                  )}
+
+                  <div className="mt-3 rounded-xl border border-cyan-100 bg-white/80 px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                      Compromiso relacionado
+                    </p>
+                    <p className="mt-1 text-xs font-semibold leading-5 text-slate-800">
+                      {evidence.compromiso.descripcion}
+                    </p>
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      Estado:{" "}
+                      {evidence.compromiso.estado.replaceAll(
+                        "_",
+                        " "
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="mt-3 flex flex-col gap-2 text-[11px] text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+                    <span>
+                      Adjuntada por {evidence.creadoPor.nombre} ·{" "}
+                      {formatearFecha(evidence.createdAt)}
+                    </span>
+                    <a
+                      href={evidence.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg border border-cyan-700 bg-white px-3 py-2 text-xs font-bold text-cyan-800 transition hover:bg-cyan-100"
+                    >
+                      Abrir evidencia
+                      <ExternalLink size={14} />
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </section>
       )}
 
       <AppConfirmDialog
