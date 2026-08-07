@@ -200,7 +200,7 @@ export default function DetalleAspectoDrawer({
               icon={FileCheck2}
               label={`Evidencias${
                 loadedSections.EVIDENCIAS
-                  ? ` (${data?.evidencias.length ?? 0})`
+                  ? ` (${(data?.evidencias.length ?? 0) + (data?.evidenciasCompromiso.length ?? 0)})`
                   : ""
               }`}
               loading={loadingSections.EVIDENCIAS}

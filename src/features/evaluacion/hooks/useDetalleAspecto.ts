@@ -99,6 +99,7 @@ function construirDetalleParcial(
     historial: [],
     compromisos: [],
     evidencias: [],
+    evidenciasCompromiso: [],
     revisionesTecnicas: [],
     evidenciaObjetivo: null,
     permisos: {
@@ -286,6 +287,8 @@ export function useDetalleAspecto({
               ? {
                   ...current,
                   evidencias: response.evidencias,
+                  evidenciasCompromiso:
+                    response.evidenciasCompromiso,
                   evidenciaObjetivo:
                     response.evidenciaObjetivo,
                   permisos: response.permisos,
