@@ -16,7 +16,7 @@ import type {
 import AppSpinner from "../feedback/AppSpinner";
 
 const controlClass =
-  "w-full rounded-xl border border-neutral-700 bg-[#090a0b] px-3 py-2.5 text-sm text-white outline-none transition [color-scheme:dark] placeholder:text-neutral-600 focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:opacity-50";
+  "w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-950 outline-none transition [color-scheme:light] placeholder:text-slate-400 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 disabled:cursor-not-allowed disabled:opacity-50";
 
 function dateInput(value: string | null | undefined) {
   return value?.slice(0, 10) ?? "";
@@ -89,14 +89,14 @@ export default function EvidenciaEvaluacionForm({
   return (
     <form
       onSubmit={(event) => void submit(event)}
-      className="rounded-2xl border border-cyan-500/20 bg-cyan-500/[0.045] p-4"
+      className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-white">
+          <p className="text-sm font-semibold text-slate-950">
             {evidence ? "Editar evidencia" : "Nueva evidencia"}
           </p>
-          <p className="mt-1 text-xs leading-5 text-neutral-500">
+          <p className="mt-1 text-xs leading-5 text-slate-600">
             Registra un enlace de Google Drive o una URL externa. La carga directa de archivos se agregará en una fase posterior.
           </p>
         </div>
@@ -104,7 +104,7 @@ export default function EvidenciaEvaluacionForm({
           type="button"
           onClick={onCancel}
           disabled={busy}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-neutral-700 bg-neutral-900 text-neutral-400 transition hover:text-white disabled:opacity-50"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-600 transition hover:text-slate-950 disabled:opacity-50"
           aria-label="Cerrar formulario"
         >
           <X size={16} />
@@ -113,7 +113,7 @@ export default function EvidenciaEvaluacionForm({
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <label className="sm:col-span-2">
-          <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+          <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-600">
             Nombre del documento
           </span>
           <input
@@ -127,11 +127,11 @@ export default function EvidenciaEvaluacionForm({
         </label>
 
         <label className="sm:col-span-2">
-          <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+          <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-600">
             Enlace
           </span>
           <div className="relative">
-            <Link2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+            <Link2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600" />
             <input
               type="url"
               value={url}
@@ -144,7 +144,7 @@ export default function EvidenciaEvaluacionForm({
         </label>
 
         <label>
-          <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+          <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-600">
             Fecha del documento
           </span>
           <input
@@ -158,7 +158,7 @@ export default function EvidenciaEvaluacionForm({
           />
         </label>
 
-        <label className="flex min-h-[68px] items-center gap-3 rounded-xl border border-neutral-700 bg-[#090a0b] px-3 py-2.5">
+        <label className="flex min-h-[68px] items-center gap-3 rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5">
           <input
             type="checkbox"
             checked={visibleClient}
@@ -166,20 +166,20 @@ export default function EvidenciaEvaluacionForm({
               setVisibleClient(event.target.checked)
             }
             disabled={busy}
-            className="h-4 w-4 rounded border-neutral-600 bg-neutral-900 text-cyan-500"
+            className="h-4 w-4 rounded border-slate-400 bg-slate-50 text-cyan-500"
           />
           <span>
-            <span className="block text-xs font-medium text-neutral-300">
+            <span className="block text-xs font-medium text-slate-700">
               Visible para el cliente
             </span>
-            <span className="mt-1 block text-[10px] leading-4 text-neutral-600">
+            <span className="mt-1 block text-[10px] leading-4 text-slate-500">
               Los usuarios cliente podrán consultar este enlace.
             </span>
           </span>
         </label>
 
         <label className="sm:col-span-2">
-          <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+          <span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-600">
             Descripción
           </span>
           <textarea
@@ -196,7 +196,7 @@ export default function EvidenciaEvaluacionForm({
       </div>
 
       {localError && (
-        <p className="mt-3 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+        <p className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
           {localError}
         </p>
       )}
@@ -206,17 +206,17 @@ export default function EvidenciaEvaluacionForm({
           type="button"
           onClick={onCancel}
           disabled={busy}
-          className="rounded-xl border border-neutral-700 bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-neutral-300 transition hover:text-white disabled:opacity-50"
+          className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:text-slate-950 disabled:opacity-50"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={busy}
-          className="flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black transition hover:bg-neutral-200 disabled:opacity-50"
+          className="flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-cyan-700 disabled:opacity-50"
         >
           {busy ? (
-            <AppSpinner size="sm" className="text-black" />
+            <AppSpinner size="sm" className="text-white" />
           ) : (
             <Save size={16} />
           )}

@@ -23,12 +23,12 @@ export default function RevisionTecnicaAspectoTab({
 
   if (evaluaciones.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-neutral-800 bg-[#101112] px-5 py-14 text-center">
-        <ShieldCheck className="mx-auto h-9 w-9 text-neutral-700" />
-        <p className="mt-3 text-sm font-semibold text-neutral-300">
+      <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-5 py-14 text-center">
+        <ShieldCheck className="mx-auto h-9 w-9 text-slate-400" />
+        <p className="mt-3 text-sm font-semibold text-slate-700">
           Este aspecto no tiene revisiones técnicas
         </p>
-        <p className="mx-auto mt-2 max-w-xl text-xs leading-5 text-neutral-600">
+        <p className="mx-auto mt-2 max-w-xl text-xs leading-5 text-slate-500">
           La solicitud se crea al finalizar una gestión cuya evaluación esté marcada para revisión técnica.
         </p>
       </div>
@@ -37,11 +37,11 @@ export default function RevisionTecnicaAspectoTab({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-cyan-500/15 bg-cyan-500/5 p-4">
+      <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4">
         <p className="text-sm font-semibold text-cyan-200">
           Revisión técnica del aspecto
         </p>
-        <p className="mt-1 text-xs leading-5 text-neutral-500">
+        <p className="mt-1 text-xs leading-5 text-slate-600">
           Cada revisión corresponde a una evaluación concreta. Si se requieren ajustes, la evaluación finalizada no se modifica: se registra una nueva gestión.
         </p>
       </div>
@@ -69,27 +69,27 @@ function RevisionItem({
   const revision = evaluacion.revisionTecnica;
 
   return (
-    <article className="rounded-2xl border border-neutral-800 bg-[#101112] p-4 sm:p-5">
+    <article className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           {revision ? (
             <RevisionTecnicaEstadoBadge estado={revision.estado} />
           ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/25 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-300">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-800">
               <Clock3 size={12} />
               Se creará al finalizar
             </span>
           )}
-          <p className="mt-3 text-sm font-semibold text-white">
+          <p className="mt-3 text-sm font-semibold text-slate-950">
             {evaluacion.gestion.tipoActividad}
           </p>
-          <p className="mt-1 text-xs text-neutral-500">
+          <p className="mt-1 text-xs text-slate-600">
             {formatDate(evaluacion.gestion.fechaGestion)} · {evaluacion.gestion.profesional}
           </p>
         </div>
 
         {esBorrador && (
-          <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-300">
+          <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-800">
             Borrador
           </span>
         )}
@@ -113,11 +113,11 @@ function RevisionItem({
         />
       </div>
 
-      <div className="mt-4 rounded-xl border border-neutral-800 bg-[#090a0b] p-4">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-600">
+      <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
           Motivo de la revisión
         </p>
-        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-neutral-300">
+        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
           {revision?.motivoSolicitud ||
             evaluacion.motivoRevisionTecnica ||
             "Revisión técnica solicitada."}
@@ -125,35 +125,35 @@ function RevisionItem({
       </div>
 
       {revision?.conceptoTecnico && (
-        <div className="mt-4 rounded-xl border border-cyan-500/15 bg-cyan-500/5 p-4">
+        <div className="mt-4 rounded-xl border border-cyan-200 bg-cyan-50 p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-700">
               Concepto técnico
             </p>
-            <span className="flex items-center gap-1.5 text-[10px] text-neutral-500">
+            <span className="flex items-center gap-1.5 text-[10px] text-slate-600">
               <UserRound size={12} />
               {revision.revisadaPor?.nombre ?? "Revisor"}
             </span>
           </div>
-          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-neutral-200">
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-800">
             {revision.conceptoTecnico}
           </p>
         </div>
       )}
 
       {revision?.estado === "REQUIERE_AJUSTES" && (
-        <div className="mt-4 flex gap-3 rounded-xl border border-orange-500/20 bg-orange-500/10 p-4">
-          <Wrench className="mt-0.5 h-4 w-4 shrink-0 text-orange-300" />
-          <p className="text-xs leading-5 text-orange-200/80">
+        <div className="mt-4 flex gap-3 rounded-xl border border-orange-200 bg-orange-50 p-4">
+          <Wrench className="mt-0.5 h-4 w-4 shrink-0 text-orange-700" />
+          <p className="text-xs leading-5 text-orange-800">
             Los ajustes deben registrarse en una nueva gestión. Esta evaluación permanece intacta en el historial.
           </p>
         </div>
       )}
 
       {revision?.motivoAnulacion && (
-        <div className="mt-4 flex gap-3 rounded-xl border border-neutral-700 bg-neutral-900 p-4">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-neutral-400" />
-          <p className="text-xs leading-5 text-neutral-400">
+        <div className="mt-4 flex gap-3 rounded-xl border border-slate-300 bg-slate-50 p-4">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-slate-600" />
+          <p className="text-xs leading-5 text-slate-600">
             {revision.motivoAnulacion}
           </p>
         </div>
@@ -172,12 +172,12 @@ function Fact({
   value: string;
 }) {
   return (
-    <div className="rounded-xl border border-neutral-800 bg-[#090a0b] p-3">
-      <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-neutral-600">
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+      <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
         <Icon size={13} />
         {label}
       </p>
-      <p className="mt-2 text-xs text-neutral-300">{value}</p>
+      <p className="mt-2 text-xs text-slate-700">{value}</p>
     </div>
   );
 }

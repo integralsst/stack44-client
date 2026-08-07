@@ -15,15 +15,15 @@ export function DetailSection({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-neutral-800 bg-[#101112] p-4 sm:p-5">
-      <div className="mb-4 flex items-start gap-3 border-b border-neutral-800 pb-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-neutral-800 bg-[#08090a] text-cyan-400">
+    <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+      <div className="mb-4 flex items-start gap-3 border-b border-slate-200 pb-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-cyan-700">
           <Icon size={18} />
         </div>
         <div className="min-w-0">
-          <h3 className="font-bold text-white">{title}</h3>
+          <h3 className="font-bold text-slate-950">{title}</h3>
           {description && (
-            <p className="mt-1 text-xs leading-5 text-neutral-500">
+            <p className="mt-1 text-xs leading-5 text-slate-600">
               {description}
             </p>
           )}
@@ -47,14 +47,14 @@ export function InfoCard({
     <div
       className={`rounded-xl border p-3.5 ${
         accent
-          ? "border-cyan-500/20 bg-cyan-500/5"
-          : "border-neutral-800 bg-[#090a0b]"
+          ? "border-cyan-200 bg-cyan-50"
+          : "border-slate-200 bg-slate-50"
       }`}
     >
-      <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-neutral-600">
+      <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500">
         {label}
       </p>
-      <div className="mt-2 text-sm leading-6 text-neutral-200">
+      <div className="mt-2 text-sm leading-6 text-slate-800">
         {value}
       </div>
     </div>
@@ -71,7 +71,7 @@ export function BooleanCard({
   detail?: string | null;
 }) {
   return (
-    <div className="rounded-xl border border-neutral-800 bg-[#090a0b] p-3.5">
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5">
       <div className="flex items-start gap-2.5">
         <span
           className={`mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full ${
@@ -79,12 +79,12 @@ export function BooleanCard({
           }`}
         />
         <div>
-          <p className="text-xs font-medium leading-5 text-neutral-300">
+          <p className="text-xs font-medium leading-5 text-slate-700">
             {label}
           </p>
           <p
             className={`mt-1 text-xs ${
-              value ? "text-emerald-400" : "text-neutral-600"
+              value ? "text-emerald-700" : "text-slate-500"
             }`}
           >
             {value ? "Sí" : "No"}
@@ -104,9 +104,9 @@ export function EmptyState({
   description: string;
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-neutral-800 bg-[#090a0b] px-5 py-10 text-center">
-      <p className="font-semibold text-neutral-300">{title}</p>
-      <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-neutral-600">
+    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-5 py-10 text-center">
+      <p className="font-semibold text-slate-700">{title}</p>
+      <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-slate-500">
         {description}
       </p>
     </div>

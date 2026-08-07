@@ -26,6 +26,7 @@ import {
 } from "react";
 
 import { useAuth } from "../../features/auth/context/AuthContext";
+import CentroAlertasCompromisos from "../../features/compromisos/components/alertas/CentroAlertasCompromisos";
 import { ADMIN_LIGHT_SCOPE_CLASSES } from "../ui/adminLightTheme";
 
 const internalRoles = new Set([
@@ -449,10 +450,18 @@ export default function DashboardLayout() {
             </div>
           </div>
 
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-200 bg-cyan-50 text-xs font-bold text-cyan-700 sm:h-10 sm:w-10">
-            {user.name
-              .charAt(0)
-              .toUpperCase()}
+          <div className="flex items-center gap-2">
+            {canViewOwnCommitments && (
+              <CentroAlertasCompromisos />
+            )}
+            <div
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-200 bg-cyan-50 text-xs font-bold text-cyan-700 sm:h-10 sm:w-10"
+              title={user.name}
+            >
+              {user.name
+                .charAt(0)
+                .toUpperCase()}
+            </div>
           </div>
         </header>
 

@@ -97,6 +97,7 @@ function construirDetalleParcial(
     ultimaEvaluacion: null,
     detalleVigencia: response.detalleVigencia,
     historial: [],
+    compromisos: [],
     evidencias: [],
     revisionesTecnicas: [],
     evidenciaObjetivo: null,
@@ -266,6 +267,7 @@ export function useDetalleAspecto({
               ? {
                   ...current,
                   historial: response.historial,
+                  compromisos: response.compromisos,
                 }
               : current
           );

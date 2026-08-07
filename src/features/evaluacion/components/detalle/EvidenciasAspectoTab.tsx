@@ -55,13 +55,13 @@ export default function EvidenciasAspectoTab({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-neutral-800 bg-[#101112] p-4 sm:p-5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-white">
+            <h3 className="text-sm font-semibold text-slate-950">
               Evidencias del estado mostrado
             </h3>
-            <p className="mt-1 text-xs leading-5 text-neutral-500">
+            <p className="mt-1 text-xs leading-5 text-slate-600">
               {data.evidenciaObjetivo?.esBorrador
                 ? "Se muestran los soportes de la evaluación en borrador de la gestión actual."
                 : data.evidenciaObjetivo
@@ -74,7 +74,7 @@ export default function EvidenciasAspectoTab({
             <button
               type="button"
               onClick={() => setFormOpen(true)}
-              className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black transition hover:bg-neutral-200"
+              className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-cyan-700"
             >
               <FilePlus2 size={16} />
               Agregar evidencia
@@ -83,7 +83,7 @@ export default function EvidenciasAspectoTab({
         </div>
 
         {!canEdit && data.permisos.motivoEvidencias && (
-          <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-3 text-xs leading-5 text-amber-100">
+          <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs leading-5 text-amber-900">
             <Info size={15} className="mt-0.5 shrink-0" />
             <span>{data.permisos.motivoEvidencias}</span>
           </div>

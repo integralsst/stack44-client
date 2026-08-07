@@ -56,6 +56,82 @@ export interface HistorialAspectoItem
   totalEvidencias: number;
 }
 
+export interface CompromisoHistorialAspecto {
+  id: string;
+  descripcion: string;
+  estado: string;
+  fechaLimite: string;
+  creadoEn: string;
+  cerradoEn: string | null;
+  creadoPor: {
+    id: string;
+    nombre: string;
+  };
+  gestionOrigen: {
+    fechaGestion: string;
+    anio: number;
+  };
+  evaluacionOrigen: {
+    estadoCumplimiento: string;
+    calificacionAdministrativa: number;
+  };
+  actividades: Array<{
+    id: string;
+    descripcion: string;
+    estado: string;
+    atendidaEn: string | null;
+    tipoResponsable: string;
+    responsable: {
+      id: string;
+      nombre: string;
+    };
+  }>;
+  progreso: {
+    total: number;
+    atendidas: number;
+  };
+  recalificaciones: Array<{
+    id: string;
+    estadoCumplimiento: string;
+    calificacionAdministrativa: number;
+    observacion: string | null;
+    createdAt: string;
+    usuario: {
+      id: string;
+      nombre: string;
+    };
+  }>;
+  solicitudesCierre: Array<{
+    id: string;
+    numeroIntento: number;
+    estado: string;
+    solicitadaEn: string;
+    decididaEn: string | null;
+    mensajeCierre: string | null;
+    observacionesDevolucion: string | null;
+    solicitadaPor: {
+      id: string;
+      nombre: string;
+    };
+    decididaPor: {
+      id: string;
+      nombre: string;
+    } | null;
+  }>;
+  eventos: Array<{
+    id: string;
+    tipo: "HISTORIAL" | "RECALIFICACION";
+    accion: string;
+    descripcion: string;
+    createdAt: string;
+    usuario: {
+      id: string;
+      nombre: string;
+    };
+    calificacion: number | null;
+  }>;
+}
+
 export interface DetalleAspectoBaseResponse {
   empresa: {
     id: string;
@@ -247,12 +323,14 @@ export interface HistorialPaginacion {
 export interface DetalleAspectoResponse
   extends DetalleAspectoBaseResponse {
   historial: HistorialAspectoItem[];
+  compromisos: CompromisoHistorialAspecto[];
   evidencias: EvidenciaEvaluacion[];
   revisionesTecnicas: EvaluacionDetalleAspecto[];
 }
 
 export interface DetalleAspectoHistorialResponse {
   historial: HistorialAspectoItem[];
+  compromisos: CompromisoHistorialAspecto[];
   paginacion: HistorialPaginacion;
 }
 

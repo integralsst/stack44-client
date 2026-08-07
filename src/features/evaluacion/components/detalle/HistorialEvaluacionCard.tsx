@@ -10,13 +10,13 @@ import { formatDate } from "./DetalleAspectoUi";
 
 const stateClass: Record<string, string> = {
   CUMPLIDO:
-    "border-emerald-400/20 bg-emerald-400/10 text-emerald-200",
+    "border-emerald-200 bg-emerald-50 text-emerald-800",
   PARCIAL:
-    "border-amber-400/20 bg-amber-400/10 text-amber-200",
+    "border-amber-200 bg-amber-50 text-amber-800",
   NO_CUMPLIDO:
-    "border-red-400/20 bg-red-400/10 text-red-200",
+    "border-red-200 bg-red-50 text-red-800",
   NO_APLICA:
-    "border-sky-400/20 bg-sky-400/10 text-sky-200",
+    "border-sky-200 bg-sky-50 text-sky-800",
 };
 
 const stateLabel: Record<string, string> = {
@@ -37,8 +37,8 @@ export default function HistorialEvaluacionCard({
     <article
       className={`rounded-2xl border p-4 sm:p-5 ${
         invalidada
-          ? "border-red-500/20 bg-red-500/[0.035]"
-          : "border-neutral-800 bg-[#101112]"
+          ? "border-red-200 bg-red-50"
+          : "border-slate-200 bg-white"
       }`}
     >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -47,56 +47,56 @@ export default function HistorialEvaluacionCard({
             <span
               className={`rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider ${
                 stateClass[item.estadoCumplimiento] ??
-                "border-neutral-700 bg-neutral-800 text-neutral-300"
+                "border-slate-300 bg-slate-100 text-slate-700"
               } ${invalidada ? "opacity-60" : ""}`}
             >
               {stateLabel[item.estadoCumplimiento] ??
                 item.estadoCumplimiento}
             </span>
-            <span className="rounded-full bg-neutral-800 px-2.5 py-1 text-[9px] font-semibold text-neutral-300">
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[9px] font-semibold text-slate-700">
               Nota {item.calificacionAdministrativa}
             </span>
-            <span className="text-[10px] text-neutral-600">
+            <span className="text-[10px] text-slate-500">
               Periodo {item.anio}
             </span>
 
             {invalidada && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-red-400/20 bg-red-400/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-red-200">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-red-800">
                 <Ban size={11} />
                 Gestión invalidada
               </span>
             )}
           </div>
 
-          <h4 className="mt-3 text-sm font-semibold text-white">
+          <h4 className="mt-3 text-sm font-semibold text-slate-950">
             {item.gestion.tipoActividad}
           </h4>
-          <p className="mt-1 text-xs text-neutral-500">
+          <p className="mt-1 text-xs text-slate-600">
             {item.gestion.categoriaGestion ?? "Gestión general"}
             {` · ${item.gestion.modalidad.replaceAll("_", " ")}`}
           </p>
         </div>
 
         <div className="shrink-0 text-left sm:text-right">
-          <p className="text-xs font-medium text-neutral-300">
+          <p className="text-xs font-medium text-slate-700">
             {formatDate(item.gestion.fechaGestion)}
           </p>
-          <p className="mt-1 text-[10px] text-neutral-600">
+          <p className="mt-1 text-[10px] text-slate-500">
             Registrada {formatDate(item.creadaEn, true)}
           </p>
         </div>
       </div>
 
       {invalidada && (
-        <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/5 p-3">
-          <p className="text-[9px] font-bold uppercase tracking-wider text-red-300/80">
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3">
+          <p className="text-[9px] font-bold uppercase tracking-wider text-red-800">
             No participa en el estado vigente ni en los cálculos
           </p>
-          <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-red-100">
+          <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-red-900">
             {item.gestion.motivoInvalidacion ??
               "No se registró un motivo de invalidación."}
           </p>
-          <p className="mt-2 text-[10px] leading-5 text-neutral-500">
+          <p className="mt-2 text-[10px] leading-5 text-slate-600">
             {item.gestion.invalidadaPor
               ? `Invalidada por ${item.gestion.invalidadaPor.nombre} el ${formatDate(
                   item.gestion.invalidadaEn,
@@ -111,46 +111,46 @@ export default function HistorialEvaluacionCard({
       )}
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-xl border border-neutral-800 bg-[#090a0b] p-3">
-          <p className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-neutral-600">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-slate-500">
             <UserRound size={13} /> Profesional
           </p>
-          <p className="mt-2 text-xs leading-5 text-neutral-300">
+          <p className="mt-2 text-xs leading-5 text-slate-700">
             {item.gestion.profesional}
           </p>
         </div>
-        <div className="rounded-xl border border-neutral-800 bg-[#090a0b] p-3">
-          <p className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-neutral-600">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-slate-500">
             <CalendarDays size={13} /> Fecha del soporte
           </p>
-          <p className="mt-2 text-xs leading-5 text-neutral-300">
+          <p className="mt-2 text-xs leading-5 text-slate-700">
             {formatDate(item.fechaDocumento)}
           </p>
         </div>
-        <div className="rounded-xl border border-neutral-800 bg-[#090a0b] p-3">
-          <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-600">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
             Vencimiento
           </p>
-          <p className="mt-2 text-xs leading-5 text-neutral-300">
+          <p className="mt-2 text-xs leading-5 text-slate-700">
             {formatDate(item.fechaVencimientoCalculada)}
           </p>
         </div>
-        <div className="rounded-xl border border-neutral-800 bg-[#090a0b] p-3">
-          <p className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-neutral-600">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-slate-500">
             <FileCheck2 size={13} /> Evidencias
           </p>
-          <p className="mt-2 text-xs leading-5 text-neutral-300">
+          <p className="mt-2 text-xs leading-5 text-slate-700">
             {item.totalEvidencias} soporte(s)
           </p>
         </div>
       </div>
 
       {(item.observacion || item.justificacionNoAplica) && (
-        <div className="mt-3 rounded-xl border border-neutral-800 bg-[#090a0b] p-3">
-          <p className="text-[9px] font-bold uppercase tracking-wider text-neutral-600">
+        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
             Observación
           </p>
-          <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-neutral-300">
+          <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-slate-700">
             {item.observacion ?? item.justificacionNoAplica}
           </p>
         </div>
