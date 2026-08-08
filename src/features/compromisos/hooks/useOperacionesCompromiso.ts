@@ -19,6 +19,7 @@ import type {
   FeedbackOperacionCompromiso,
   ReasignarCompromisoInput,
 } from "../types/operacion-compromisos.types";
+import { notificarCambioCompromisos } from "../lib/alertas-compromisos.events";
 
 export function useOperacionesCompromiso(
   compromisoId: string,
@@ -47,6 +48,7 @@ export function useOperacionesCompromiso(
     try {
       await accion(token);
       await recargar();
+      notificarCambioCompromisos();
       setFeedback({
         tone: "success",
         title: "Cambio guardado",

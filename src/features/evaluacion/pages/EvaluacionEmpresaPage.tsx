@@ -24,6 +24,7 @@ import { useAuth } from "../../auth/context/AuthContext";
 import CompromisosFinalizacionModal from "../../compromisos/components/finalizacion/CompromisosFinalizacionModal";
 import { usePreparacionFinalizacion } from "../../compromisos/hooks/usePreparacionFinalizacion";
 import type { CompromisoFinalizacionInput } from "../../compromisos/types/compromiso.types";
+import { notificarCambioCompromisos } from "../../compromisos/lib/alertas-compromisos.events";
 import DetalleAspectoDrawer from "../components/detalle/DetalleAspectoDrawer";
 import EvaluacionEmpresaHeader from "../components/EvaluacionEmpresaHeader";
 import AppAlert from "../components/feedback/AppAlert";
@@ -79,7 +80,8 @@ function enfocarAspectoEnMatriz(aspectoNombre: string) {
 export default function EvaluacionEmpresaPage() {
   const { empresaId } = useParams<{ empresaId: string }>();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] =
+    useSearchParams();
   const { hasRole } = useAuth();
   const anioSolicitado = Number(
     searchParams.get("anio")
@@ -183,6 +185,24 @@ export default function EvaluacionEmpresaPage() {
       }
     );
     await recargarDespuesDeFinalizar();
+
+    if (
+      searchParams.has("compromiso") ||
+      searchParams.has("aspecto") ||
+      searchParams.has("tareaId")
+    ) {
+      const siguientesParametros =
+        new URLSearchParams(searchParams);
+
+      siguientesParametros.delete("compromiso");
+      siguientesParametros.delete("aspecto");
+      siguientesParametros.delete("tareaId");
+      setSearchParams(siguientesParametros, {
+        replace: true,
+      });
+    }
+
+    notificarCambioCompromisos();
   };
 
   const prepararFinalizacion = async () => {
@@ -214,6 +234,7 @@ export default function EvaluacionEmpresaPage() {
       revisiones.recargar(),
       resultados.recargar(),
     ]);
+    notificarCambioCompromisos();
   };
 
   const enfocarRevision = useCallback(

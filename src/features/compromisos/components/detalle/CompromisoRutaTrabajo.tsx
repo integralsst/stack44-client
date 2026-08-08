@@ -48,6 +48,19 @@ export default function CompromisoRutaTrabajo({
   const pasos = [
     {
       numero: 1,
+      titulo: "Registrar avances",
+      detalle:
+        compromiso.progreso.evidencias > 0 ||
+        compromiso.seguimientos.length > 0
+          ? "Hay avances o evidencias registrados."
+          : "Agrega seguimiento y evidencia de soporte.",
+      completado:
+        compromiso.progreso.evidencias > 0 ||
+        compromiso.seguimientos.length > 0,
+      actual: compromiso.progreso.actividadesPendientes > 0,
+    },
+    {
+      numero: 2,
       titulo: "Completar actividades",
       detalle:
         compromiso.progreso.actividadesPendientes === 0
@@ -58,19 +71,6 @@ export default function CompromisoRutaTrabajo({
         compromiso.progreso.actividadesPendientes === 0,
       actual:
         compromiso.progreso.actividadesPendientes > 0,
-    },
-    {
-      numero: 2,
-      titulo: "Registrar avances",
-      detalle:
-        compromiso.progreso.evidencias > 0 ||
-        compromiso.seguimientos.length > 0
-          ? "Hay avances o evidencias registrados."
-          : "Agrega seguimiento y evidencia de soporte.",
-      completado:
-        compromiso.progreso.evidencias > 0 ||
-        compromiso.seguimientos.length > 0,
-      actual: false,
     },
     {
       numero: 3,
@@ -190,14 +190,14 @@ function obtenerSiguienteAccion(
   }
 
   if (responsablesPendientes.length > 0) {
-    return `${responsablesPendientes.join(", ")} debe completar su actividad. “Completar mi actividad” confirma únicamente esa tarea; no cierra el compromiso.`;
+    return `${responsablesPendientes.join(", ")} debe registrar el avance y la evidencia disponible; después debe usar “Completar mi actividad”.`;
   }
 
   if (!compromiso.progreso.aspectoRecalificadoEnCinco) {
     return "Un profesional autorizado debe evaluar nuevamente este mismo aspecto y registrarlo con nota 5.";
   }
 
-  return compromiso.operacion.esUsuarioCliente
-    ? "Ya puedes solicitar que SIS revise el cierre del compromiso."
-    : "El compromiso reúne los requisitos; ya puedes solicitar su cierre formal.";
+  return compromiso.operacion.puedeSolicitarCierre
+    ? "Ya puedes solicitar la revisión formal del cierre."
+    : "El responsable activo debe solicitar la revisión formal del cierre.";
 }
