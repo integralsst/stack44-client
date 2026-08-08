@@ -31,13 +31,13 @@ export default function CompromisoResponsables({
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <p className="text-xs font-semibold uppercase tracking-wider text-cyan-700">
-        Paso 1
+        Paso 2 · Confirmación final
       </p>
       <h2 className="mt-1 text-base font-bold text-slate-950">
-        Completar las actividades asignadas
+        Confirmar las actividades asignadas
       </h2>
       <p className="mt-1 text-sm leading-6 text-slate-600">
-        Cada persona confirma únicamente su propia tarea. Completar una actividad no cierra el compromiso; todas deben quedar completas y después el aspecto debe recalificarse en 5.
+        Después de documentar el trabajo, cada persona confirma únicamente su propia tarea. Esto no cierra el compromiso; todavía se requiere la recalificación en 5 y la revisión formal.
       </p>
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         {responsables.map(
@@ -51,9 +51,8 @@ export default function CompromisoResponsables({
               activa &&
                 responsable.actividad &&
                 operacion.puedeGestionarActividades &&
-                (operacion.esSupervisor ||
-                  responsable.usuarioResponsable.id ===
-                    operacion.usuarioId)
+                responsable.usuarioResponsable.id ===
+                  operacion.usuarioId
             );
 
             return (
@@ -156,12 +155,8 @@ export default function CompromisoResponsables({
                       }
                     >
                       {atendida
-                        ? operacion.esSupervisor
-                          ? "Reabrir actividad"
-                          : "Reabrir mi actividad"
-                        : operacion.esSupervisor
-                          ? "Marcar actividad completada"
-                          : "Completar mi actividad"}
+                        ? "Reabrir mi actividad"
+                        : "Completar mi actividad"}
                     </AppButton>
                   </div>
                 )}

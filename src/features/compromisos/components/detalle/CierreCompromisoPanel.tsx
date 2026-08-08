@@ -35,11 +35,14 @@ export default function CierreCompromisoPanel({
   const pendiente = compromiso.solicitudesCierre.find(
     (solicitud) => solicitud.estado === "PENDIENTE"
   );
+  const ultimaSolicitud =
+    compromiso.solicitudesCierre[0] ?? null;
+  const solicitudDevuelta =
+    ultimaSolicitud?.estado === "DEVUELTA";
   const puedeVerSolicitud =
     compromiso.estado === "EN_EJECUCION" &&
-    (compromiso.operacion.esSupervisor ||
-      compromiso.operacion
-        .puedeRegistrarSeguimiento);
+    compromiso.operacion
+      .puedeGestionarActividades;
 
   const decidir = async (
     decision: "APROBAR" | "DEVOLVER"
@@ -92,56 +95,75 @@ export default function CierreCompromisoPanel({
                 .puedeSolicitarCierre
             }
           >
-            {compromiso.operacion.esUsuarioCliente
-              ? "Solicitar revisión de cierre"
-              : "Solicitar cierre"}
+            {solicitudDevuelta
+              ? "Volver a solicitar revisión"
+              : "Solicitar revisión de cierre"}
           </AppButton>
         )}
       </div>
 
       {!pendiente &&
         compromiso.estado === "EN_EJECUCION" && (
-          <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-bold text-slate-900">
-              Requisitos para habilitar la solicitud
-            </p>
-            <div className="mt-3 grid gap-2 md:grid-cols-2">
-              <Requisito
-                listo={
-                  compromiso.progreso
-                    .actividadesTotal > 0 &&
-                  compromiso.progreso
-                    .actividadesPendientes === 0
-                }
-                texto={
-                  compromiso.progreso
-                    .actividadesPendientes === 0
-                    ? "Todas las actividades están completas."
-                    : "Faltan " +
-                      compromiso.progreso
-                        .actividadesPendientes +
-                      " actividad(es) por completar."
-                }
-              />
-              <Requisito
-                listo={
-                  compromiso.progreso
-                    .aspectoRecalificadoEnCinco
-                }
-                texto={
-                  compromiso.progreso
-                    .aspectoRecalificadoEnCinco
-                    ? "El aspecto ya fue recalificado en 5."
-                    : "Falta una evaluación posterior del aspecto en 5."
-                }
-              />
-            </div>
-            {!compromiso.operacion
-              .puedeSolicitarCierre && (
-              <p className="mt-3 text-xs leading-5 text-slate-600">
-                El botón permanecerá deshabilitado hasta cumplir ambos requisitos. Las evidencias son soporte recomendado, no un requisito automático.
-              </p>
+          <div className="mt-4 space-y-4">
+            {solicitudDevuelta && (
+              <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+                <p className="text-sm font-bold">
+                  La solicitud anterior fue devuelta
+                </p>
+                <p className="mt-1 text-xs leading-5">
+                  {ultimaSolicitud.observacionesDevolucion ??
+                    "Corrige lo solicitado y presenta una nueva revisión."}
+                </p>
+                <p className="mt-2 text-xs font-semibold leading-5">
+                  El intento devuelto no puede aprobarse. Después de corregir, debes volver a solicitar la revisión para continuar.
+                </p>
+              </div>
             )}
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-sm font-bold text-slate-900">
+                Requisitos para habilitar la solicitud
+              </p>
+              <div className="mt-3 grid gap-2 md:grid-cols-2">
+                <Requisito
+                  listo={
+                    compromiso.progreso
+                      .actividadesTotal > 0 &&
+                    compromiso.progreso
+                      .actividadesPendientes === 0
+                  }
+                  texto={
+                    compromiso.progreso
+                      .actividadesPendientes === 0
+                      ? "Todas las actividades están completas."
+                      : "Faltan " +
+                        compromiso.progreso
+                          .actividadesPendientes +
+                        " actividad(es) por completar."
+                  }
+                />
+                <Requisito
+                  listo={
+                    compromiso.progreso
+                      .aspectoRecalificadoEnCinco
+                  }
+                  texto={
+                    compromiso.progreso
+                      .aspectoRecalificadoEnCinco
+                      ? "El aspecto ya fue recalificado en 5."
+                      : "Falta una evaluación posterior del aspecto en 5."
+                  }
+                />
+              </div>
+              {!compromiso.operacion
+                .puedeSolicitarCierre && (
+                <p className="mt-3 text-xs leading-5 text-slate-600">
+                  {puedeVerSolicitud
+                    ? "El botón permanecerá deshabilitado hasta cumplir ambos requisitos. Las evidencias son soporte recomendado, no un requisito automático."
+                    : "Solo el responsable activo puede presentar la solicitud. Los supervisores conservan acceso de consulta, recalificación y decisión según la etapa."}
+                </p>
+              )}
+            </div>
           </div>
         )}
 

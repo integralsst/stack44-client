@@ -127,16 +127,6 @@ export default function CompromisoDetallePage() {
       <CompromisoProgreso
         progreso={detalle.data.progreso}
       />
-      <CompromisoResponsables
-        responsables={
-          detalle.data.responsables
-        }
-        operacion={detalle.data.operacion}
-        procesando={operaciones.procesando}
-        onToggleActividad={
-          operaciones.cambiarActividad
-        }
-      />
       <RegistroAvanceCompromiso
         compromiso={detalle.data}
         procesando={operaciones.procesando}
@@ -145,6 +135,16 @@ export default function CompromisoDetallePage() {
         }
         onCreateEvidence={
           operaciones.crearEvidencia
+        }
+      />
+      <CompromisoResponsables
+        responsables={
+          detalle.data.responsables
+        }
+        operacion={detalle.data.operacion}
+        procesando={operaciones.procesando}
+        onToggleActividad={
+          operaciones.cambiarActividad
         }
       />
       <AsignacionCompromisoPanel

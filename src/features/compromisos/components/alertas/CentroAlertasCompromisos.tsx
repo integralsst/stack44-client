@@ -22,6 +22,7 @@ import type {
   AlertaCompromiso,
   AlertasCompromisosResponse,
 } from "../../types/alertas-compromisos.types";
+import { COMPROMISOS_ACTUALIZADOS_EVENT } from "../../lib/alertas-compromisos.events";
 
 const ACTUALIZACION_MS = 60_000;
 
@@ -63,7 +64,38 @@ export default function CentroAlertasCompromisos() {
     );
 
     return () => window.clearInterval(interval);
-  }, [cargar, location.pathname]);
+  }, [cargar, location.key]);
+
+  useEffect(() => {
+    const actualizar = () => void cargar();
+    const actualizarAlVolver = () => {
+      if (document.visibilityState === "visible") {
+        void cargar();
+      }
+    };
+
+    window.addEventListener(
+      COMPROMISOS_ACTUALIZADOS_EVENT,
+      actualizar
+    );
+    window.addEventListener("focus", actualizar);
+    document.addEventListener(
+      "visibilitychange",
+      actualizarAlVolver
+    );
+
+    return () => {
+      window.removeEventListener(
+        COMPROMISOS_ACTUALIZADOS_EVENT,
+        actualizar
+      );
+      window.removeEventListener("focus", actualizar);
+      document.removeEventListener(
+        "visibilitychange",
+        actualizarAlVolver
+      );
+    };
+  }, [cargar]);
 
   useEffect(() => {
     const cerrarFuera = (event: PointerEvent) => {
@@ -94,7 +126,14 @@ export default function CentroAlertasCompromisos() {
     <div className="relative" ref={contenedorRef}>
       <button
         type="button"
-        onClick={() => setAbierto((actual) => !actual)}
+        onClick={() => {
+          const siguiente = !abierto;
+          setAbierto(siguiente);
+
+          if (siguiente) {
+            void cargar();
+          }
+        }}
         className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-700"
         aria-label={
           total > 0

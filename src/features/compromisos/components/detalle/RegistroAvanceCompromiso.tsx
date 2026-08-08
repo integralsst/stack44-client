@@ -46,13 +46,13 @@ export default function RegistroAvanceCompromiso({
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <p className="text-xs font-semibold uppercase tracking-wider text-cyan-700">
-        Paso 2
+        Paso 1
       </p>
       <h2 className="mt-1 text-base font-bold text-slate-950">
-        Registrar avance
+        Documentar el trabajo realizado
       </h2>
       <p className="mt-1 text-sm leading-6 text-slate-600">
-        Describe lo realizado y adjunta el enlace de la evidencia cuando exista. Las evidencias respaldan la gestión, pero no sustituyen la actividad ni la recalificación en 5.
+        Registra primero el seguimiento y la evidencia disponible. Al terminar, encontrarás la confirmación de tu actividad en el siguiente paso.
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2 border-b border-slate-200 pb-3">
