@@ -2,7 +2,9 @@ import { apiRequest } from "../../../lib/api";
 import type {
   CrearEvidenciaCompromisoInput,
   CrearSeguimientoCompromisoInput,
+  DecidirAmpliacionCompromisoInput,
   ReasignarCompromisoInput,
+  SolicitarAmpliacionCompromisoInput,
 } from "../types/operacion-compromisos.types";
 
 function ruta(compromisoId: string, sufijo: string) {
@@ -129,6 +131,59 @@ export function decidirCierreCompromiso(
         decision,
         mensaje,
       }),
+    },
+    token
+  );
+}
+
+export function solicitarAmpliacionCompromiso(
+  compromisoId: string,
+  data: SolicitarAmpliacionCompromisoInput,
+  token: string
+) {
+  return apiRequest(
+    ruta(compromisoId, "/solicitudes-ampliacion"),
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+    },
+    token
+  );
+}
+
+export function decidirAmpliacionCompromiso(
+  compromisoId: string,
+  data: DecidirAmpliacionCompromisoInput,
+  token: string
+) {
+  return apiRequest(
+    ruta(
+      compromisoId,
+      "/solicitudes-ampliacion/" +
+        encodeURIComponent(data.solicitudId) +
+        "/decision"
+    ),
+    {
+      method: "POST",
+      body: JSON.stringify({
+        decision: data.decision,
+        observacion: data.observacion,
+      }),
+    },
+    token
+  );
+}
+
+export function cancelarCompromiso(
+  compromisoId: string,
+  motivo: string,
+  token: string
+) {
+  return apiRequest(
+    ruta(compromisoId, "/cancelacion"),
+    {
+      method: "POST",
+      body: JSON.stringify({ motivo }),
     },
     token
   );

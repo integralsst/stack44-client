@@ -18,6 +18,17 @@ export interface ReasignarCompromisoInput {
   nuevoUsuarioResponsableId: string;
 }
 
+export interface SolicitarAmpliacionCompromisoInput {
+  fechaLimiteSolicitada: string;
+  justificacion: string;
+}
+
+export interface DecidirAmpliacionCompromisoInput {
+  solicitudId: string;
+  decision: "APROBAR" | "RECHAZAR";
+  observacion: string | null;
+}
+
 export interface FeedbackOperacionCompromiso {
   tone: "success" | "error";
   title: string;
