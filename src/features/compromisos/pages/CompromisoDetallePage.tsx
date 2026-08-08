@@ -1,4 +1,7 @@
 import {
+  useCallback,
+} from "react";
+import {
   ArrowLeft,
   RefreshCw,
 } from "lucide-react";
@@ -9,6 +12,7 @@ import {
 } from "react-router-dom";
 
 import CompromisoDetalleResumen from "../components/detalle/CompromisoDetalleResumen";
+import AdministracionCompromisoPanel from "../components/detalle/AdministracionCompromisoPanel";
 import AsignacionCompromisoPanel from "../components/detalle/AsignacionCompromisoPanel";
 import CierreCompromisoPanel from "../components/detalle/CierreCompromisoPanel";
 import CompromisoProgreso from "../components/detalle/CompromisoProgreso";
@@ -17,6 +21,7 @@ import CompromisoRutaTrabajo from "../components/detalle/CompromisoRutaTrabajo";
 import CompromisoTrazabilidad from "../components/detalle/CompromisoTrazabilidad";
 import RegistroAvanceCompromiso from "../components/detalle/RegistroAvanceCompromiso";
 import AppToast from "../../evaluacion/components/feedback/AppToast";
+import { useAdministracionCompromiso } from "../hooks/useAdministracionCompromiso";
 import { useCompromisoDetalle } from "../hooks/useCompromisoDetalle";
 import { useOperacionesCompromiso } from "../hooks/useOperacionesCompromiso";
 
@@ -27,10 +32,20 @@ export default function CompromisoDetallePage() {
   const navigate = useNavigate();
   const detalle =
     useCompromisoDetalle(compromisoId);
+  const administracion =
+    useAdministracionCompromiso(compromisoId);
+  const recargarTodo = useCallback(async () => {
+    await Promise.all([
+      detalle.recargar(),
+      administracion.recargar(),
+    ]);
+  }, [administracion.recargar, detalle.recargar]);
   const operaciones = useOperacionesCompromiso(
     compromisoId,
-    detalle.recargar
+    recargarTodo
   );
+  const actualizando =
+    detalle.cargando || administracion.cargando;
 
   const volverA =
     location.pathname.startsWith(
@@ -92,15 +107,15 @@ export default function CompromisoDetallePage() {
         <button
           type="button"
           onClick={() =>
-            void detalle.recargar()
+            void recargarTodo()
           }
-          disabled={detalle.cargando}
+          disabled={actualizando}
           className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
         >
           <RefreshCw
             size={16}
             className={
-              detalle.cargando
+              actualizando
                 ? "animate-spin"
                 : ""
             }
@@ -115,6 +130,15 @@ export default function CompromisoDetallePage() {
           className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
         >
           {detalle.error}
+        </div>
+      )}
+
+      {administracion.error && (
+        <div
+          role="alert"
+          className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+        >
+          El compromiso se cargó, pero no fue posible consultar su administración: {administracion.error}
         </div>
       )}
 
@@ -175,6 +199,22 @@ export default function CompromisoDetallePage() {
         }
         onDecide={operaciones.decidirCierre}
       />
+      {administracion.data && (
+        <AdministracionCompromisoPanel
+          administracion={administracion.data}
+          esSupervisor={
+            detalle.data.operacion.esSupervisor
+          }
+          procesando={operaciones.procesando}
+          onRequestExtension={
+            operaciones.solicitarAmpliacion
+          }
+          onDecideExtension={
+            operaciones.decidirAmpliacion
+          }
+          onCancel={operaciones.cancelar}
+        />
+      )}
       <CompromisoTrazabilidad
         compromiso={detalle.data}
       />
