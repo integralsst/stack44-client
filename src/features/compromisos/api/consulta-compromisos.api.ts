@@ -1,4 +1,5 @@
 import { apiRequest } from "../../../lib/api";
+import type { AdministracionCompromiso } from "../types/administracion-compromiso.types";
 import type {
   AlcanceCompromisos,
   CompromisoDetalle,
@@ -89,6 +90,19 @@ export function obtenerCompromisoDetalle(
   return apiRequest<CompromisoDetalle>(
     "/api/compromisos/" +
       encodeURIComponent(compromisoId),
+    {},
+    token
+  );
+}
+
+export function obtenerAdministracionCompromiso(
+  compromisoId: string,
+  token: string
+) {
+  return apiRequest<AdministracionCompromiso>(
+    "/api/compromisos/" +
+      encodeURIComponent(compromisoId) +
+      "/administracion",
     {},
     token
   );
