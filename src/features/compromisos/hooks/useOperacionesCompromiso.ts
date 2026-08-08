@@ -6,18 +6,23 @@ import {
 import { useAuth } from "../../auth/context/AuthContext";
 import {
   cambiarActividadCompromiso,
+  cancelarCompromiso,
   crearEvidenciaCompromiso,
   crearSeguimientoCompromiso,
+  decidirAmpliacionCompromiso,
   decidirCierreCompromiso,
   reasignarCompromiso,
   rechazarAsignacionCompromiso,
+  solicitarAmpliacionCompromiso,
   solicitarCierreCompromiso,
 } from "../api/operacion-compromisos.api";
 import type {
   CrearEvidenciaCompromisoInput,
   CrearSeguimientoCompromisoInput,
+  DecidirAmpliacionCompromisoInput,
   FeedbackOperacionCompromiso,
   ReasignarCompromisoInput,
+  SolicitarAmpliacionCompromisoInput,
 } from "../types/operacion-compromisos.types";
 import { notificarCambioCompromisos } from "../lib/alertas-compromisos.events";
 
@@ -165,6 +170,45 @@ export function useOperacionesCompromiso(
             solicitudId,
             decision,
             mensaje,
+            currentToken
+          )
+      ),
+    solicitarAmpliacion: (
+      data: SolicitarAmpliacionCompromisoInput
+    ) =>
+      ejecutar(
+        "solicitud-ampliacion",
+        "La solicitud de ampliación quedó pendiente de coordinación y administración.",
+        (currentToken) =>
+          solicitarAmpliacionCompromiso(
+            compromisoId,
+            data,
+            currentToken
+          )
+      ),
+    decidirAmpliacion: (
+      data: DecidirAmpliacionCompromisoInput
+    ) =>
+      ejecutar(
+        "decision-ampliacion",
+        data.decision === "APROBAR"
+          ? "Tu decisión quedó registrada. La fecha solo cambia cuando coordinación y administración hayan aprobado."
+          : "La solicitud de ampliación quedó rechazada.",
+        (currentToken) =>
+          decidirAmpliacionCompromiso(
+            compromisoId,
+            data,
+            currentToken
+          )
+      ),
+    cancelar: (motivo: string) =>
+      ejecutar(
+        "cancelacion",
+        "El compromiso quedó cancelado y la trazabilidad fue conservada.",
+        (currentToken) =>
+          cancelarCompromiso(
+            compromisoId,
+            motivo,
             currentToken
           )
       ),
