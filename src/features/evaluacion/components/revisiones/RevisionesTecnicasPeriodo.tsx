@@ -7,7 +7,10 @@ import {
   ShieldCheck,
   Wrench,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import {
+  useMemo,
+  useState,
+} from "react";
 
 import AppButton from "../../../../components/ui/AppButton";
 import type {
@@ -27,6 +30,7 @@ interface Props {
   cargando: boolean;
   procesando: boolean;
   error: string | null;
+  initialFilter?: EstadoFlujoRevisionTecnica;
   onReload: () => Promise<void> | void;
   onResolve: (
     revisionId: string,
@@ -49,12 +53,15 @@ export default function RevisionesTecnicasPeriodo({
   cargando,
   procesando,
   error,
+  initialFilter,
   onReload,
   onResolve,
   onCorregir,
   onResolved,
 }: Props) {
-  const [filtro, setFiltro] = useState<Filtro>("REQUIERE_AJUSTES");
+  const [filtro, setFiltro] = useState<Filtro>(
+    initialFilter ?? "REQUIERE_AJUSTES"
+  );
   const [seleccionada, setSeleccionada] =
     useState<RevisionTecnicaEvaluacionItem | null>(null);
   const [toast, setToast] = useState<{

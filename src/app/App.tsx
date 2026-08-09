@@ -9,6 +9,8 @@ import {
   Navigate,
   Route,
   Routes,
+  useParams,
+  useSearchParams,
 } from "react-router-dom";
 
 import {
@@ -78,6 +80,13 @@ const EvaluacionEmpresaPage = lazy(
   () =>
     import(
       "../features/evaluacion/pages/EvaluacionEmpresaPage"
+    )
+);
+
+const ControlesEvaluacionPage = lazy(
+  () =>
+    import(
+      "../features/evaluacion/pages/ControlesEvaluacionPage"
     )
 );
 
@@ -230,6 +239,32 @@ function RoleGuard({
   return <>{children}</>;
 }
 
+function EvaluacionRoute() {
+  const { empresaId } = useParams<{ empresaId: string }>();
+  const [searchParams] = useSearchParams();
+  const anio = searchParams.get("anio") ?? String(new Date().getFullYear());
+
+  if (empresaId && searchParams.get("noAplica") === "1") {
+    return (
+      <Navigate
+        to={`/dashboard/empresas/${empresaId}/evaluacion/controles?anio=${encodeURIComponent(anio)}&tab=no-aplica`}
+        replace
+      />
+    );
+  }
+
+  if (empresaId && searchParams.get("aprobaciones") === "1") {
+    return (
+      <Navigate
+        to={`/dashboard/empresas/${empresaId}/evaluacion/controles?anio=${encodeURIComponent(anio)}&tab=aprobaciones`}
+        replace
+      />
+    );
+  }
+
+  return <EvaluacionEmpresaPage />;
+}
+
 function PublicLanding() {
   return (
     <>
@@ -282,7 +317,18 @@ function AppRoutes() {
                 <RoleGuard
                   allowedRoles={EVALUACION_ROLES}
                 >
-                  <EvaluacionEmpresaPage />
+                  <EvaluacionRoute />
+                </RoleGuard>
+              }
+            />
+
+            <Route
+              path="empresas/:empresaId/evaluacion/controles"
+              element={
+                <RoleGuard
+                  allowedRoles={EVALUACION_ROLES}
+                >
+                  <ControlesEvaluacionPage />
                 </RoleGuard>
               }
             />
