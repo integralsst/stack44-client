@@ -22,11 +22,19 @@ interface Props {
   ) => Promise<boolean>;
 }
 
-function fecha(value: string | null) {
+function fechaHora(value: string | null) {
   if (!value) return "—";
   return new Intl.DateTimeFormat("es-CO", {
     dateStyle: "medium",
     timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function fechaCalendario(value: string | null) {
+  if (!value) return "—";
+  return new Intl.DateTimeFormat("es-CO", {
+    dateStyle: "medium",
+    timeZone: "UTC",
   }).format(new Date(value));
 }
 
@@ -97,7 +105,7 @@ export default function AprobacionesGestionPanel({
                   {item.gestion.usuarioCreador.nombre} · {item.gestion.modalidad.replaceAll("_", " ")}
                 </h3>
                 <p className="mt-1 text-xs text-neutral-500">
-                  Gestión del {fecha(item.gestion.fechaGestion)} · control generado {fecha(item.generadaEn)}
+                  Gestión del {fechaCalendario(item.gestion.fechaGestion)} · control generado {fechaHora(item.generadaEn)}
                 </p>
               </div>
               <Estado item={item} />
