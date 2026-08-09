@@ -2,9 +2,11 @@ import {
   ArrowLeft,
   Building2,
   CalendarDays,
+  ClipboardCheck,
   MapPin,
   ShieldCheck,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import AppIconButton from "../../../components/ui/AppIconButton";
 import AppSelect from "../../../components/ui/AppSelect";
@@ -133,6 +135,16 @@ export default function EvaluacionEmpresaHeader({
               </span>
             </div>
           </div>
+
+          {periodo && (
+            <Link
+              to={`/dashboard/empresas/${empresa.id}/evaluacion/controles?anio=${anio}`}
+              className="flex items-center justify-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2.5 text-sm font-bold text-cyan-800 transition hover:border-cyan-300 hover:bg-cyan-100 sm:col-span-2"
+            >
+              <ClipboardCheck size={16} />
+              No aplica y aprobaciones de gestión
+            </Link>
+          )}
         </div>
       </div>
     </header>
