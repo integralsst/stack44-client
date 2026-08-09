@@ -14,14 +14,20 @@ import {
   useSearchParams,
 } from "react-router-dom";
 
+import type { ContextoEvaluacionResponse } from "../../../types/evaluacion.types";
 import { useAuth } from "../../auth/context/AuthContext";
 import { obtenerContextoEvaluacion } from "../api/evaluacion.api";
 import AprobacionesGestionPanel from "../components/aprobaciones/AprobacionesGestionPanel";
 import NoAplicaPeriodoPanel from "../components/no-aplica/NoAplicaPeriodoPanel";
 import { useControlesEvaluacion } from "../hooks/useControlesEvaluacion";
-import type { ContextoEvaluacionResponse } from "../../../types/evaluacion.types";
 
 type TabControl = "no-aplica" | "aprobaciones";
+
+type ResultadoContexto = {
+  key: string;
+  contexto: ContextoEvaluacionResponse | null;
+  error: string | null;
+};
 
 export default function ControlesEvaluacionPage() {
   const { empresaId } = useParams<{ empresaId: string }>();
@@ -37,42 +43,53 @@ export default function ControlesEvaluacionPage() {
     searchParams.get("tab") === "aprobaciones"
       ? "aprobaciones"
       : "no-aplica";
+  const requestKey = `${empresaId ?? "sin-empresa"}:${anio}:${token ?? "sin-token"}`;
 
-  const [contexto, setContexto] =
-    useState<ContextoEvaluacionResponse | null>(null);
-  const [cargandoContexto, setCargandoContexto] =
-    useState(true);
-  const [errorContexto, setErrorContexto] =
-    useState<string | null>(null);
+  const [resultadoContexto, setResultadoContexto] =
+    useState<ResultadoContexto | null>(null);
 
   useEffect(() => {
     if (!empresaId || !token) return;
 
     let active = true;
-    setCargandoContexto(true);
-    setErrorContexto(null);
+    const keyActual = requestKey;
 
     obtenerContextoEvaluacion(empresaId, anio, token)
       .then((data) => {
-        if (active) setContexto(data);
+        if (!active) return;
+
+        setResultadoContexto({
+          key: keyActual,
+          contexto: data,
+          error: null,
+        });
       })
       .catch((error) => {
-        if (active) {
-          setErrorContexto(
+        if (!active) return;
+
+        setResultadoContexto({
+          key: keyActual,
+          contexto: null,
+          error:
             error instanceof Error
               ? error.message
-              : "No fue posible consultar la empresa."
-          );
-        }
-      })
-      .finally(() => {
-        if (active) setCargandoContexto(false);
+              : "No fue posible consultar la empresa.",
+        });
       });
 
     return () => {
       active = false;
     };
-  }, [anio, empresaId, token]);
+  }, [anio, empresaId, requestKey, token]);
+
+  const resultadoActual =
+    resultadoContexto?.key === requestKey
+      ? resultadoContexto
+      : null;
+  const contexto = resultadoActual?.contexto ?? null;
+  const errorContexto = resultadoActual?.error ?? null;
+  const cargandoContexto =
+    Boolean(empresaId && token) && !resultadoActual;
 
   const controles = useControlesEvaluacion(
     contexto?.periodo?.id ?? null,
@@ -120,8 +137,14 @@ export default function ControlesEvaluacionPage() {
     return (
       <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-red-100">
         <p className="font-bold">No fue posible abrir los controles</p>
-        <p className="mt-1 text-sm">{errorContexto ?? "La empresa no está disponible."}</p>
-        <button onClick={volver} className="mt-4 rounded-xl bg-white px-4 py-2 text-sm font-bold text-black">
+        <p className="mt-1 text-sm">
+          {errorContexto ?? "La empresa no está disponible."}
+        </p>
+        <button
+          type="button"
+          onClick={volver}
+          className="mt-4 rounded-xl bg-white px-4 py-2 text-sm font-bold text-black"
+        >
           Volver
         </button>
       </div>
@@ -142,18 +165,29 @@ export default function ControlesEvaluacionPage() {
               <ArrowLeft size={17} />
             </button>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300">Controles de evaluación</p>
-              <h1 className="mt-1 text-xl font-bold text-white">{contexto.empresa.nombre}</h1>
-              <p className="mt-1 text-xs text-neutral-500">Periodo {anio} · decisiones posteriores a gestiones finalizadas</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300">
+                Controles de evaluación
+              </p>
+              <h1 className="mt-1 text-xl font-bold text-white">
+                {contexto.empresa.nombre}
+              </h1>
+              <p className="mt-1 text-xs text-neutral-500">
+                Periodo {anio} · decisiones posteriores a gestiones finalizadas
+              </p>
             </div>
           </div>
           <button
             type="button"
-            disabled={controles.cargando || Boolean(controles.procesando)}
+            disabled={
+              controles.cargando || Boolean(controles.procesando)
+            }
             onClick={() => void controles.recargar()}
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-700 bg-[#08090a] px-4 py-2.5 text-sm font-semibold text-neutral-300 hover:border-cyan-500/40 hover:text-cyan-200 disabled:opacity-50"
           >
-            <RefreshCw size={16} className={controles.cargando ? "animate-spin" : ""} />
+            <RefreshCw
+              size={16}
+              className={controles.cargando ? "animate-spin" : ""}
+            />
             Actualizar
           </button>
         </div>
@@ -161,7 +195,8 @@ export default function ControlesEvaluacionPage() {
 
       {!contexto.periodo ? (
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 text-amber-100">
-          El periodo {anio} todavía no está abierto. Abre el periodo desde Evaluación antes de usar estos controles.
+          El periodo {anio} todavía no está abierto. Abre el periodo desde
+          Evaluación antes de usar estos controles.
         </div>
       ) : (
         <>
