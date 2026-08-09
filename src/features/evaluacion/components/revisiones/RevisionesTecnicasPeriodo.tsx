@@ -8,7 +8,6 @@ import {
   Wrench,
 } from "lucide-react";
 import {
-  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -69,12 +68,6 @@ export default function RevisionesTecnicasPeriodo({
     title: string;
     description: string;
   } | null>(null);
-
-  useEffect(() => {
-    if (initialFilter) {
-      setFiltro(initialFilter);
-    }
-  }, [initialFilter]);
 
   const revisiones = useMemo(() => {
     const items = data?.revisiones ?? [];
