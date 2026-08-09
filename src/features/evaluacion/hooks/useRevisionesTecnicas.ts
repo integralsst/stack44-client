@@ -5,6 +5,7 @@ import {
 } from "react";
 
 import { useAuth } from "../../auth/context/AuthContext";
+import { notificarCambioCompromisos } from "../../compromisos/lib/alertas-compromisos.events";
 import {
   obtenerRevisionesTecnicasPeriodo,
   resolverRevisionTecnica,
@@ -74,6 +75,7 @@ export function useRevisionesTecnicas(
           token
         );
         await recargar();
+        notificarCambioCompromisos();
         return response;
       } catch (currentError) {
         const message =
