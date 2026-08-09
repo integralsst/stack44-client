@@ -17,6 +17,15 @@ export type EstadoRevisionTecnica =
   | "REQUIERE_AJUSTES"
   | "ANULADA";
 
+export type CausaResultadoEfectivo =
+  | "REGISTRADA"
+  | "NO_APLICA_PENDIENTE"
+  | "NO_APLICA_APROBADO"
+  | "NO_APLICA_RECHAZADO"
+  | "GESTION_PENDIENTE_APROBACION"
+  | "GESTION_APROBADA"
+  | "GESTION_RECHAZADA";
+
 export interface RevisionTecnicaRegistrada {
   id: string;
   estado: EstadoRevisionTecnica;
@@ -119,6 +128,9 @@ export interface EvaluacionRegistrada {
   estadoCumplimiento:
     EstadoCumplimientoAspecto;
   calificacionAdministrativa: number;
+  calificacionEfectiva: number;
+  resultadoProvisional: boolean;
+  causaResultadoEfectivo: CausaResultadoEfectivo;
   observacion: string | null;
   fechaDocumento: string | null;
   fechaVencimientoCalculada:
@@ -127,6 +139,33 @@ export interface EvaluacionRegistrada {
   justificacionNoAplica:
     | string
     | null;
+  decisionNoAplica: {
+    id: string;
+    estado: "PENDIENTE" | "APROBADO" | "RECHAZADO";
+    resultadoEfectivo: number;
+    observacionDecision: string | null;
+    solicitadaEn: string;
+    decididaEn: string | null;
+    solicitadaPor: {
+      id: string;
+      nombre: string;
+    };
+    decididaPor: {
+      id: string;
+      nombre: string;
+    } | null;
+  } | null;
+  aprobacionGestion: {
+    id: string;
+    estado: "PENDIENTE" | "APROBADA" | "RECHAZADA";
+    observacionDecision: string | null;
+    generadaEn: string;
+    decididaEn: string | null;
+    decididaPor: {
+      id: string;
+      nombre: string;
+    } | null;
+  } | null;
   marcadaRevisionTecnica: boolean;
   motivoRevisionTecnica: string | null;
   revisionTecnica: RevisionTecnicaRegistrada | null;
