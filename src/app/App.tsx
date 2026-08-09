@@ -81,6 +81,13 @@ const EvaluacionEmpresaPage = lazy(
     )
 );
 
+const ControlesEvaluacionPage = lazy(
+  () =>
+    import(
+      "../features/evaluacion/pages/ControlesEvaluacionPage"
+    )
+);
+
 const InformesGlobalesPage = lazy(
   () =>
     import(
@@ -283,6 +290,17 @@ function AppRoutes() {
                   allowedRoles={EVALUACION_ROLES}
                 >
                   <EvaluacionEmpresaPage />
+                </RoleGuard>
+              }
+            />
+
+            <Route
+              path="empresas/:empresaId/evaluacion/controles"
+              element={
+                <RoleGuard
+                  allowedRoles={EVALUACION_ROLES}
+                >
+                  <ControlesEvaluacionPage />
                 </RoleGuard>
               }
             />
