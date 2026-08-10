@@ -158,7 +158,7 @@ export default function DetalleAspectoDrawer({
                 {title}
               </h2>
               <p className="mt-1 text-xs leading-5 text-slate-600">
-                Consulta la configuración maestra, el historial de la empresa y los soportes asociados.
+                Consulta la configuración maestra, la trazabilidad de la empresa y los soportes asociados.
               </p>
             </div>
 
@@ -186,10 +186,7 @@ export default function DetalleAspectoDrawer({
               icon={History}
               label={`Historial${
                 loadedSections.HISTORIAL
-                  ? ` (${
-                      (data?.historial.length ?? 0) +
-                      (data?.compromisos.length ?? 0)
-                    })`
+                  ? ` (${data?.trazabilidad.length ?? 0})`
                   : ""
               }`}
               loading={loadingSections.HISTORIAL}
@@ -310,6 +307,9 @@ export default function DetalleAspectoDrawer({
                     loadingMore={loadingSections.HISTORIAL}
                     onLoadMore={() =>
                       void loadMoreHistory()
+                    }
+                    onOpenRevisionTecnica={() =>
+                      activateTab("REVISION_TECNICA")
                     }
                   />
                 )}
