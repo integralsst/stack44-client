@@ -170,7 +170,7 @@ export default function AccionCompactaCard({
             </div>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-3 sm:flex sm:items-center sm:justify-between sm:gap-4">
+          <div className="mt-4 rounded-2xl border border-cyan-200 bg-white p-3">
             <div className="min-w-0">
               <p className="text-xs font-extrabold text-slate-950">
                 Resolver esta acción
@@ -182,7 +182,7 @@ export default function AccionCompactaCard({
 
             <Link
               to={accion.accion.ruta}
-              className="mt-3 inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-xs font-extrabold text-white transition hover:bg-cyan-700 sm:mt-0 sm:w-auto"
+              className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-cyan-700 bg-cyan-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-sm transition hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2"
             >
               {accion.accion.etiqueta}
               <ArrowRight size={15} />
