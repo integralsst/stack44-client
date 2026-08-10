@@ -18,7 +18,6 @@ import {
   desactivarEvidenciaEvaluacion,
 } from "../api/evidencias-evaluacion.api";
 import type {
-  DetalleAspectoResponse,
   DetalleAspectoResumenRapidoResponse,
   HistorialPaginacion,
   SeccionDetalleAspecto,
@@ -27,6 +26,10 @@ import type {
   EvidenciaEvaluacion,
   EvidenciaEvaluacionFormInput,
 } from "../types/evidencia-evaluacion.types";
+import type {
+  DetalleAspectoConTrazabilidad,
+  DetalleAspectoHistorialConTrazabilidad,
+} from "../types/trazabilidad-aspecto.types";
 
 const estadoSeccionesInicial = {
   HISTORIAL: false,
@@ -49,7 +52,7 @@ const paginacionHistorialInicial: HistorialPaginacion = {
 
 function construirDetalleParcial(
   response: DetalleAspectoResumenRapidoResponse
-): DetalleAspectoResponse {
+): DetalleAspectoConTrazabilidad {
   return {
     empresa: response.empresa,
     periodo: response.periodo,
@@ -101,6 +104,7 @@ function construirDetalleParcial(
     evidencias: [],
     evidenciasCompromiso: [],
     revisionesTecnicas: [],
+    trazabilidad: [],
     evidenciaObjetivo: null,
     permisos: {
       puedeGestionarEvidencias: false,
@@ -124,7 +128,7 @@ export function useDetalleAspecto({
 }) {
   const { token } = useAuth();
   const [data, setData] =
-    useState<DetalleAspectoResponse | null>(null);
+    useState<DetalleAspectoConTrazabilidad | null>(null);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(
@@ -256,19 +260,20 @@ export function useDetalleAspecto({
 
       try {
         if (section === "HISTORIAL") {
-          const response = await obtenerHistorialAspecto(
+          const response = (await obtenerHistorialAspecto(
             empresaId,
             tareaId,
             anio,
             1,
             token
-          );
+          )) as DetalleAspectoHistorialConTrazabilidad;
           setData((current) =>
             current
               ? {
                   ...current,
                   historial: response.historial,
                   compromisos: response.compromisos,
+                  trazabilidad: response.trazabilidad,
                 }
               : current
           );
@@ -370,30 +375,42 @@ export function useDetalleAspecto({
     }));
 
     try {
-      const response = await obtenerHistorialAspecto(
+      const response = (await obtenerHistorialAspecto(
         empresaId,
         tareaId,
         anio,
         pagina,
         token
-      );
+      )) as DetalleAspectoHistorialConTrazabilidad;
 
       setData((current) => {
         if (!current) return current;
 
-        const existentes = new Set(
+        const evaluacionesExistentes = new Set(
           current.historial.map((item) => item.id)
         );
-        const nuevos = response.historial.filter(
-          (item) => !existentes.has(item.id)
+        const eventosExistentes = new Set(
+          current.trazabilidad.map((item) => item.id)
+        );
+        const nuevasEvaluaciones = response.historial.filter(
+          (item) => !evaluacionesExistentes.has(item.id)
+        );
+        const nuevosEventos = response.trazabilidad.filter(
+          (item) => !eventosExistentes.has(item.id)
         );
 
         return {
           ...current,
           historial: [
             ...current.historial,
-            ...nuevos,
+            ...nuevasEvaluaciones,
           ],
+          trazabilidad: [
+            ...current.trazabilidad,
+            ...nuevosEventos,
+          ].sort((a, b) =>
+            b.createdAt.localeCompare(a.createdAt)
+          ),
         };
       });
       setHistoryPagination(response.paginacion);
