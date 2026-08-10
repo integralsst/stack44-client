@@ -4,6 +4,7 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
 import { useAuth } from "../../../auth/context/AuthContext";
@@ -333,7 +334,7 @@ function MiniDato({
 }: {
   label: string;
   value: string;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-3">
