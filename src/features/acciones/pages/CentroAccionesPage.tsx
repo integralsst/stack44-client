@@ -213,10 +213,7 @@ export default function CentroAccionesPage() {
     <section className="mx-auto w-full max-w-7xl space-y-4">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">
-            Fase 5C
-          </p>
-          <h1 className="mt-1 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+          <h1 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
             Centro de acciones
           </h1>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">
