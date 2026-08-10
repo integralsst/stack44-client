@@ -1,12 +1,12 @@
 import {
   Ban,
   CalendarDays,
-  ChevronDown,
   FileCheck2,
   UserRound,
 } from "lucide-react";
 
 import type { HistorialAspectoItem } from "../../types/detalle-aspecto.types";
+import DetalleColapsableCard from "./DetalleColapsableCard";
 import { formatDate } from "./DetalleAspectoUi";
 
 const stateClass: Record<string, string> = {
@@ -27,23 +27,24 @@ const stateLabel: Record<string, string> = {
   NO_APLICA: "No aplica",
 };
 
-type HistorialConResultadoEfectivo = HistorialAspectoItem & {
-  calificacionRegistrada?: number;
-  calificacionEfectiva?: number;
-  resultadoProvisional?: boolean;
-  causaResultadoEfectivo?: string;
-  decisionNoAplica?: {
-    estado: string;
-    resultadoEfectivo: number;
-    observacionDecision: string | null;
-  } | null;
-  aprobacionGestion?: {
-    estado: string;
-    observacionDecision: string | null;
-  } | null;
-};
+export type HistorialConResultadoEfectivo =
+  HistorialAspectoItem & {
+    calificacionRegistrada?: number;
+    calificacionEfectiva?: number;
+    resultadoProvisional?: boolean;
+    causaResultadoEfectivo?: string;
+    decisionNoAplica?: {
+      estado: string;
+      resultadoEfectivo: number;
+      observacionDecision: string | null;
+    } | null;
+    aprobacionGestion?: {
+      estado: string;
+      observacionDecision: string | null;
+    } | null;
+  };
 
-function decisionNoAplicaClass(estado: string) {
+export function decisionNoAplicaClass(estado: string) {
   if (estado === "APROBADO") {
     return "border-emerald-200 bg-emerald-50 text-emerald-800";
   }
@@ -55,7 +56,7 @@ function decisionNoAplicaClass(estado: string) {
   return "border-amber-200 bg-amber-50 text-amber-800";
 }
 
-function decisionNoAplicaLabel(estado: string) {
+export function decisionNoAplicaLabel(estado: string) {
   if (estado === "APROBADO") return "No aplica aprobado";
   if (estado === "RECHAZADO") return "No aplica rechazado";
   return "No aplica pendiente";
@@ -77,182 +78,173 @@ export default function HistorialEvaluacionCard({
   const decisionNoAplica = itemEfectivo.decisionNoAplica ?? null;
   const cambioResultado = registrada !== efectiva;
 
+  const summary = (
+    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={`rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider ${
+              stateClass[item.estadoCumplimiento] ??
+              "border-slate-300 bg-slate-100 text-slate-700"
+            } ${invalidada ? "opacity-60" : ""}`}
+          >
+            {stateLabel[item.estadoCumplimiento] ??
+              item.estadoCumplimiento}
+          </span>
+
+          {decisionNoAplica && (
+            <span
+              className={`rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider ${decisionNoAplicaClass(
+                decisionNoAplica.estado
+              )}`}
+            >
+              {decisionNoAplicaLabel(decisionNoAplica.estado)} · efectivo{" "}
+              {decisionNoAplica.resultadoEfectivo}
+            </span>
+          )}
+
+          <span
+            className={`rounded-full px-2.5 py-1 text-[9px] font-semibold ${
+              cambioResultado
+                ? "bg-cyan-50 text-cyan-800 ring-1 ring-cyan-200"
+                : "bg-slate-100 text-slate-700"
+            }`}
+          >
+            {cambioResultado ? "Efectiva" : "Nota"} {efectiva}
+          </span>
+
+          {cambioResultado && (
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[9px] font-semibold text-slate-500">
+              Registrada {registrada}
+            </span>
+          )}
+
+          <span className="text-[10px] text-slate-500">
+            Periodo {item.anio}
+          </span>
+          {invalidada && (
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-red-800">
+              <Ban size={11} />
+              Gestión invalidada
+            </span>
+          )}
+        </div>
+
+        <h4 className="mt-2 truncate text-sm font-semibold text-slate-950">
+          {item.gestion.tipoActividad}
+        </h4>
+        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-600">
+          <span>{formatDate(item.gestion.fechaGestion)}</span>
+          <span aria-hidden="true">·</span>
+          <span className="inline-flex items-center gap-1">
+            <UserRound size={12} />
+            {item.gestion.profesional}
+          </span>
+        </p>
+      </div>
+    </div>
+  );
+
   return (
-    <details
-      className={`group overflow-hidden rounded-2xl border ${
+    <DetalleColapsableCard
+      summary={summary}
+      className={
         invalidada
           ? "border-red-200 bg-red-50"
           : "border-slate-200 bg-white"
-      }`}
+      }
+      contentClassName="p-4 sm:p-5"
     >
-      <summary className="cursor-pointer list-none p-4 sm:px-5">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider ${
-                  stateClass[item.estadoCumplimiento] ??
-                  "border-slate-300 bg-slate-100 text-slate-700"
-                } ${invalidada ? "opacity-60" : ""}`}
-              >
-                {stateLabel[item.estadoCumplimiento] ??
-                  item.estadoCumplimiento}
-              </span>
+      <p className="text-xs text-slate-600">
+        {item.gestion.categoriaGestion ?? "Gestión general"}
+        {` · ${item.gestion.modalidad.replaceAll("_", " ")}`}
+        {` · Registrada ${formatDate(item.creadaEn, true)}`}
+      </p>
 
-              {decisionNoAplica && (
-                <span
-                  className={`rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider ${decisionNoAplicaClass(
-                    decisionNoAplica.estado
-                  )}`}
-                >
-                  {decisionNoAplicaLabel(decisionNoAplica.estado)} · efectivo{" "}
-                  {decisionNoAplica.resultadoEfectivo}
-                </span>
-              )}
-
-              <span
-                className={`rounded-full px-2.5 py-1 text-[9px] font-semibold ${
-                  cambioResultado
-                    ? "bg-cyan-50 text-cyan-800 ring-1 ring-cyan-200"
-                    : "bg-slate-100 text-slate-700"
-                }`}
-              >
-                {cambioResultado ? "Efectiva" : "Nota"} {efectiva}
-              </span>
-
-              {cambioResultado && (
-                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[9px] font-semibold text-slate-500">
-                  Registrada {registrada}
-                </span>
-              )}
-
-              <span className="text-[10px] text-slate-500">
-                Periodo {item.anio}
-              </span>
-              {invalidada && (
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-red-800">
-                  <Ban size={11} />
-                  Gestión invalidada
-                </span>
-              )}
-            </div>
-
-            <h4 className="mt-2 truncate text-sm font-semibold text-slate-950">
-              {item.gestion.tipoActividad}
-            </h4>
-            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-600">
-              <span>{formatDate(item.gestion.fechaGestion)}</span>
-              <span aria-hidden="true">·</span>
-              <span className="inline-flex items-center gap-1">
-                <UserRound size={12} />
-                {item.gestion.profesional}
-              </span>
-            </p>
-          </div>
-
-          <span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-bold text-cyan-700">
-            <span className="group-open:hidden">Ver detalle</span>
-            <span className="hidden group-open:inline">Ocultar detalle</span>
-            <ChevronDown
-              size={15}
-              className="transition-transform group-open:rotate-180"
-            />
-          </span>
+      {invalidada && (
+        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3">
+          <p className="text-[9px] font-bold uppercase tracking-wider text-red-800">
+            No participa en el estado vigente ni en los cálculos
+          </p>
+          <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-red-900">
+            {item.gestion.motivoInvalidacion ??
+              "No se registró un motivo de invalidación."}
+          </p>
+          <p className="mt-2 text-[10px] leading-5 text-slate-600">
+            {item.gestion.invalidadaPor
+              ? `Invalidada por ${item.gestion.invalidadaPor.nombre} el ${formatDate(
+                  item.gestion.invalidadaEn,
+                  true
+                )}.`
+              : `Invalidada el ${formatDate(
+                  item.gestion.invalidadaEn,
+                  true
+                )}.`}
+          </p>
         </div>
-      </summary>
+      )}
 
-      <div className="border-t border-slate-200 p-4 sm:p-5">
-        <p className="text-xs text-slate-600">
-          {item.gestion.categoriaGestion ?? "Gestión general"}
-          {` · ${item.gestion.modalidad.replaceAll("_", " ")}`}
-          {` · Registrada ${formatDate(item.creadaEn, true)}`}
-        </p>
-
-        {invalidada && (
-          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3">
-            <p className="text-[9px] font-bold uppercase tracking-wider text-red-800">
-              No participa en el estado vigente ni en los cálculos
+      {decisionNoAplica && (
+        <div
+          className={`mt-4 rounded-xl border p-3 ${decisionNoAplicaClass(
+            decisionNoAplica.estado
+          )}`}
+        >
+          <p className="text-[9px] font-bold uppercase tracking-wider">
+            Decisión sobre No aplica
+          </p>
+          <p className="mt-2 text-xs font-semibold">
+            {decisionNoAplicaLabel(decisionNoAplica.estado)} · resultado efectivo{" "}
+            {decisionNoAplica.resultadoEfectivo}
+          </p>
+          {decisionNoAplica.observacionDecision && (
+            <p className="mt-2 whitespace-pre-wrap text-xs leading-5">
+              {decisionNoAplica.observacionDecision}
             </p>
-            <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-red-900">
-              {item.gestion.motivoInvalidacion ??
-                "No se registró un motivo de invalidación."}
+          )}
+          {cambioResultado && (
+            <p className="mt-2 text-[10px] leading-5 opacity-80">
+              La nota registrada {registrada} se conserva para auditoría; el valor que participa en el estado vigente y los cálculos es {efectiva}.
             </p>
-            <p className="mt-2 text-[10px] leading-5 text-slate-600">
-              {item.gestion.invalidadaPor
-                ? `Invalidada por ${item.gestion.invalidadaPor.nombre} el ${formatDate(
-                    item.gestion.invalidadaEn,
-                    true
-                  )}.`
-                : `Invalidada el ${formatDate(
-                    item.gestion.invalidadaEn,
-                    true
-                  )}.`}
-            </p>
-          </div>
-        )}
-
-        {decisionNoAplica && (
-          <div
-            className={`mt-4 rounded-xl border p-3 ${decisionNoAplicaClass(
-              decisionNoAplica.estado
-            )}`}
-          >
-            <p className="text-[9px] font-bold uppercase tracking-wider">
-              Decisión sobre No aplica
-            </p>
-            <p className="mt-2 text-xs font-semibold">
-              {decisionNoAplicaLabel(decisionNoAplica.estado)} · resultado efectivo{" "}
-              {decisionNoAplica.resultadoEfectivo}
-            </p>
-            {decisionNoAplica.observacionDecision && (
-              <p className="mt-2 whitespace-pre-wrap text-xs leading-5">
-                {decisionNoAplica.observacionDecision}
-              </p>
-            )}
-            {cambioResultado && (
-              <p className="mt-2 text-[10px] leading-5 opacity-80">
-                La nota registrada {registrada} se conserva para auditoría; el valor que participa en el estado vigente y los cálculos es {efectiva}.
-              </p>
-            )}
-          </div>
-        )}
-
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <DetalleDato
-            icon={<UserRound size={13} />}
-            label="Profesional"
-            value={item.gestion.profesional}
-          />
-          <DetalleDato
-            icon={<CalendarDays size={13} />}
-            label="Fecha del soporte"
-            value={formatDate(item.fechaDocumento)}
-          />
-          <DetalleDato
-            label="Vencimiento"
-            value={formatDate(
-              item.fechaVencimientoCalculada
-            )}
-          />
-          <DetalleDato
-            icon={<FileCheck2 size={13} />}
-            label="Evidencias"
-            value={`${item.totalEvidencias} soporte(s)`}
-          />
+          )}
         </div>
+      )}
 
-        {(item.observacion || item.justificacionNoAplica) && (
-          <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
-              Observación
-            </p>
-            <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-slate-700">
-              {item.observacion ?? item.justificacionNoAplica}
-            </p>
-          </div>
-        )}
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <DetalleDato
+          icon={<UserRound size={13} />}
+          label="Profesional"
+          value={item.gestion.profesional}
+        />
+        <DetalleDato
+          icon={<CalendarDays size={13} />}
+          label="Fecha del soporte"
+          value={formatDate(item.fechaDocumento)}
+        />
+        <DetalleDato
+          label="Vencimiento"
+          value={formatDate(
+            item.fechaVencimientoCalculada
+          )}
+        />
+        <DetalleDato
+          icon={<FileCheck2 size={13} />}
+          label="Evidencias"
+          value={`${item.totalEvidencias} soporte(s)`}
+        />
       </div>
-    </details>
+
+      {(item.observacion || item.justificacionNoAplica) && (
+        <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
+            Observación
+          </p>
+          <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-slate-700">
+            {item.observacion ?? item.justificacionNoAplica}
+          </p>
+        </div>
+      )}
+    </DetalleColapsableCard>
   );
 }
 
