@@ -9,9 +9,12 @@ import {
 import { useMemo, useState } from "react";
 
 import type {
+  DetalleAspectoConTrazabilidad,
   EventoTrazabilidadAspecto,
   TipoEventoTrazabilidadAspecto,
 } from "../../types/trazabilidad-aspecto.types";
+import DetalleColapsableCard from "./DetalleColapsableCard";
+import DetalleEventoTrazabilidad from "./DetalleEventoTrazabilidad";
 import { formatDate } from "./DetalleAspectoUi";
 
 type FiltroTrazabilidad =
@@ -22,8 +25,7 @@ type FiltroTrazabilidad =
   | "COMPROMISO";
 
 interface Props {
-  eventos: EventoTrazabilidadAspecto[];
-  puedeVerRevisionTecnica: boolean;
+  data: DetalleAspectoConTrazabilidad;
   onOpenRevisionTecnica: () => void;
 }
 
@@ -98,12 +100,14 @@ function configTipo(tipo: TipoEventoTrazabilidadAspecto) {
 }
 
 export default function TrazabilidadAspectoTimeline({
-  eventos,
-  puedeVerRevisionTecnica,
+  data,
   onOpenRevisionTecnica,
 }: Props) {
+  const eventos = data.trazabilidad;
   const [filtro, setFiltro] =
     useState<FiltroTrazabilidad>("TODOS");
+  const [eventoAbiertoId, setEventoAbiertoId] =
+    useState<string | null>(null);
 
   const visibles = useMemo(
     () => eventos.filter((evento) => coincideFiltro(evento, filtro)),
@@ -125,6 +129,11 @@ export default function TrazabilidadAspectoTimeline({
     };
   }, [eventos]);
 
+  const cambiarFiltro = (next: FiltroTrazabilidad) => {
+    setFiltro(next);
+    setEventoAbiertoId(null);
+  };
+
   return (
     <section>
       <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
@@ -135,7 +144,7 @@ export default function TrazabilidadAspectoTimeline({
               <h3 className="text-sm font-bold">Trazabilidad del aspecto</h3>
             </div>
             <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-600">
-              Recorrido cronológico de evaluaciones, decisiones, revisiones técnicas y compromisos. Los módulos especializados siguen disponibles para operar cada proceso.
+              Recorre la historia de arriba hacia abajo. Todo inicia colapsado: abre únicamente el evento que necesitas para consultar su detalle sin perder el contexto.
             </p>
           </div>
 
@@ -158,7 +167,7 @@ export default function TrazabilidadAspectoTimeline({
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setFiltro(item.id)}
+                onClick={() => cambiarFiltro(item.id)}
                 className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                   active
                     ? "border-cyan-300 bg-cyan-50 text-cyan-800"
@@ -185,15 +194,49 @@ export default function TrazabilidadAspectoTimeline({
           {visibles.map((evento) => {
             const config = configTipo(evento.tipo);
             const Icon = config.icon;
-            const puedeAbrirRevision =
-              evento.tipo === "REVISION_TECNICA" &&
-              Boolean(evento.referencia.revisionTecnicaId) &&
-              puedeVerRevisionTecnica;
+            const abierto = eventoAbiertoId === evento.id;
+
+            const summary = (
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${config.badge}`}
+                    >
+                      {config.label}
+                    </span>
+                    {evento.estado && (
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                        {evento.estado.replaceAll("_", " ")}
+                      </span>
+                    )}
+                  </div>
+
+                  <h4 className="mt-2 text-sm font-bold text-slate-950">
+                    {evento.titulo}
+                  </h4>
+                  <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-xs leading-5 text-slate-600">
+                    {evento.descripcion}
+                  </p>
+                </div>
+
+                <div className="shrink-0 text-left sm:text-right">
+                  <p className="text-[10px] font-semibold text-slate-500">
+                    {formatDate(evento.createdAt, true)}
+                  </p>
+                  {evento.usuario && (
+                    <p className="mt-1 text-[10px] text-slate-500">
+                      {evento.usuario.nombre}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
 
             return (
-              <article
+              <div
                 key={evento.id}
-                className="relative flex gap-3 rounded-2xl px-1 py-3 sm:gap-4 sm:px-2"
+                className="relative flex gap-3 rounded-2xl px-1 py-2.5 sm:gap-4 sm:px-2"
               >
                 <div
                   className={`relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-white ${config.circle}`}
@@ -201,54 +244,23 @@ export default function TrazabilidadAspectoTimeline({
                   <Icon size={15} />
                 </div>
 
-                <div className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span
-                          className={`rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${config.badge}`}
-                        >
-                          {config.label}
-                        </span>
-                        {evento.estado && (
-                          <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                            {evento.estado.replaceAll("_", " ")}
-                          </span>
-                        )}
-                      </div>
-
-                      <h4 className="mt-2 text-sm font-bold text-slate-950">
-                        {evento.titulo}
-                      </h4>
-                      <p className="mt-1 whitespace-pre-wrap text-xs leading-5 text-slate-600">
-                        {evento.descripcion}
-                      </p>
-                    </div>
-
-                    <div className="shrink-0 text-left sm:text-right">
-                      <p className="text-[10px] font-semibold text-slate-500">
-                        {formatDate(evento.createdAt, true)}
-                      </p>
-                      {evento.usuario && (
-                        <p className="mt-1 text-[10px] text-slate-500">
-                          {evento.usuario.nombre}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {puedeAbrirRevision && (
-                    <button
-                      type="button"
-                      onClick={onOpenRevisionTecnica}
-                      className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-violet-700 transition hover:text-violet-900"
-                    >
-                      <ShieldCheck size={13} />
-                      Ver revisión técnica
-                    </button>
-                  )}
+                <div className="min-w-0 flex-1">
+                  <DetalleColapsableCard
+                    summary={summary}
+                    open={abierto}
+                    onOpenChange={(next) =>
+                      setEventoAbiertoId(next ? evento.id : null)
+                    }
+                    contentClassName="bg-slate-50/60 p-3.5 sm:p-4"
+                  >
+                    <DetalleEventoTrazabilidad
+                      evento={evento}
+                      data={data}
+                      onOpenRevisionTecnica={onOpenRevisionTecnica}
+                    />
+                  </DetalleColapsableCard>
                 </div>
-              </article>
+              </div>
             );
           })}
         </div>
