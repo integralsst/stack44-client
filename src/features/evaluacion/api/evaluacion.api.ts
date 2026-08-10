@@ -5,16 +5,41 @@ import type {
   GuardarEvaluacionInput,
 } from "../../../types/evaluacion.types";
 
-export function obtenerContextoEvaluacion(
+function aplicarResultadoEfectivoEnVista(
+  contexto: ContextoEvaluacionResponse
+): ContextoEvaluacionResponse {
+  return {
+    ...contexto,
+    filas: contexto.filas.map((fila) => ({
+      ...fila,
+      // La matriz es una vista operativa: para la última evaluación
+      // finalizada debe mostrar el resultado efectivo ya resuelto por
+      // backend (No aplica 3/5/0, aprobación de gestión, etc.), no la
+      // nota base registrada que se conserva únicamente para auditoría.
+      ultimaEvaluacion: fila.ultimaEvaluacion
+        ? {
+            ...fila.ultimaEvaluacion,
+            calificacionAdministrativa:
+              fila.ultimaEvaluacion.calificacionEfectiva ??
+              fila.ultimaEvaluacion.calificacionAdministrativa,
+          }
+        : null,
+    })),
+  };
+}
+
+export async function obtenerContextoEvaluacion(
   empresaId: string,
   anio: number,
   token: string
 ) {
-  return apiRequest<ContextoEvaluacionResponse>(
+  const contexto = await apiRequest<ContextoEvaluacionResponse>(
     `/api/evaluacion/empresas/${empresaId}/contexto?anio=${anio}`,
     {},
     token
   );
+
+  return aplicarResultadoEfectivoEnVista(contexto);
 }
 
 export function abrirPeriodoEvaluacion(

@@ -27,12 +27,55 @@ const stateLabel: Record<string, string> = {
   NO_APLICA: "No aplica",
 };
 
+type HistorialConResultadoEfectivo = HistorialAspectoItem & {
+  calificacionRegistrada?: number;
+  calificacionEfectiva?: number;
+  resultadoProvisional?: boolean;
+  causaResultadoEfectivo?: string;
+  decisionNoAplica?: {
+    estado: string;
+    resultadoEfectivo: number;
+    observacionDecision: string | null;
+  } | null;
+  aprobacionGestion?: {
+    estado: string;
+    observacionDecision: string | null;
+  } | null;
+};
+
+function decisionNoAplicaClass(estado: string) {
+  if (estado === "APROBADO") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-800";
+  }
+
+  if (estado === "RECHAZADO") {
+    return "border-red-200 bg-red-50 text-red-800";
+  }
+
+  return "border-amber-200 bg-amber-50 text-amber-800";
+}
+
+function decisionNoAplicaLabel(estado: string) {
+  if (estado === "APROBADO") return "No aplica aprobado";
+  if (estado === "RECHAZADO") return "No aplica rechazado";
+  return "No aplica pendiente";
+}
+
 export default function HistorialEvaluacionCard({
   item,
 }: {
   item: HistorialAspectoItem;
 }) {
+  const itemEfectivo = item as HistorialConResultadoEfectivo;
   const invalidada = item.gestion.estado === "INVALIDADA";
+  const registrada =
+    itemEfectivo.calificacionRegistrada ??
+    item.calificacionAdministrativa;
+  const efectiva =
+    itemEfectivo.calificacionEfectiva ??
+    item.calificacionAdministrativa;
+  const decisionNoAplica = itemEfectivo.decisionNoAplica ?? null;
+  const cambioResultado = registrada !== efectiva;
 
   return (
     <details
@@ -55,9 +98,34 @@ export default function HistorialEvaluacionCard({
                 {stateLabel[item.estadoCumplimiento] ??
                   item.estadoCumplimiento}
               </span>
-              <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[9px] font-semibold text-slate-700">
-                Nota {item.calificacionAdministrativa}
+
+              {decisionNoAplica && (
+                <span
+                  className={`rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider ${decisionNoAplicaClass(
+                    decisionNoAplica.estado
+                  )}`}
+                >
+                  {decisionNoAplicaLabel(decisionNoAplica.estado)} · efectivo{" "}
+                  {decisionNoAplica.resultadoEfectivo}
+                </span>
+              )}
+
+              <span
+                className={`rounded-full px-2.5 py-1 text-[9px] font-semibold ${
+                  cambioResultado
+                    ? "bg-cyan-50 text-cyan-800 ring-1 ring-cyan-200"
+                    : "bg-slate-100 text-slate-700"
+                }`}
+              >
+                {cambioResultado ? "Efectiva" : "Nota"} {efectiva}
               </span>
+
+              {cambioResultado && (
+                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[9px] font-semibold text-slate-500">
+                  Registrada {registrada}
+                </span>
+              )}
+
               <span className="text-[10px] text-slate-500">
                 Periodo {item.anio}
               </span>
@@ -120,6 +188,32 @@ export default function HistorialEvaluacionCard({
                     true
                   )}.`}
             </p>
+          </div>
+        )}
+
+        {decisionNoAplica && (
+          <div
+            className={`mt-4 rounded-xl border p-3 ${decisionNoAplicaClass(
+              decisionNoAplica.estado
+            )}`}
+          >
+            <p className="text-[9px] font-bold uppercase tracking-wider">
+              Decisión sobre No aplica
+            </p>
+            <p className="mt-2 text-xs font-semibold">
+              {decisionNoAplicaLabel(decisionNoAplica.estado)} · resultado efectivo{" "}
+              {decisionNoAplica.resultadoEfectivo}
+            </p>
+            {decisionNoAplica.observacionDecision && (
+              <p className="mt-2 whitespace-pre-wrap text-xs leading-5">
+                {decisionNoAplica.observacionDecision}
+              </p>
+            )}
+            {cambioResultado && (
+              <p className="mt-2 text-[10px] leading-5 opacity-80">
+                La nota registrada {registrada} se conserva para auditoría; el valor que participa en el estado vigente y los cálculos es {efectiva}.
+              </p>
+            )}
           </div>
         )}
 
