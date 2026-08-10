@@ -199,7 +199,7 @@ export default function CentroAlertasCompromisos() {
                     Todo al día
                   </p>
                   <p className="mt-1 text-xs leading-5 text-slate-600">
-                    No tienes acciones pendientes en compromisos.
+                    No tienes acciones pendientes en este momento.
                   </p>
                 </div>
               )}
@@ -219,6 +219,14 @@ export default function CentroAlertasCompromisos() {
                 Se muestran las {data.alertas.length} acciones más prioritarias de {data.resumen.total}.
               </p>
             )}
+
+            <Link
+              to="/dashboard/acciones"
+              onClick={() => setAbierto(false)}
+              className="mt-3 flex min-h-10 w-full items-center justify-center rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-2 text-xs font-extrabold text-cyan-800 transition hover:border-cyan-300 hover:bg-cyan-100"
+            >
+              Ver todas las acciones
+            </Link>
           </div>
         </section>
       )}
