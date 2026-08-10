@@ -51,6 +51,13 @@ const Dashboard = lazy(
     )
 );
 
+const CentroAccionesPage = lazy(
+  () =>
+    import(
+      "../features/acciones/pages/CentroAccionesPage"
+    )
+);
+
 const Companies = lazy(
   () =>
     import(
@@ -305,6 +312,17 @@ function AppRoutes() {
             element={<ProtectedDashboardLayout />}
           >
             <Route index element={<Dashboard />} />
+
+            <Route
+              path="acciones"
+              element={
+                <RoleGuard
+                  allowedRoles={MIS_COMPROMISOS_ROLES}
+                >
+                  <CentroAccionesPage />
+                </RoleGuard>
+              }
+            />
 
             <Route
               path="empresas"
