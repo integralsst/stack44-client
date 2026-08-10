@@ -100,21 +100,22 @@ export default function FiltrosCentroAcciones({
             <button
               key={filtro.label}
               type="button"
+              aria-pressed={activo}
               onClick={() =>
                 onFiltro(filtro.categoria, filtro.prioridad)
               }
               className={`shrink-0 rounded-full border px-3 py-2 text-xs font-bold transition ${
                 activo
-                  ? "border-slate-950 bg-slate-950 text-white"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-cyan-300 hover:text-cyan-700"
+                  ? "border-cyan-400 bg-cyan-50 text-cyan-900 shadow-sm ring-1 ring-cyan-100"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-cyan-300 hover:bg-cyan-50/60 hover:text-cyan-800"
               }`}
             >
               {filtro.label}
               {typeof filtro.conteo === "number" && (
                 <span
-                  className={`ml-2 rounded-full px-1.5 py-0.5 text-[9px] ${
+                  className={`ml-2 rounded-full px-1.5 py-0.5 text-[9px] font-extrabold ${
                     activo
-                      ? "bg-white/15 text-white"
+                      ? "bg-cyan-100 text-cyan-950"
                       : "bg-slate-100 text-slate-600"
                   }`}
                 >
