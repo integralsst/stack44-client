@@ -6,6 +6,7 @@ import {
   ChevronRight,
   FileText,
   LayoutDashboard,
+  ListChecks,
   LogOut,
   Menu,
   Table2,
@@ -102,6 +103,13 @@ export default function DashboardLayout() {
       icon: LayoutDashboard,
       visible: true,
       exact: true,
+    },
+    {
+      to: "/dashboard/acciones",
+      label: "Centro de acciones",
+      icon: ListChecks,
+      visible: canViewOwnCommitments,
+      exact: false,
     },
     {
       to: "/dashboard/empresas",
