@@ -13,11 +13,9 @@ import type {
   DetalleAspectoConTrazabilidad,
   EventoTrazabilidadAspecto,
 } from "../../types/trazabilidad-aspecto.types";
-import {
-  decisionNoAplicaLabel,
-  type HistorialConResultadoEfectivo,
-} from "./HistorialEvaluacionCard";
 import { formatDate } from "./DetalleAspectoUi";
+import type { HistorialConResultadoEfectivo } from "./HistorialEvaluacionCard";
+import { decisionNoAplicaLabel } from "./historial-evaluacion-presentacion";
 
 interface Props {
   evento: EventoTrazabilidadAspecto;
