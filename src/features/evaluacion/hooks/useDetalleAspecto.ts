@@ -260,13 +260,26 @@ export function useDetalleAspecto({
 
       try {
         if (section === "HISTORIAL") {
-          const response = (await obtenerHistorialAspecto(
-            empresaId,
-            tareaId,
-            anio,
-            1,
-            token
-          )) as DetalleAspectoHistorialConTrazabilidad;
+          const puedeVerRevisionTecnica =
+            data?.permisos.puedeVerRevisionTecnica ?? false;
+          const [response, revisionResponse] = await Promise.all([
+            obtenerHistorialAspecto(
+              empresaId,
+              tareaId,
+              anio,
+              1,
+              token
+            ) as Promise<DetalleAspectoHistorialConTrazabilidad>,
+            puedeVerRevisionTecnica
+              ? obtenerRevisionTecnicaAspecto(
+                  empresaId,
+                  tareaId,
+                  anio,
+                  token
+                )
+              : Promise.resolve(null),
+          ]);
+
           setData((current) =>
             current
               ? {
@@ -274,10 +287,20 @@ export function useDetalleAspecto({
                   historial: response.historial,
                   compromisos: response.compromisos,
                   trazabilidad: response.trazabilidad,
+                  revisionesTecnicas:
+                    revisionResponse?.evaluaciones ??
+                    current.revisionesTecnicas,
                 }
               : current
           );
           setHistoryPagination(response.paginacion);
+
+          if (revisionResponse) {
+            setLoadedSections((current) => ({
+              ...current,
+              REVISION_TECNICA: true,
+            }));
+          }
         }
 
         if (section === "EVIDENCIAS") {
@@ -342,6 +365,7 @@ export function useDetalleAspecto({
     },
     [
       anio,
+      data?.permisos.puedeVerRevisionTecnica,
       empresaId,
       loadedSections,
       loadingSections,
@@ -439,95 +463,140 @@ export function useDetalleAspecto({
   ]);
 
   useEffect(() => {
-    setData(null);
-    setError(null);
-    setConfigurationLoaded(false);
-    setLoadingConfiguration(false);
-    setConfigurationError(null);
-    setHistoryPagination(paginacionHistorialInicial);
-    setLoadedSections(estadoSeccionesInicial);
-    setLoadingSections(estadoSeccionesInicial);
-    setSectionErrors(erroresSeccionesInicial);
-
-    if (open) {
-      void reload();
+    if (!open) {
+      setData(null);
+      setError(null);
+      setBusy(false);
+      setConfigurationLoaded(false);
+      setLoadingConfiguration(false);
+      setConfigurationError(null);
+      setLoadedSections(estadoSeccionesInicial);
+      setLoadingSections(estadoSeccionesInicial);
+      setSectionErrors(erroresSeccionesInicial);
+      setHistoryPagination(paginacionHistorialInicial);
+      return;
     }
-  }, [open, reload, tareaId]);
 
-  const runEvidenceAction = useCallback(
-    async (action: () => Promise<unknown>) => {
+    void reload();
+  }, [open, reload]);
+
+  const createEvidence = useCallback(
+    async (input: EvidenciaEvaluacionFormInput) => {
+      if (!token || !data?.evidenciaObjetivo?.evaluacionId) {
+        return false;
+      }
+
       setBusy(true);
       setError(null);
 
       try {
-        await action();
-        await loadSection("EVIDENCIAS", true);
+        const created = await crearEvidenciaEvaluacion(
+          data.evidenciaObjetivo.evaluacionId,
+          input,
+          token
+        );
+
+        setData((current) =>
+          current
+            ? {
+                ...current,
+                evidencias: [created, ...current.evidencias],
+              }
+            : current
+        );
+        return true;
       } catch (currentError) {
-        const message =
+        setError(
           currentError instanceof Error
             ? currentError.message
-            : "No fue posible completar la operación.";
-        setError(message);
-        throw currentError;
+            : "No fue posible crear la evidencia."
+        );
+        return false;
       } finally {
         setBusy(false);
       }
     },
-    [loadSection]
-  );
-
-  const createEvidence = useCallback(
-    async (input: EvidenciaEvaluacionFormInput) => {
-      if (
-        !token ||
-        !data?.evidenciaObjetivo?.evaluacionId
-      ) {
-        throw new Error(
-          "Primero guarda la evaluación del aspecto."
-        );
-      }
-
-      await runEvidenceAction(() =>
-        crearEvidenciaEvaluacion(
-          data.evidenciaObjetivo!.evaluacionId,
-          input,
-          token
-        )
-      );
-    },
-    [data?.evidenciaObjetivo, runEvidenceAction, token]
+    [data?.evidenciaObjetivo?.evaluacionId, token]
   );
 
   const updateEvidence = useCallback(
     async (
-      evidence: EvidenciaEvaluacion,
+      evidenciaId: string,
       input: EvidenciaEvaluacionFormInput
     ) => {
-      if (!token) return;
+      if (!token) return false;
 
-      await runEvidenceAction(() =>
-        actualizarEvidenciaEvaluacion(
-          evidence.id,
+      setBusy(true);
+      setError(null);
+
+      try {
+        const updated = await actualizarEvidenciaEvaluacion(
+          evidenciaId,
           input,
           token
-        )
-      );
+        );
+
+        setData((current) =>
+          current
+            ? {
+                ...current,
+                evidencias: current.evidencias.map((evidencia) =>
+                  evidencia.id === evidenciaId ? updated : evidencia
+                ),
+              }
+            : current
+        );
+        return true;
+      } catch (currentError) {
+        setError(
+          currentError instanceof Error
+            ? currentError.message
+            : "No fue posible actualizar la evidencia."
+        );
+        return false;
+      } finally {
+        setBusy(false);
+      }
     },
-    [runEvidenceAction, token]
+    [token]
   );
 
   const removeEvidence = useCallback(
-    async (evidence: EvidenciaEvaluacion) => {
-      if (!token) return;
+    async (evidenciaId: string) => {
+      if (!token) return false;
 
-      await runEvidenceAction(() =>
-        desactivarEvidenciaEvaluacion(
-          evidence.id,
+      setBusy(true);
+      setError(null);
+
+      try {
+        await desactivarEvidenciaEvaluacion(
+          evidenciaId,
           token
-        )
-      );
+        );
+
+        setData((current) =>
+          current
+            ? {
+                ...current,
+                evidencias: current.evidencias.filter(
+                  (evidencia) => evidencia.id !== evidenciaId
+                ),
+              }
+            : current
+        );
+        return true;
+      } catch (currentError) {
+        setError(
+          currentError instanceof Error
+            ? currentError.message
+            : "No fue posible retirar la evidencia."
+        );
+        return false;
+      } finally {
+        setBusy(false);
+      }
     },
-    [runEvidenceAction, token]
+    [token]
   );
 
   return {
@@ -536,18 +605,18 @@ export function useDetalleAspecto({
     busy,
     error,
     reload,
-    loadConfiguration,
+    createEvidence,
+    updateEvidence,
+    removeEvidence,
     loadingConfiguration,
     configurationLoaded,
     configurationError,
-    loadSection,
-    loadMoreHistory,
     historyPagination,
     loadingSections,
     loadedSections,
     sectionErrors,
-    createEvidence,
-    updateEvidence,
-    removeEvidence,
+    loadSection,
+    loadMoreHistory,
+    loadConfiguration,
   };
 }
