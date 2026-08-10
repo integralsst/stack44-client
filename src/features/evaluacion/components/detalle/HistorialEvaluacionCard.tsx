@@ -4,6 +4,7 @@ import {
   FileCheck2,
   UserRound,
 } from "lucide-react";
+import type { ReactNode } from "react";
 
 import type { HistorialAspectoItem } from "../../types/detalle-aspecto.types";
 import DetalleColapsableCard from "./DetalleColapsableCard";
@@ -253,7 +254,7 @@ function DetalleDato({
   label,
   value,
 }: {
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   label: string;
   value: string;
 }) {
