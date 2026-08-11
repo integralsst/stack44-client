@@ -2,6 +2,7 @@ import {
   CheckCircle2,
   ClipboardCheck,
   FileClock,
+  FileSearch,
   GitPullRequestArrow,
   History,
   ShieldCheck,
@@ -22,7 +23,8 @@ type FiltroTrazabilidad =
   | "EVALUACION"
   | "DECISIONES"
   | "REVISION_TECNICA"
-  | "COMPROMISO";
+  | "COMPROMISO"
+  | "AUDITORIA";
 
 interface Props {
   data: DetalleAspectoConTrazabilidad;
@@ -38,6 +40,7 @@ const filtros: Array<{
   { id: "DECISIONES", label: "Decisiones" },
   { id: "REVISION_TECNICA", label: "Revisión técnica" },
   { id: "COMPROMISO", label: "Compromisos" },
+  { id: "AUDITORIA", label: "Auditorías" },
 ];
 
 function coincideFiltro(
@@ -70,6 +73,15 @@ function configTipo(tipo: TipoEventoTrazabilidadAspecto) {
       label: "Compromiso",
       circle: "border-cyan-200 bg-cyan-50 text-cyan-700",
       badge: "border-cyan-200 bg-cyan-50 text-cyan-700",
+    };
+  }
+
+  if (tipo === "AUDITORIA") {
+    return {
+      icon: FileSearch,
+      label: "Auditoría",
+      circle: "border-orange-200 bg-orange-50 text-orange-700",
+      badge: "border-orange-200 bg-orange-50 text-orange-700",
     };
   }
 
@@ -126,6 +138,7 @@ export default function TrazabilidadAspectoTimeline({
         (item) => item.tipo === "REVISION_TECNICA"
       ).length,
       compromisos: eventos.filter((item) => item.tipo === "COMPROMISO").length,
+      auditorias: eventos.filter((item) => item.tipo === "AUDITORIA").length,
     };
   }, [eventos]);
 
@@ -153,11 +166,12 @@ export default function TrazabilidadAspectoTimeline({
           </span>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
           <ResumenMini label="Evaluaciones" value={conteos.evaluaciones} />
           <ResumenMini label="Decisiones" value={conteos.decisiones} />
           <ResumenMini label="Revisiones" value={conteos.revisiones} />
           <ResumenMini label="Compromisos" value={conteos.compromisos} />
+          <ResumenMini label="Auditorías" value={conteos.auditorias} />
         </div>
 
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
