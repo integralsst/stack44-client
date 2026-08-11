@@ -63,6 +63,12 @@ export default function FiltrosCentroAcciones({
       prioridad: "TODAS" as const,
       conteo: resumen?.categorias.APROBACIONES,
     },
+    {
+      label: "Auditorías",
+      categoria: "AUDITORIAS" as const,
+      prioridad: "TODAS" as const,
+      conteo: resumen?.categorias.AUDITORIAS,
+    },
     ...(resumen?.categorias.OTROS
       ? [
           {

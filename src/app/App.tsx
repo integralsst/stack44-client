@@ -58,6 +58,20 @@ const CentroAccionesPage = lazy(
     )
 );
 
+const AuditoriasPage = lazy(
+  () =>
+    import(
+      "../features/auditorias/pages/AuditoriasPage"
+    )
+);
+
+const AuditoriaDetallePage = lazy(
+  () =>
+    import(
+      "../features/auditorias/pages/AuditoriaDetallePage"
+    )
+);
+
 const Companies = lazy(
   () =>
     import(
@@ -320,6 +334,24 @@ function AppRoutes() {
                   allowedRoles={MIS_COMPROMISOS_ROLES}
                 >
                   <CentroAccionesPage />
+                </RoleGuard>
+              }
+            />
+
+            <Route
+              path="auditorias"
+              element={
+                <RoleGuard allowedRoles={INFORMES_ROLES}>
+                  <AuditoriasPage />
+                </RoleGuard>
+              }
+            />
+
+            <Route
+              path="auditorias/:auditoriaId"
+              element={
+                <RoleGuard allowedRoles={INFORMES_ROLES}>
+                  <AuditoriaDetallePage />
                 </RoleGuard>
               }
             />

@@ -45,6 +45,7 @@ const CATEGORIAS = {
   REVISION_TECNICA: "Revisión técnica",
   NO_APLICA: "No aplica",
   APROBACIONES: "Aprobación",
+  AUDITORIAS: "Auditoría",
   OTROS: "Otra acción",
 } as const;
 

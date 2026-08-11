@@ -8,7 +8,8 @@ export type TipoEventoTrazabilidadAspecto =
   | "NO_APLICA"
   | "APROBACION_GESTION"
   | "REVISION_TECNICA"
-  | "COMPROMISO";
+  | "COMPROMISO"
+  | "AUDITORIA";
 
 export interface EventoTrazabilidadAspecto {
   id: string;
@@ -25,6 +26,8 @@ export interface EventoTrazabilidadAspecto {
     evaluacionId: string | null;
     revisionTecnicaId: string | null;
     compromisoId: string | null;
+    auditoriaId?: string | null;
+    hallazgoId?: string | null;
   };
 }
 
