@@ -98,14 +98,23 @@ export default function EvaluacionEmpresaPage() {
     "EVIDENCIAS"
       ? ("EVIDENCIAS" as const)
       : ("RESUMEN" as const);
-
-  const [anio, setAnio] = useState(() =>
+  const anio =
     Number.isInteger(anioSolicitado) &&
     anioSolicitado >= 2000 &&
     anioSolicitado <= 2100
       ? anioSolicitado
-      : new Date().getFullYear()
-  );
+      : new Date().getFullYear();
+
+  const cambiarAnio = (siguienteAnio: number) => {
+    const siguientesParametros =
+      new URLSearchParams(searchParams);
+    siguientesParametros.set(
+      "anio",
+      String(siguienteAnio)
+    );
+    setSearchParams(siguientesParametros);
+  };
+
   const [gestionModalOpen, setGestionModalOpen] =
     useState(false);
   const [historialModalOpen, setHistorialModalOpen] =
@@ -272,17 +281,6 @@ export default function EvaluacionEmpresaPage() {
 
   useEffect(() => {
     if (
-      Number.isInteger(anioSolicitado) &&
-      anioSolicitado >= 2000 &&
-      anioSolicitado <= 2100 &&
-      anioSolicitado !== anio
-    ) {
-      setAnio(anioSolicitado);
-    }
-  }, [anio, anioSolicitado]);
-
-  useEffect(() => {
-    if (
       !contexto?.gestionActiva ||
       !aspectoParaRecalificar
     ) {
@@ -360,7 +358,7 @@ export default function EvaluacionEmpresaPage() {
         empresa={contexto.empresa}
         periodo={contexto.periodo}
         anio={anio}
-        onAnioChange={setAnio}
+        onAnioChange={cambiarAnio}
         onVolver={() => navigate("/dashboard/empresas")}
       />
 
@@ -785,6 +783,7 @@ export default function EvaluacionEmpresaPage() {
       )}
 
       <DetalleAspectoDrawer
+        key={`${tareaDetalleId ?? "closed"}:${detalleInicial}`}
         open={tareaDetalleId !== null}
         empresaId={empresaId}
         tareaId={tareaDetalleId}
