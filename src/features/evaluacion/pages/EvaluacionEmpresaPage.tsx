@@ -90,6 +90,14 @@ export default function EvaluacionEmpresaPage() {
     searchParams.get("aspecto")?.trim() || null;
   const compromisoParaRecalificar =
     searchParams.get("compromiso")?.trim() || null;
+  const tareaDetalleSolicitada = Number(
+    searchParams.get("tareaId")
+  );
+  const detalleInicial =
+    searchParams.get("detalle")?.toUpperCase() ===
+    "EVIDENCIAS"
+      ? ("EVIDENCIAS" as const)
+      : ("RESUMEN" as const);
 
   const [anio, setAnio] = useState(() =>
     Number.isInteger(anioSolicitado) &&
@@ -109,7 +117,12 @@ export default function EvaluacionEmpresaPage() {
   const [informesModalOpen, setInformesModalOpen] =
     useState(false);
   const [tareaDetalleId, setTareaDetalleId] =
-    useState<number | null>(null);
+    useState<number | null>(() =>
+      Number.isInteger(tareaDetalleSolicitada) &&
+      tareaDetalleSolicitada > 0
+        ? tareaDetalleSolicitada
+        : null
+    );
   const [revisionCorreccion, setRevisionCorreccion] =
     useState<RevisionTecnicaEvaluacionItem | null>(null);
 
@@ -197,6 +210,7 @@ export default function EvaluacionEmpresaPage() {
       siguientesParametros.delete("compromiso");
       siguientesParametros.delete("aspecto");
       siguientesParametros.delete("tareaId");
+      siguientesParametros.delete("detalle");
       setSearchParams(siguientesParametros, {
         replace: true,
       });
@@ -775,7 +789,23 @@ export default function EvaluacionEmpresaPage() {
         empresaId={empresaId}
         tareaId={tareaDetalleId}
         anio={anio}
-        onClose={() => setTareaDetalleId(null)}
+        initialTab={detalleInicial}
+        onClose={() => {
+          setTareaDetalleId(null);
+
+          if (
+            searchParams.has("tareaId") ||
+            searchParams.has("detalle")
+          ) {
+            const siguientesParametros =
+              new URLSearchParams(searchParams);
+            siguientesParametros.delete("tareaId");
+            siguientesParametros.delete("detalle");
+            setSearchParams(siguientesParametros, {
+              replace: true,
+            });
+          }
+        }}
       />
     </div>
   );
