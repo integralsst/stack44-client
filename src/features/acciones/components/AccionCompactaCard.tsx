@@ -72,6 +72,8 @@ export default function AccionCompactaCard({
 }) {
   const nivel = NIVELES[accion.nivel];
   const Icon = nivel.icon;
+  const requiereRecargaParaDetalle =
+    accion.categoria === "EVIDENCIAS";
 
   return (
     <article
@@ -184,6 +186,7 @@ export default function AccionCompactaCard({
 
             <Link
               to={accion.accion.ruta}
+              reloadDocument={requiereRecargaParaDetalle}
               className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-cyan-700 bg-cyan-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-sm transition hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2"
             >
               {accion.accion.etiqueta}
