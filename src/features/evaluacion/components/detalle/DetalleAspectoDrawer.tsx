@@ -35,15 +35,17 @@ export default function DetalleAspectoDrawer({
   empresaId,
   tareaId,
   anio,
+  initialTab = "RESUMEN",
   onClose,
 }: {
   open: boolean;
   empresaId: string | undefined;
   tareaId: number | null;
   anio: number;
+  initialTab?: DetailTab;
   onClose: () => void;
 }) {
-  const [tab, setTab] = useState<DetailTab>("RESUMEN");
+  const [tab, setTab] = useState<DetailTab>(initialTab);
   const {
     data,
     loading,
@@ -70,10 +72,10 @@ export default function DetalleAspectoDrawer({
   });
 
   useEffect(() => {
-    if (open) {
-      setTab("RESUMEN");
-    }
-  }, [open, tareaId]);
+    if (!open || initialTab === "RESUMEN") return;
+
+    void loadSection(initialTab);
+  }, [initialTab, loadSection, open, tareaId]);
 
   useEffect(() => {
     if (!open) return;

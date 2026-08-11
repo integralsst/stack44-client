@@ -42,6 +42,7 @@ const NIVELES = {
 
 const CATEGORIAS = {
   COMPROMISOS: "Compromiso",
+  EVIDENCIAS: "Evidencia",
   REVISION_TECNICA: "Revisión técnica",
   NO_APLICA: "No aplica",
   APROBACIONES: "Aprobación",

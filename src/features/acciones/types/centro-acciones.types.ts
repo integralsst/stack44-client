@@ -1,5 +1,6 @@
 export type CategoriaAccionCentro =
   | "COMPROMISOS"
+  | "EVIDENCIAS"
   | "REVISION_TECNICA"
   | "NO_APLICA"
   | "APROBACIONES"
@@ -12,6 +13,7 @@ export type NivelAccionCentro = "ALTA" | "MEDIA" | "BAJA";
 
 export interface ConteoCategoriasAcciones {
   COMPROMISOS: number;
+  EVIDENCIAS: number;
   REVISION_TECNICA: number;
   NO_APLICA: number;
   APROBACIONES: number;

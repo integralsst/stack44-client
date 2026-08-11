@@ -46,6 +46,12 @@ export default function FiltrosCentroAcciones({
       conteo: resumen?.categorias.COMPROMISOS,
     },
     {
+      label: "Evidencias",
+      categoria: "EVIDENCIAS" as const,
+      prioridad: "TODAS" as const,
+      conteo: resumen?.categorias.EVIDENCIAS,
+    },
+    {
       label: "Revisiones técnicas",
       categoria: "REVISION_TECNICA" as const,
       prioridad: "TODAS" as const,
