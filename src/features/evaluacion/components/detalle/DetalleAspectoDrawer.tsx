@@ -35,12 +35,14 @@ export default function DetalleAspectoDrawer({
   empresaId,
   tareaId,
   anio,
+  initialTab = "RESUMEN",
   onClose,
 }: {
   open: boolean;
   empresaId: string | undefined;
   tareaId: number | null;
   anio: number;
+  initialTab?: DetailTab;
   onClose: () => void;
 }) {
   const [tab, setTab] = useState<DetailTab>("RESUMEN");
@@ -71,9 +73,15 @@ export default function DetalleAspectoDrawer({
 
   useEffect(() => {
     if (open) {
-      setTab("RESUMEN");
+      setTab(initialTab);
     }
-  }, [open, tareaId]);
+  }, [initialTab, open, tareaId]);
+
+  useEffect(() => {
+    if (!open || initialTab === "RESUMEN") return;
+
+    void loadSection(initialTab);
+  }, [initialTab, loadSection, open, tareaId]);
 
   useEffect(() => {
     if (!open) return;
@@ -211,7 +219,7 @@ export default function DetalleAspectoDrawer({
                   loadedSections.REVISION_TECNICA
                     ? ` (${data.revisionesTecnicas.length})`
                     : ""
-                }`}
+              }`}
                 loading={loadingSections.REVISION_TECNICA}
                 onClick={() =>
                   activateTab("REVISION_TECNICA")
