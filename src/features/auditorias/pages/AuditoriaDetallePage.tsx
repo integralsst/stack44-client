@@ -1,7 +1,6 @@
 import {
   ArrowLeft,
   CalendarClock,
-  CheckCircle2,
   ChevronDown,
   ClipboardCheck,
   FileSearch,
