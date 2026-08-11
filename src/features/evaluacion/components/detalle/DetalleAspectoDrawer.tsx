@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 
 import { useDetalleAspecto } from "../../hooks/useDetalleAspecto";
 import type {
@@ -30,21 +31,70 @@ type DetailTab =
   | "RESUMEN"
   | SeccionDetalleAspecto;
 
-export default function DetalleAspectoDrawer({
-  open,
-  empresaId,
-  tareaId,
-  anio,
-  initialTab = "RESUMEN",
-  onClose,
-}: {
+type Props = {
   open: boolean;
   empresaId: string | undefined;
   tareaId: number | null;
   anio: number;
   initialTab?: DetailTab;
   onClose: () => void;
-}) {
+};
+
+function tabDesdeSearchParams(
+  searchParams: URLSearchParams
+): DetailTab {
+  const detalle =
+    searchParams.get("detalle")?.toUpperCase() ?? "";
+
+  if (detalle === "EVIDENCIAS") return "EVIDENCIAS";
+  if (detalle === "HISTORIAL") return "HISTORIAL";
+  if (detalle === "REVISION_TECNICA") {
+    return "REVISION_TECNICA";
+  }
+
+  return "RESUMEN";
+}
+
+export default function DetalleAspectoDrawer(
+  props: Props
+) {
+  const [searchParams] = useSearchParams();
+  const tareaIdSolicitada = Number(
+    searchParams.get("tareaId")
+  );
+  const tareaIdDesdeRuta =
+    Number.isInteger(tareaIdSolicitada) &&
+    tareaIdSolicitada > 0
+      ? tareaIdSolicitada
+      : null;
+  const tareaIdEfectiva =
+    tareaIdDesdeRuta ?? props.tareaId;
+  const initialTabEfectiva =
+    tareaIdDesdeRuta !== null
+      ? tabDesdeSearchParams(searchParams)
+      : (props.initialTab ?? "RESUMEN");
+  const openEfectivo =
+    props.open || tareaIdDesdeRuta !== null;
+
+  return (
+    <DetalleAspectoDrawerContent
+      key={`${tareaIdEfectiva ?? "closed"}:${initialTabEfectiva}`}
+      {...props}
+      open={openEfectivo}
+      tareaId={tareaIdEfectiva}
+      initialTab={initialTabEfectiva}
+    />
+  );
+}
+
+function DetalleAspectoDrawerContent({
+  open,
+  empresaId,
+  tareaId,
+  anio,
+  initialTab = "RESUMEN",
+  onClose,
+}: Props) {
   const [tab, setTab] = useState<DetailTab>(initialTab);
   const {
     data,
