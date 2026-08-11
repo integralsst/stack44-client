@@ -136,15 +136,20 @@ export default function AuditoriasPage() {
     void obtenerContextoAuditoriaEmpresa(token, form.empresaId)
       .then((resultado) => {
         setContexto(resultado);
-        const existeAnio = resultado.periodos.some(
-          (item) => String(item.anio) === form.anio
-        );
-        if (!existeAnio && resultado.periodos[0]) {
-          setForm((current) => ({
+        setForm((current) => {
+          const existeAnio = resultado.periodos.some(
+            (item) => String(item.anio) === current.anio
+          );
+
+          if (existeAnio || !resultado.periodos[0]) {
+            return current;
+          }
+
+          return {
             ...current,
             anio: String(resultado.periodos[0].anio),
-          }));
-        }
+          };
+        });
       })
       .catch((currentError) => {
         setContexto(null);
