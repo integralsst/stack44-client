@@ -265,8 +265,6 @@ function AlertaItem({
     },
   }[alerta.nivel];
   const Icon = configuracion.icon;
-  const requiereRecargaParaDetalle =
-    alerta.accion.ruta.includes("detalle=EVIDENCIAS");
 
   return (
     <article
@@ -294,7 +292,6 @@ function AlertaItem({
           </p>
           <Link
             to={alerta.accion.ruta}
-            reloadDocument={requiereRecargaParaDetalle}
             onClick={onOpen}
             className="mt-3 inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-950 !bg-slate-950 px-4 py-2 text-xs font-extrabold !text-white shadow-sm transition hover:!border-cyan-700 hover:!bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-600 focus:ring-offset-2"
             style={{
