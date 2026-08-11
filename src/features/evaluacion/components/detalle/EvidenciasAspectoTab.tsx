@@ -6,6 +6,7 @@ import {
   Paperclip,
 } from "lucide-react";
 
+import { useAuth } from "../../../auth/context/AuthContext";
 import type { DetalleAspectoResponse } from "../../types/detalle-aspecto.types";
 import type {
   EvidenciaEvaluacion,
@@ -44,6 +45,7 @@ export default function EvidenciasAspectoTab({
     evidence: EvidenciaEvaluacion
   ) => Promise<void>;
 }) {
+  const { hasRole } = useAuth();
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] =
     useState<EvidenciaEvaluacion | null>(null);
@@ -52,6 +54,24 @@ export default function EvidenciasAspectoTab({
 
   const canEdit =
     data.permisos.puedeGestionarEvidencias;
+  const requiereEvidencia = Boolean(
+    data.tarea.aspecto.configuracionEvidencia
+      ?.requiereEvidencia
+  );
+  const puedeCompletarPosteriormente = Boolean(
+    hasRole(
+      "PROFESSIONAL",
+      "COORDINATOR",
+      "ADMIN",
+      "OWNER",
+      "SUPERADMIN"
+    ) &&
+      requiereEvidencia &&
+      data.evidenciaObjetivo &&
+      !data.evidenciaObjetivo.esBorrador &&
+      data.evidencias.length === 0
+  );
+  const canCreate = canEdit || puedeCompletarPosteriormente;
   const defaultVisible = Boolean(
     data.tarea.aspecto.configuracionEvidencia
       ?.visibleClienteDefault
@@ -80,7 +100,7 @@ export default function EvidenciasAspectoTab({
             </p>
           </div>
 
-          {canEdit && !formOpen && (
+          {canCreate && !formOpen && (
             <button
               type="button"
               onClick={() => setFormOpen(true)}
@@ -92,7 +112,16 @@ export default function EvidenciasAspectoTab({
           )}
         </div>
 
-        {!canEdit && data.permisos.motivoEvidencias && (
+        {puedeCompletarPosteriormente && (
+          <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs leading-5 text-amber-950">
+            <Info size={15} className="mt-0.5 shrink-0" />
+            <span>
+              Este aspecto exige evidencia y la evaluación finalizada todavía no tiene soporte. Puedes agregarlo ahora sin modificar la calificación ni la gestión original.
+            </span>
+          </div>
+        )}
+
+        {!canCreate && data.permisos.motivoEvidencias && (
           <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs leading-5 text-amber-900">
             <Info size={15} className="mt-0.5 shrink-0" />
             <span>{data.permisos.motivoEvidencias}</span>
@@ -100,7 +129,7 @@ export default function EvidenciasAspectoTab({
         )}
       </div>
 
-      {formOpen && canEdit && (
+      {formOpen && canCreate && (
         <EvidenciaEvaluacionForm
           evidence={editing}
           busy={busy}
@@ -121,7 +150,7 @@ export default function EvidenciasAspectoTab({
         <EmptyState
           title="No hay evidencias registradas"
           description={
-            canEdit
+            canCreate
               ? "Agrega un enlace de Google Drive o una URL externa como soporte de esta evaluación."
               : "La evaluación y sus compromisos no tienen soportes visibles para tu usuario."
           }
