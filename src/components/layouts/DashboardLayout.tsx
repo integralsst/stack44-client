@@ -4,6 +4,7 @@ import {
   ClipboardList,
   ChevronLeft,
   ChevronRight,
+  FileSearch,
   FileText,
   LayoutDashboard,
   ListChecks,
@@ -109,6 +110,13 @@ export default function DashboardLayout() {
       label: "Centro de acciones",
       icon: ListChecks,
       visible: canViewOwnCommitments,
+      exact: false,
+    },
+    {
+      to: "/dashboard/auditorias",
+      label: "Auditorías",
+      icon: FileSearch,
+      visible: canViewInformes,
       exact: false,
     },
     {
