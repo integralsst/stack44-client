@@ -400,7 +400,7 @@ export default function AuditoriasPage() {
             />
           </Campo>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="max-w-xs">
             <Campo label="Fecha de auditoría">
               <input
                 required
@@ -415,17 +415,18 @@ export default function AuditoriasPage() {
                 className={inputClass}
               />
             </Campo>
-            <Campo label="Objetivo">
-              <input
-                value={form.objetivo}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, objetivo: event.target.value }))
-                }
-                className={inputClass}
-                placeholder="Objetivo principal"
-              />
-            </Campo>
           </div>
+
+          <Campo label="Objetivo">
+            <textarea
+              value={form.objetivo}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, objetivo: event.target.value }))
+              }
+              className={`${inputClass} min-h-20 resize-y`}
+              placeholder="Describe el propósito principal de la auditoría"
+            />
+          </Campo>
 
           <Campo label="Alcance">
             <textarea
@@ -438,12 +439,12 @@ export default function AuditoriasPage() {
             />
           </Campo>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={() => setModalOpen(false)}
               disabled={submitting}
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700"
+              className="min-h-11 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700"
             >
               Cancelar
             </button>
@@ -456,7 +457,7 @@ export default function AuditoriasPage() {
                 !form.titulo.trim() ||
                 !contexto?.periodos.length
               }
-              className="inline-flex items-center gap-2 rounded-xl border border-cyan-700 bg-cyan-600 px-4 py-2.5 text-xs font-extrabold text-white disabled:opacity-50"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-cyan-700 bg-cyan-600 px-4 py-2.5 text-xs font-extrabold text-white disabled:opacity-50"
             >
               {submitting && <Loader2 size={14} className="animate-spin" />}
               Crear auditoría
@@ -523,11 +524,11 @@ function Resumen({ label, value }: { label: string; value: number }) {
 }
 
 const inputClass =
-  "w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-100";
+  "min-h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
 
 function Campo({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="block">
+    <label className="block min-w-0">
       <span className="mb-1.5 block text-xs font-bold text-slate-700">{label}</span>
       {children}
     </label>

@@ -46,7 +46,9 @@ import type {
 } from "../types/auditorias.types";
 
 const inputClass =
-  "w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-100";
+  "min-h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-cyan-400 focus:bg-white focus:ring-2 focus:ring-cyan-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
+
+type EstadoAuditoriaDestino = "EN_EJECUCION" | "FINALIZADA" | "CANCELADA";
 
 const TIPO_LABEL: Record<TipoHallazgo, string> = {
   NO_CONFORMIDAD: "No conformidad",
@@ -94,6 +96,10 @@ export default function AuditoriaDetallePage() {
     useState<HallazgoAuditoria | null>(null);
   const [hallazgoSeguimiento, setHallazgoSeguimiento] =
     useState<HallazgoAuditoria | null>(null);
+  const [estadoPendiente, setEstadoPendiente] =
+    useState<Exclude<EstadoAuditoriaDestino, "CANCELADA"> | null>(null);
+  const [modalCancelacion, setModalCancelacion] = useState(false);
+  const [motivoCancelacion, setMotivoCancelacion] = useState("");
 
   const cargar = useCallback(async () => {
     if (!token || !auditoriaId) return;
@@ -131,31 +137,38 @@ export default function AuditoriaDetallePage() {
     [auditoria]
   );
 
-  const cambiarEstado = async (estado: "EN_EJECUCION" | "FINALIZADA" | "CANCELADA") => {
-    if (!token || !auditoria) return;
-    let motivo: string | null = null;
-    if (estado === "CANCELADA") {
-      motivo = window.prompt("Indica el motivo de cancelación:")?.trim() || null;
-      if (!motivo) return;
-    } else if (
-      !window.confirm(
-        estado === "FINALIZADA"
-          ? "¿Finalizar la auditoría? Los hallazgos y recomendaciones quedarán como registro histórico."
-          : "¿Iniciar la ejecución de esta auditoría?"
-      )
-    ) {
-      return;
-    }
+  const ejecutarCambioEstado = async (
+    estado: EstadoAuditoriaDestino,
+    motivo: string | null = null
+  ): Promise<boolean> => {
+    if (!token || !auditoria) return false;
 
     setBusy(true);
+    setError(null);
     try {
       await cambiarEstadoAuditoria(token, auditoria.id, estado, motivo);
       await cargar();
+      return true;
     } catch (currentError) {
-      setError(currentError instanceof Error ? currentError.message : "No fue posible cambiar el estado.");
+      setError(
+        currentError instanceof Error
+          ? currentError.message
+          : "No fue posible cambiar el estado."
+      );
+      return false;
     } finally {
       setBusy(false);
     }
+  };
+
+  const solicitarCambioEstado = (estado: EstadoAuditoriaDestino) => {
+    if (estado === "CANCELADA") {
+      setMotivoCancelacion("");
+      setModalCancelacion(true);
+      return;
+    }
+
+    setEstadoPendiente(estado);
   };
 
   if (loading && !auditoria) {
@@ -178,6 +191,19 @@ export default function AuditoriaDetallePage() {
     puedeEditar &&
     auditoria.estado !== "FINALIZADA" &&
     auditoria.estado !== "CANCELADA";
+
+  const confirmacionTitulo =
+    estadoPendiente === "FINALIZADA"
+      ? "Finalizar auditoría"
+      : "Iniciar auditoría";
+  const confirmacionDescripcion =
+    estadoPendiente === "FINALIZADA"
+      ? "La auditoría quedará como registro histórico. Los hallazgos, recomendaciones y seguimientos conservarán su trazabilidad."
+      : "La auditoría pasará a ejecución y podrás registrar los hallazgos encontrados durante la revisión.";
+  const confirmacionEtiqueta =
+    estadoPendiente === "FINALIZADA"
+      ? "Finalizar auditoría"
+      : "Iniciar auditoría";
 
   return (
     <section className="mx-auto w-full max-w-6xl space-y-4">
@@ -212,12 +238,18 @@ export default function AuditoriaDetallePage() {
           {puedeEditar && (
             <div className="flex flex-wrap gap-2">
               {auditoria.estado === "BORRADOR" && (
-                <AccionHeader disabled={busy} onClick={() => void cambiarEstado("EN_EJECUCION")}>
+                <AccionHeader
+                  disabled={busy}
+                  onClick={() => solicitarCambioEstado("EN_EJECUCION")}
+                >
                   Iniciar auditoría
                 </AccionHeader>
               )}
               {auditoria.estado === "EN_EJECUCION" && (
-                <AccionHeader disabled={busy} onClick={() => void cambiarEstado("FINALIZADA")}>
+                <AccionHeader
+                  disabled={busy}
+                  onClick={() => solicitarCambioEstado("FINALIZADA")}
+                >
                   Finalizar auditoría
                 </AccionHeader>
               )}
@@ -225,7 +257,7 @@ export default function AuditoriaDetallePage() {
                 <button
                   type="button"
                   disabled={busy}
-                  onClick={() => void cambiarEstado("CANCELADA")}
+                  onClick={() => solicitarCambioEstado("CANCELADA")}
                   className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700 disabled:opacity-50"
                 >
                   Cancelar
@@ -343,6 +375,99 @@ export default function AuditoriaDetallePage() {
         }}
         onError={setError}
       />
+
+      <AppModal
+        open={Boolean(estadoPendiente)}
+        title={confirmacionTitulo}
+        description={confirmacionDescripcion}
+        onClose={() => setEstadoPendiente(null)}
+        busy={busy}
+      >
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-cyan-100 bg-cyan-50/70 px-4 py-3 text-sm leading-6 text-slate-700">
+            <strong className="text-slate-950">{auditoria.titulo}</strong>
+            <span className="mt-1 block text-xs text-slate-600">
+              {auditoria.empresaPeriodo.empresa.nombre} · Periodo {auditoria.empresaPeriodo.anio}
+            </span>
+          </div>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setEstadoPendiente(null)}
+              className="min-h-11 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 disabled:opacity-50"
+            >
+              Volver
+            </button>
+            <button
+              type="button"
+              disabled={busy || !estadoPendiente}
+              onClick={() => {
+                if (!estadoPendiente) return;
+                const estado = estadoPendiente;
+                void ejecutarCambioEstado(estado).then((ok) => {
+                  if (ok) setEstadoPendiente(null);
+                });
+              }}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-cyan-700 bg-cyan-600 px-4 py-2.5 text-xs font-extrabold text-white disabled:opacity-50"
+            >
+              {busy && <Loader2 size={14} className="animate-spin" />}
+              {confirmacionEtiqueta}
+            </button>
+          </div>
+        </div>
+      </AppModal>
+
+      <AppModal
+        open={modalCancelacion}
+        title="Cancelar auditoría"
+        description="La cancelación conserva el registro histórico y requiere documentar el motivo."
+        onClose={() => setModalCancelacion(false)}
+        busy={busy}
+      >
+        <form
+          className="space-y-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const motivo = motivoCancelacion.trim();
+            if (!motivo) return;
+            void ejecutarCambioEstado("CANCELADA", motivo).then((ok) => {
+              if (ok) {
+                setModalCancelacion(false);
+                setMotivoCancelacion("");
+              }
+            });
+          }}
+        >
+          <Campo label="Motivo de cancelación">
+            <textarea
+              required
+              value={motivoCancelacion}
+              onChange={(event) => setMotivoCancelacion(event.target.value)}
+              className={`${inputClass} min-h-28 resize-y`}
+              placeholder="Explica por qué se cancela esta auditoría"
+            />
+          </Campo>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setModalCancelacion(false)}
+              className="min-h-11 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 disabled:opacity-50"
+            >
+              Volver
+            </button>
+            <button
+              type="submit"
+              disabled={busy || !motivoCancelacion.trim()}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-red-300 bg-red-50 px-4 py-2.5 text-xs font-extrabold text-red-800 disabled:opacity-50"
+            >
+              {busy && <Loader2 size={14} className="animate-spin" />}
+              Confirmar cancelación
+            </button>
+          </div>
+        </form>
+      </AppModal>
     </section>
   );
 }
@@ -476,7 +601,7 @@ function HallazgoCard({
                 type="button"
                 onClick={() => void guardarAsignacion()}
                 disabled={saving}
-                className="min-h-10 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
+                className="min-h-11 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
               >
                 {saving ? "Guardando…" : "Guardar"}
               </button>
@@ -809,11 +934,11 @@ function SeguimientoModal({
 
 function ModalActions({ busy, onClose, label }: { busy: boolean; onClose: () => void; label: string }) {
   return (
-    <div className="flex justify-end gap-2 pt-2">
-      <button type="button" onClick={onClose} disabled={busy} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700">
+    <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+      <button type="button" onClick={onClose} disabled={busy} className="min-h-11 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-700">
         Cancelar
       </button>
-      <button type="submit" disabled={busy} className="inline-flex items-center gap-2 rounded-xl border border-cyan-700 bg-cyan-600 px-4 py-2.5 text-xs font-extrabold text-white disabled:opacity-50">
+      <button type="submit" disabled={busy} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-cyan-700 bg-cyan-600 px-4 py-2.5 text-xs font-extrabold text-white disabled:opacity-50">
         {busy && <Loader2 size={14} className="animate-spin" />}
         {label}
       </button>
@@ -858,7 +983,7 @@ function MiniDato({ label, value }: { label: string; value: string }) {
 
 function Campo({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <label className="block">
+    <label className="block min-w-0">
       <span className="mb-1.5 block text-xs font-bold text-slate-700">{label}</span>
       {children}
     </label>
