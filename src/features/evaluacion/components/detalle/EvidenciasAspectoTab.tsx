@@ -58,6 +58,9 @@ export default function EvidenciasAspectoTab({
     data.tarea.aspecto.configuracionEvidencia
       ?.requiereEvidencia
   );
+  const totalEvidencias =
+    data.evidencias.length +
+    data.evidenciasCompromiso.length;
   const puedeCompletarPosteriormente = Boolean(
     hasRole(
       "PROFESSIONAL",
@@ -69,16 +72,13 @@ export default function EvidenciasAspectoTab({
       requiereEvidencia &&
       data.evidenciaObjetivo &&
       !data.evidenciaObjetivo.esBorrador &&
-      data.evidencias.length === 0
+      totalEvidencias === 0
   );
   const canCreate = canEdit || puedeCompletarPosteriormente;
   const defaultVisible = Boolean(
     data.tarea.aspecto.configuracionEvidencia
       ?.visibleClienteDefault
   );
-  const totalEvidencias =
-    data.evidencias.length +
-    data.evidenciasCompromiso.length;
 
   const closeForm = () => {
     if (busy) return;

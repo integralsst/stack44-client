@@ -29,7 +29,7 @@ import type {
 
 type Tab = "matriz" | "estructura" | "versiones" | "historial";
 
-const ADMIN_ROLES = new Set(["ADMIN", "PROPIETARIO", "SUPERADMIN"]);
+const ADMIN_ROLES = new Set(["ADMIN", "OWNER", "SUPERADMIN"]);
 
 const tabs: Array<{
   id: Tab;
@@ -103,7 +103,11 @@ export default function Supermatriz() {
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-white">Supermatriz</h1>
-            <p className="mt-1 text-sm text-neutral-600">Administración global</p>
+            <p className="mt-1 text-sm text-neutral-600">
+              {canAdminister
+                ? "Administración global"
+                : "Consulta técnica de solo lectura"}
+            </p>
           </div>
 
           <div className="flex w-full flex-col gap-2 sm:flex-row xl:w-auto">
