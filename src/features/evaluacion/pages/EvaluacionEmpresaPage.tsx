@@ -86,10 +86,12 @@ export default function EvaluacionEmpresaPage() {
   const anioSolicitado = Number(
     searchParams.get("anio")
   );
-  const aspectoParaRecalificar =
+  const aspectoSolicitado =
     searchParams.get("aspecto")?.trim() || null;
   const compromisoParaRecalificar =
     searchParams.get("compromiso")?.trim() || null;
+  const aspectoParaRecalificar =
+    compromisoParaRecalificar ? aspectoSolicitado : null;
   const tareaDetalleSolicitada = Number(
     searchParams.get("tareaId")
   );
@@ -280,23 +282,19 @@ export default function EvaluacionEmpresaPage() {
   );
 
   useEffect(() => {
-    if (
-      !contexto?.gestionActiva ||
-      !aspectoParaRecalificar
-    ) {
+    if (!contexto?.periodo || !aspectoSolicitado) {
       return;
     }
 
     const timer = window.setTimeout(() => {
-      enfocarAspectoEnMatriz(
-        aspectoParaRecalificar
-      );
+      enfocarAspectoEnMatriz(aspectoSolicitado);
     }, 500);
 
     return () => window.clearTimeout(timer);
   }, [
-    aspectoParaRecalificar,
-    contexto?.gestionActiva,
+    aspectoSolicitado,
+    contexto?.periodo?.id,
+    contexto?.gestionActiva?.id,
   ]);
 
   useEffect(() => {
