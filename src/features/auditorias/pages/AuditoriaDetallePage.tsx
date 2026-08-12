@@ -82,6 +82,12 @@ export default function AuditoriaDetallePage() {
     "OWNER",
     "SUPERADMIN"
   );
+  const puedeGobernar = hasRole(
+    "COORDINATOR",
+    "ADMIN",
+    "OWNER",
+    "SUPERADMIN"
+  );
 
   const [auditoria, setAuditoria] = useState<AuditoriaDetalle | null>(null);
   const [contexto, setContexto] = useState<ContextoAuditoriaEmpresa | null>(null);
@@ -235,7 +241,7 @@ export default function AuditoriaDetallePage() {
             </p>
           </div>
 
-          {puedeEditar && (
+          {puedeGobernar && (
             <div className="flex flex-wrap gap-2">
               {auditoria.estado === "BORRADOR" && (
                 <AccionHeader
@@ -330,6 +336,7 @@ export default function AuditoriaDetallePage() {
               contexto={contexto}
               puedeEditar={puedeEditar && auditoria.estado !== "CANCELADA"}
               puedeCrearContenido={editableContenido}
+              puedeGobernar={puedeGobernar}
               onReload={() => void cargar()}
               onError={setError}
               onRecommendation={() => setHallazgoRecomendacion(hallazgo)}
@@ -368,6 +375,7 @@ export default function AuditoriaDetallePage() {
       <SeguimientoModal
         hallazgo={hallazgoSeguimiento}
         token={token}
+        puedeGobernar={puedeGobernar}
         onClose={() => setHallazgoSeguimiento(null)}
         onSaved={async () => {
           setHallazgoSeguimiento(null);
@@ -481,6 +489,7 @@ function HallazgoCard({
   contexto,
   puedeEditar,
   puedeCrearContenido,
+  puedeGobernar,
   onReload,
   onError,
   onRecommendation,
@@ -494,6 +503,7 @@ function HallazgoCard({
   contexto: ContextoAuditoriaEmpresa | null;
   puedeEditar: boolean;
   puedeCrearContenido: boolean;
+  puedeGobernar: boolean;
   onReload: () => void;
   onError: (value: string | null) => void;
   onRecommendation: () => void;
@@ -529,43 +539,49 @@ function HallazgoCard({
   const recomendacionesRegistradas = hallazgo.recomendaciones.length > 0;
   const seguimientosRegistrados = hallazgo.seguimientos.length > 0;
   const resuelto = hallazgo.estado === "RESUELTO" || hallazgo.estado === "CERRADO";
+  const puedeEditarAsignacion = puedeEditar && (!resuelto || puedeGobernar);
+  const puedeAgregarRecomendacion = puedeCrearContenido && !resuelto;
+  const puedeRegistrarSeguimiento =
+    puedeEditar && (hallazgo.estado !== "CERRADO" || puedeGobernar);
   const asignacionModificada =
     responsable !== (hallazgo.responsableUsuarioId ?? "") ||
     fechaObjetivo !== (hallazgo.fechaObjetivo?.slice(0, 10) ?? "");
 
-  const siguienteAccion = !recomendacionesRegistradas
-    ? puedeCrearContenido
-      ? {
-          titulo: "Define la acción recomendada",
-          descripcion: "Registra una recomendación clara para orientar al responsable y dejar listo el seguimiento.",
-          etiqueta: "Añadir recomendación",
-          accion: onRecommendation,
-        }
-      : puedeEditar
+  const siguienteAccion = resuelto
+    ? null
+    : !recomendacionesRegistradas
+      ? puedeAgregarRecomendacion
         ? {
-            titulo: "Continúa con el seguimiento",
-            descripcion: "La auditoría ya no admite nuevas recomendaciones, pero puedes documentar el seguimiento disponible para este hallazgo.",
-            etiqueta: "Registrar seguimiento",
-            accion: onFollowUp,
+            titulo: "Define la acción recomendada",
+            descripcion: "Registra una recomendación clara para orientar al responsable y dejar listo el seguimiento.",
+            etiqueta: "Añadir recomendación",
+            accion: onRecommendation,
           }
-        : null
-    : !seguimientosRegistrados
-      ? puedeEditar
-        ? {
-            titulo: "Registra el primer seguimiento",
-            descripcion: "La recomendación ya está definida. Documenta el avance y actualiza los estados cuando corresponda.",
-            etiqueta: "Registrar seguimiento",
-            accion: onFollowUp,
-          }
-        : null
-      : !resuelto && puedeEditar
-        ? {
-            titulo: "Continúa el seguimiento hasta resolverlo",
-            descripcion: "Ya existe trazabilidad de seguimiento. Registra un nuevo avance cuando haya cambios relevantes.",
-            etiqueta: "Registrar seguimiento",
-            accion: onFollowUp,
-          }
-        : null;
+        : puedeRegistrarSeguimiento
+          ? {
+              titulo: "Continúa con el seguimiento",
+              descripcion: "La auditoría ya no admite nuevas recomendaciones, pero puedes documentar el seguimiento disponible para este hallazgo.",
+              etiqueta: "Registrar seguimiento",
+              accion: onFollowUp,
+            }
+          : null
+      : !seguimientosRegistrados
+        ? puedeRegistrarSeguimiento
+          ? {
+              titulo: "Registra el primer seguimiento",
+              descripcion: "La recomendación ya está definida. Documenta el avance y actualiza los estados cuando corresponda.",
+              etiqueta: "Registrar seguimiento",
+              accion: onFollowUp,
+            }
+          : null
+        : puedeRegistrarSeguimiento
+          ? {
+              titulo: "Continúa el seguimiento hasta resolverlo",
+              descripcion: "Ya existe trazabilidad de seguimiento. Registra un nuevo avance cuando haya cambios relevantes.",
+              etiqueta: "Registrar seguimiento",
+              accion: onFollowUp,
+            }
+          : null;
 
   return (
     <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -616,6 +632,15 @@ function HallazgoCard({
             <PasoHallazgo numero="4" titulo="Resolución" completo={resuelto} descripcion={resuelto ? "Resuelto" : "Pendiente"} />
           </div>
 
+          {resuelto && !puedeGobernar && (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+              <p className="text-xs font-black text-emerald-900">Hallazgo resuelto · modo de consulta</p>
+              <p className="mt-1 text-xs leading-5 text-emerald-800">
+                La asignación y las recomendaciones quedan protegidas. Puedes consultar la trazabilidad y registrar un seguimiento posterior sin reabrir ni cambiar estados.
+              </p>
+            </div>
+          )}
+
           {siguienteAccion && (
             <div className="flex flex-col gap-3 rounded-2xl border border-cyan-200 bg-cyan-50/80 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
@@ -644,7 +669,7 @@ function HallazgoCard({
             </Link>
           )}
 
-          {puedeEditar ? (
+          {puedeEditarAsignacion ? (
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -697,7 +722,7 @@ function HallazgoCard({
                   <p className="text-sm font-black text-slate-950">Recomendaciones</p>
                   <p className="mt-1 text-xs text-slate-500">Acciones propuestas para atender o fortalecer el hallazgo.</p>
                 </div>
-                {puedeCrearContenido && (
+                {puedeAgregarRecomendacion && (
                   <button type="button" onClick={onRecommendation} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs font-extrabold text-cyan-800 hover:bg-cyan-100">
                     <Plus size={14} /> Añadir recomendación
                   </button>
@@ -732,7 +757,7 @@ function HallazgoCard({
                   <p className="text-sm font-black text-slate-950">Seguimiento</p>
                   <p className="mt-1 text-xs text-slate-500">Avances, verificaciones y cambios de estado del hallazgo.</p>
                 </div>
-                {puedeEditar && (
+                {puedeRegistrarSeguimiento && (
                   <button type="button" onClick={onFollowUp} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-700 hover:border-cyan-300 hover:text-cyan-800">
                     <MessageSquarePlus size={14} /> Registrar seguimiento
                   </button>
@@ -968,12 +993,14 @@ function RecomendacionModal({
 function SeguimientoModal({
   hallazgo,
   token,
+  puedeGobernar,
   onClose,
   onSaved,
   onError,
 }: {
   hallazgo: HallazgoAuditoria | null;
   token: string | null;
+  puedeGobernar: boolean;
   onClose: () => void;
   onSaved: () => Promise<void>;
   onError: (value: string | null) => void;
@@ -992,6 +1019,10 @@ function SeguimientoModal({
     setEstadoRecomendacion("");
   }, [hallazgo]);
 
+  const seguimientoInformativo = Boolean(
+    hallazgo && !puedeGobernar && hallazgo.estado === "RESUELTO"
+  );
+
   const guardar = async (event: FormEvent) => {
     event.preventDefault();
     if (!token || !hallazgo) return;
@@ -1001,8 +1032,11 @@ function SeguimientoModal({
       await registrarSeguimientoAuditoria(token, hallazgo.id, {
         descripcion,
         recomendacionId: recomendacionId || null,
-        estadoHallazgo: estadoHallazgo || null,
-        estadoRecomendacion: recomendacionId ? estadoRecomendacion || null : null,
+        estadoHallazgo: seguimientoInformativo ? null : estadoHallazgo || null,
+        estadoRecomendacion:
+          seguimientoInformativo || !recomendacionId
+            ? null
+            : estadoRecomendacion || null,
       });
       await onSaved();
     } catch (currentError) {
@@ -1015,6 +1049,11 @@ function SeguimientoModal({
   return (
     <AppModal open={Boolean(hallazgo)} title="Registrar seguimiento" description={hallazgo?.titulo} onClose={onClose} busy={busy}>
       <form className="space-y-4" onSubmit={guardar}>
+        {seguimientoInformativo && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-xs leading-5 text-emerald-800">
+            Este hallazgo ya está resuelto. El seguimiento que registres será informativo y conservará los estados actuales. La reapertura corresponde a coordinación o administración.
+          </div>
+        )}
         <Campo label="Seguimiento">
           <textarea required value={descripcion} onChange={(event) => setDescripcion(event.target.value)} className={`${inputClass} min-h-28 resize-y`} />
         </Campo>
@@ -1024,26 +1063,28 @@ function SeguimientoModal({
             {hallazgo?.recomendaciones.map((item) => <option key={item.id} value={item.id}>{item.descripcion.slice(0, 90)}</option>)}
           </select>
         </Campo>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Campo label="Nuevo estado del hallazgo">
-            <select value={estadoHallazgo} onChange={(event) => setEstadoHallazgo(event.target.value as EstadoHallazgo | "")} className={inputClass}>
-              <option value="">Conservar estado</option>
-              <option value="ABIERTO">Abierto</option>
-              <option value="EN_GESTION">En gestión</option>
-              <option value="RESUELTO">Resuelto</option>
-              <option value="CERRADO">Cerrado</option>
-            </select>
-          </Campo>
-          <Campo label="Nuevo estado de la recomendación">
-            <select disabled={!recomendacionId} value={estadoRecomendacion} onChange={(event) => setEstadoRecomendacion(event.target.value as EstadoRecomendacion | "")} className={inputClass}>
-              <option value="">Conservar estado</option>
-              <option value="PENDIENTE">Pendiente</option>
-              <option value="EN_PROGRESO">En progreso</option>
-              <option value="ATENDIDA">Atendida</option>
-              <option value="DESCARTADA">Descartada</option>
-            </select>
-          </Campo>
-        </div>
+        {!seguimientoInformativo && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Campo label="Nuevo estado del hallazgo">
+              <select value={estadoHallazgo} onChange={(event) => setEstadoHallazgo(event.target.value as EstadoHallazgo | "")} className={inputClass}>
+                <option value="">Conservar estado</option>
+                <option value="ABIERTO">Abierto</option>
+                <option value="EN_GESTION">En gestión</option>
+                <option value="RESUELTO">Resuelto</option>
+                <option value="CERRADO">Cerrado</option>
+              </select>
+            </Campo>
+            <Campo label="Nuevo estado de la recomendación">
+              <select disabled={!recomendacionId} value={estadoRecomendacion} onChange={(event) => setEstadoRecomendacion(event.target.value as EstadoRecomendacion | "")} className={inputClass}>
+                <option value="">Conservar estado</option>
+                <option value="PENDIENTE">Pendiente</option>
+                <option value="EN_PROGRESO">En progreso</option>
+                <option value="ATENDIDA">Atendida</option>
+                <option value="DESCARTADA">Descartada</option>
+              </select>
+            </Campo>
+          </div>
+        )}
         <ModalActions busy={busy} onClose={onClose} label="Registrar seguimiento" />
       </form>
     </AppModal>

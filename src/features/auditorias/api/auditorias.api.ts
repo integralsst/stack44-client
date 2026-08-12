@@ -16,6 +16,15 @@ import type {
 
 const AUDITORIA_UPDATED_EVENT = "stack44:auditoria-updated";
 
+type CambioEstadoAuditoriaResponse = {
+  id: string;
+  estado: EstadoAuditoria;
+  iniciadaEn?: string | null;
+  finalizadaEn?: string | null;
+  canceladaEn?: string | null;
+  motivoCancelacion?: string | null;
+};
+
 function notificarCambioAuditoria(): void {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(AUDITORIA_UPDATED_EVENT));
@@ -150,15 +159,18 @@ export function cambiarEstadoAuditoria(
   estado: EstadoAuditoria,
   motivo?: string | null
 ) {
+  // El PATCH de estado devuelve un registro resumido, no el detalle con
+  // hallazgos. No debe normalizarse como AuditoriaDetalle: el consumidor
+  // recarga el detalle completo inmediatamente después de la transición.
   return conNotificacion(
-    apiRequest<AuditoriaDetalle>(
+    apiRequest<CambioEstadoAuditoriaResponse>(
       `/api/auditorias/${encodeURIComponent(auditoriaId)}/estado`,
       {
         method: "PATCH",
         body: JSON.stringify({ estado, motivo: motivo ?? null }),
       },
       token
-    ).then(normalizarDetalle)
+    )
   );
 }
 
