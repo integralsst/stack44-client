@@ -47,10 +47,11 @@ export default function AuditoriaDetalleGovernancePage() {
 
   const ejecucionCompleta =
     auditoria?.estado === "EN_EJECUCION" || auditoria?.estado === "FINALIZADA";
-  const seguimientoCompleto =
-    Boolean(ejecucionCompleta) &&
-    Boolean(auditoria) &&
-    (auditoria.hallazgos.length === 0 || pendientes === 0);
+  const seguimientoCompleto = Boolean(
+    ejecucionCompleta &&
+      auditoria &&
+      (auditoria.hallazgos.length === 0 || pendientes === 0)
+  );
   const cierreCompleto = auditoria?.estado === "FINALIZADA";
 
   const mensaje = useMemo(() => {
@@ -129,7 +130,7 @@ export default function AuditoriaDetalleGovernancePage() {
                   ? "Sin pendientes operativos"
                   : `${pendientes} pendiente(s)`
               }
-              completo={Boolean(seguimientoCompleto)}
+              completo={seguimientoCompleto}
             />
             <Paso
               numero="4"
