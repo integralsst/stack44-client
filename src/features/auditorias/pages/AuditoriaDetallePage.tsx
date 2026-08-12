@@ -526,6 +526,47 @@ function HallazgoCard({
     }
   };
 
+  const recomendacionesRegistradas = hallazgo.recomendaciones.length > 0;
+  const seguimientosRegistrados = hallazgo.seguimientos.length > 0;
+  const resuelto = hallazgo.estado === "RESUELTO" || hallazgo.estado === "CERRADO";
+  const asignacionModificada =
+    responsable !== (hallazgo.responsableUsuarioId ?? "") ||
+    fechaObjetivo !== (hallazgo.fechaObjetivo?.slice(0, 10) ?? "");
+
+  const siguienteAccion = !recomendacionesRegistradas
+    ? puedeCrearContenido
+      ? {
+          titulo: "Define la acción recomendada",
+          descripcion: "Registra una recomendación clara para orientar al responsable y dejar listo el seguimiento.",
+          etiqueta: "Añadir recomendación",
+          accion: onRecommendation,
+        }
+      : puedeEditar
+        ? {
+            titulo: "Continúa con el seguimiento",
+            descripcion: "La auditoría ya no admite nuevas recomendaciones, pero puedes documentar el seguimiento disponible para este hallazgo.",
+            etiqueta: "Registrar seguimiento",
+            accion: onFollowUp,
+          }
+        : null
+    : !seguimientosRegistrados
+      ? puedeEditar
+        ? {
+            titulo: "Registra el primer seguimiento",
+            descripcion: "La recomendación ya está definida. Documenta el avance y actualiza los estados cuando corresponda.",
+            etiqueta: "Registrar seguimiento",
+            accion: onFollowUp,
+          }
+        : null
+      : !resuelto && puedeEditar
+        ? {
+            titulo: "Continúa el seguimiento hasta resolverlo",
+            descripcion: "Ya existe trazabilidad de seguimiento. Registra un nuevo avance cuando haya cambios relevantes.",
+            etiqueta: "Registrar seguimiento",
+            accion: onFollowUp,
+          }
+        : null;
+
   return (
     <article className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <button
@@ -558,7 +599,7 @@ function HallazgoCard({
       </button>
 
       {abierta && (
-        <div className="space-y-3 border-t border-slate-200 bg-slate-50/70 p-4">
+        <div className="space-y-4 border-t border-slate-200 bg-slate-50/70 p-4">
           <div className="rounded-xl border border-slate-200 bg-white p-3">
             <p className="text-sm leading-6 text-slate-700">{hallazgo.descripcion}</p>
             {hallazgo.evidencia && (
@@ -568,11 +609,30 @@ function HallazgoCard({
             )}
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-3">
-            <MiniDato label="Responsable" value={hallazgo.responsable?.nombre ?? "Sin asignar"} />
-            <MiniDato label="Fecha objetivo" value={fecha(hallazgo.fechaObjetivo)} />
-            <MiniDato label="Registrado por" value={hallazgo.creadoPor.nombre} />
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <PasoHallazgo numero="1" titulo="Hallazgo" completo descripcion="Registrado" />
+            <PasoHallazgo numero="2" titulo="Recomendación" completo={recomendacionesRegistradas} descripcion={recomendacionesRegistradas ? "Registrada" : "Pendiente"} />
+            <PasoHallazgo numero="3" titulo="Seguimiento" completo={seguimientosRegistrados} descripcion={seguimientosRegistrados ? "Con trazabilidad" : "Pendiente"} />
+            <PasoHallazgo numero="4" titulo="Resolución" completo={resuelto} descripcion={resuelto ? "Resuelto" : "Pendiente"} />
           </div>
+
+          {siguienteAccion && (
+            <div className="flex flex-col gap-3 rounded-2xl border border-cyan-200 bg-cyan-50/80 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-cyan-800">Siguiente acción</p>
+                <p className="mt-1 text-sm font-black text-slate-950">{siguienteAccion.titulo}</p>
+                <p className="mt-1 text-xs leading-5 text-slate-600">{siguienteAccion.descripcion}</p>
+              </div>
+              <button
+                type="button"
+                onClick={siguienteAccion.accion}
+                className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-cyan-700 bg-cyan-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-sm transition hover:bg-cyan-700"
+              >
+                {recomendacionesRegistradas ? <MessageSquarePlus size={15} /> : <Plus size={15} />}
+                {siguienteAccion.etiqueta}
+              </button>
+            </div>
+          )}
 
           {hallazgo.aspecto && (
             <Link
@@ -580,93 +640,151 @@ function HallazgoCard({
               className="inline-flex items-center gap-2 text-xs font-extrabold text-cyan-700 hover:text-cyan-900"
             >
               <Target size={14} />
-              Abrir aspecto en la evaluación
+              Ver trazabilidad del aspecto
             </Link>
           )}
 
-          {puedeEditar && (
-            <div className="grid gap-2 rounded-xl border border-slate-200 bg-white p-3 sm:grid-cols-[1fr_180px_auto] sm:items-end">
-              <Campo label="Responsable">
-                <select value={responsable} onChange={(event) => setResponsable(event.target.value)} className={inputClass}>
-                  <option value="">Sin asignar</option>
-                  {contexto?.responsables.map((item) => (
-                    <option key={item.id} value={item.id}>{item.nombre} · {item.rol}</option>
-                  ))}
-                </select>
-              </Campo>
-              <Campo label="Fecha objetivo">
-                <input type="date" value={fechaObjetivo} onChange={(event) => setFechaObjetivo(event.target.value)} className={inputClass} />
-              </Campo>
-              <button
-                type="button"
-                onClick={() => void guardarAsignacion()}
-                disabled={saving}
-                className="min-h-11 rounded-xl border border-slate-200 bg-slate-900 px-3 py-2 text-xs font-bold text-white disabled:opacity-50"
-              >
-                {saving ? "Guardando…" : "Guardar"}
-              </button>
+          {puedeEditar ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-sm font-black text-slate-950">Asignación y plazo</p>
+                  <p className="mt-1 text-xs text-slate-500">Define quién gestiona el hallazgo y la fecha objetivo. Los cambios quedan guardados al confirmar.</p>
+                </div>
+                <span className="text-[10px] font-semibold text-slate-500">Registrado por {hallazgo.creadoPor.nombre}</span>
+              </div>
+
+              <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(190px,240px)]">
+                <Campo label="Responsable">
+                  <select value={responsable} onChange={(event) => setResponsable(event.target.value)} className={inputClass}>
+                    <option value="">Sin asignar</option>
+                    {contexto?.responsables.map((item) => (
+                      <option key={item.id} value={item.id}>{item.nombre} · {item.rol}</option>
+                    ))}
+                  </select>
+                </Campo>
+                <Campo label="Fecha objetivo">
+                  <input type="date" value={fechaObjetivo} onChange={(event) => setFechaObjetivo(event.target.value)} className={inputClass} />
+                </Campo>
+              </div>
+
+              <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs text-slate-500">
+                  {asignacionModificada ? "Hay cambios de asignación pendientes de guardar." : "La asignación mostrada está guardada."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void guardarAsignacion()}
+                  disabled={saving || !asignacionModificada}
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-900 bg-slate-900 px-4 py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {saving ? "Guardando…" : "Guardar cambios"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-3">
+              <MiniDato label="Responsable" value={hallazgo.responsable?.nombre ?? "Sin asignar"} />
+              <MiniDato label="Fecha objetivo" value={fecha(hallazgo.fechaObjetivo)} />
+              <MiniDato label="Registrado por" value={hallazgo.creadoPor.nombre} />
             </div>
           )}
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-black text-slate-950">Recomendaciones</p>
-              {puedeCrearContenido && (
-                <button type="button" onClick={onRecommendation} className="inline-flex items-center gap-1 text-[11px] font-bold text-cyan-700">
-                  <Plus size={13} /> Añadir
-                </button>
-              )}
-            </div>
-            {hallazgo.recomendaciones.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-slate-200 bg-white px-3 py-3 text-xs text-slate-500">
-                Sin recomendaciones registradas.
-              </p>
-            ) : (
-              hallazgo.recomendaciones.map((recomendacion) => (
-                <div key={recomendacion.id} className="rounded-xl border border-slate-200 bg-white px-3 py-3">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <p className="min-w-0 flex-1 text-xs leading-5 text-slate-700">{recomendacion.descripcion}</p>
-                    <span className="rounded-full bg-slate-100 px-2 py-1 text-[9px] font-bold text-slate-700">
-                      {recomendacion.estado.replaceAll("_", " ")}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-[10px] text-slate-500">
-                    {recomendacion.responsable?.nombre ?? "Sin responsable"} · {fecha(recomendacion.fechaObjetivo)}
-                  </p>
+          <div className="grid gap-3 lg:grid-cols-2">
+            <section className="rounded-2xl border border-slate-200 bg-white p-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-black text-slate-950">Recomendaciones</p>
+                  <p className="mt-1 text-xs text-slate-500">Acciones propuestas para atender o fortalecer el hallazgo.</p>
                 </div>
-              ))
-            )}
-          </div>
+                {puedeCrearContenido && (
+                  <button type="button" onClick={onRecommendation} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs font-extrabold text-cyan-800 hover:bg-cyan-100">
+                    <Plus size={14} /> Añadir recomendación
+                  </button>
+                )}
+              </div>
+              <div className="mt-3 space-y-2">
+                {hallazgo.recomendaciones.length === 0 ? (
+                  <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-xs text-slate-500">
+                    Aún no hay recomendaciones registradas para este hallazgo.
+                  </p>
+                ) : (
+                  hallazgo.recomendaciones.map((recomendacion) => (
+                    <div key={recomendacion.id} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <p className="min-w-0 flex-1 text-xs leading-5 text-slate-700">{recomendacion.descripcion}</p>
+                        <span className="rounded-full bg-white px-2 py-1 text-[9px] font-bold text-slate-700">
+                          {recomendacion.estado.replaceAll("_", " ")}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[10px] text-slate-500">
+                        {recomendacion.responsable?.nombre ?? "Sin responsable"} · {fecha(recomendacion.fechaObjetivo)}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-black text-slate-950">Seguimiento</p>
-              {puedeEditar && (
-                <button type="button" onClick={onFollowUp} className="inline-flex items-center gap-1 text-[11px] font-bold text-cyan-700">
-                  <MessageSquarePlus size={13} /> Registrar seguimiento
-                </button>
-              )}
-            </div>
-            {hallazgo.seguimientos.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-slate-200 bg-white px-3 py-3 text-xs text-slate-500">
-                Todavía no hay seguimientos.
-              </p>
-            ) : (
-              hallazgo.seguimientos.map((seguimiento) => (
-                <div key={seguimiento.id} className="rounded-xl border border-slate-200 bg-white px-3 py-3">
-                  <p className="text-xs leading-5 text-slate-700">{seguimiento.descripcion}</p>
-                  <p className="mt-1 text-[10px] text-slate-500">
-                    {seguimiento.usuario.nombre} · {fecha(seguimiento.createdAt)}
-                    {seguimiento.estadoHallazgo ? ` · Hallazgo: ${seguimiento.estadoHallazgo.replaceAll("_", " ")}` : ""}
-                    {seguimiento.estadoRecomendacion ? ` · Recomendación: ${seguimiento.estadoRecomendacion.replaceAll("_", " ")}` : ""}
-                  </p>
+            <section className="rounded-2xl border border-slate-200 bg-white p-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-black text-slate-950">Seguimiento</p>
+                  <p className="mt-1 text-xs text-slate-500">Avances, verificaciones y cambios de estado del hallazgo.</p>
                 </div>
-              ))
-            )}
+                {puedeEditar && (
+                  <button type="button" onClick={onFollowUp} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-extrabold text-slate-700 hover:border-cyan-300 hover:text-cyan-800">
+                    <MessageSquarePlus size={14} /> Registrar seguimiento
+                  </button>
+                )}
+              </div>
+              <div className="mt-3 space-y-2">
+                {hallazgo.seguimientos.length === 0 ? (
+                  <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-4 text-xs text-slate-500">
+                    Todavía no hay seguimientos registrados.
+                  </p>
+                ) : (
+                  hallazgo.seguimientos.map((seguimiento) => (
+                    <div key={seguimiento.id} className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+                      <p className="text-xs leading-5 text-slate-700">{seguimiento.descripcion}</p>
+                      <p className="mt-1 text-[10px] text-slate-500">
+                        {seguimiento.usuario.nombre} · {fecha(seguimiento.createdAt)}
+                        {seguimiento.estadoHallazgo ? ` · Hallazgo: ${seguimiento.estadoHallazgo.replaceAll("_", " ")}` : ""}
+                        {seguimiento.estadoRecomendacion ? ` · Recomendación: ${seguimiento.estadoRecomendacion.replaceAll("_", " ")}` : ""}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
           </div>
         </div>
       )}
     </article>
+  );
+}
+
+function PasoHallazgo({
+  numero,
+  titulo,
+  completo,
+  descripcion,
+}: {
+  numero: string;
+  titulo: string;
+  completo: boolean;
+  descripcion: string;
+}) {
+  return (
+    <div className={`rounded-xl border px-3 py-3 ${completo ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-white"}`}>
+      <div className="flex items-center gap-2">
+        <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-black ${completo ? "bg-emerald-100 text-emerald-800" : "bg-slate-100 text-slate-500"}`}>
+          {numero}
+        </span>
+        <p className="text-xs font-black text-slate-900">{titulo}</p>
+      </div>
+      <p className={`mt-2 text-[10px] font-bold ${completo ? "text-emerald-700" : "text-slate-500"}`}>{descripcion}</p>
+    </div>
   );
 }
 
