@@ -65,10 +65,10 @@ const AuditoriasPage = lazy(
     )
 );
 
-const AuditoriaDetallePage = lazy(
+const AuditoriaDetalleGovernancePage = lazy(
   () =>
     import(
-      "../features/auditorias/pages/AuditoriaDetallePage"
+      "../features/auditorias/pages/AuditoriaDetalleGovernancePage"
     )
 );
 
@@ -244,16 +244,10 @@ type RoleGuardProps = {
   children: ReactNode;
 };
 
-function RoleGuard({
-  allowedRoles,
-  children,
-}: RoleGuardProps) {
+function RoleGuard({ allowedRoles, children }: RoleGuardProps) {
   const { user } = useAuth();
 
-  if (
-    !user ||
-    !allowedRoles.includes(user.role)
-  ) {
+  if (!user || !allowedRoles.includes(user.role)) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -290,11 +284,9 @@ function PublicLanding() {
   return (
     <>
       <Navbar />
-
       <main className="flex-grow">
         <LandingPage />
       </main>
-
       <Footer />
     </>
   );
@@ -310,29 +302,16 @@ function AppRoutes() {
       <Suspense fallback={<RouteLoader />}>
         <Routes>
           <Route path="/" element={<PublicLanding />} />
+          <Route path="/login" element={<LoginRoute />} />
+          <Route path="/diagnostico" element={<DiagnosticoPage />} />
 
-          <Route
-            path="/login"
-            element={<LoginRoute />}
-          />
-
-          <Route
-            path="/diagnostico"
-            element={<DiagnosticoPage />}
-          />
-
-          <Route
-            path="/dashboard"
-            element={<ProtectedDashboardLayout />}
-          >
+          <Route path="/dashboard" element={<ProtectedDashboardLayout />}>
             <Route index element={<Dashboard />} />
 
             <Route
               path="acciones"
               element={
-                <RoleGuard
-                  allowedRoles={MIS_COMPROMISOS_ROLES}
-                >
+                <RoleGuard allowedRoles={MIS_COMPROMISOS_ROLES}>
                   <CentroAccionesPage />
                 </RoleGuard>
               }
@@ -351,22 +330,17 @@ function AppRoutes() {
               path="auditorias/:auditoriaId"
               element={
                 <RoleGuard allowedRoles={INFORMES_ROLES}>
-                  <AuditoriaDetallePage />
+                  <AuditoriaDetalleGovernancePage />
                 </RoleGuard>
               }
             />
 
-            <Route
-              path="empresas"
-              element={<Companies />}
-            />
+            <Route path="empresas" element={<Companies />} />
 
             <Route
               path="empresas/:empresaId/evaluacion"
               element={
-                <RoleGuard
-                  allowedRoles={EVALUACION_ROLES}
-                >
+                <RoleGuard allowedRoles={EVALUACION_ROLES}>
                   <EvaluacionRoute />
                 </RoleGuard>
               }
@@ -375,9 +349,7 @@ function AppRoutes() {
             <Route
               path="empresas/:empresaId/evaluacion/controles"
               element={
-                <RoleGuard
-                  allowedRoles={EVALUACION_ROLES}
-                >
+                <RoleGuard allowedRoles={EVALUACION_ROLES}>
                   <ControlesEvaluacionPage />
                 </RoleGuard>
               }
@@ -395,11 +367,7 @@ function AppRoutes() {
             <Route
               path="compromisos"
               element={
-                <RoleGuard
-                  allowedRoles={
-                    COMPROMISOS_SUPERVISION_ROLES
-                  }
-                >
+                <RoleGuard allowedRoles={COMPROMISOS_SUPERVISION_ROLES}>
                   <CompromisosPage />
                 </RoleGuard>
               }
@@ -408,11 +376,7 @@ function AppRoutes() {
             <Route
               path="compromisos/:compromisoId"
               element={
-                <RoleGuard
-                  allowedRoles={
-                    MIS_COMPROMISOS_ROLES
-                  }
-                >
+                <RoleGuard allowedRoles={MIS_COMPROMISOS_ROLES}>
                   <CompromisoDetallePage />
                 </RoleGuard>
               }
@@ -421,11 +385,7 @@ function AppRoutes() {
             <Route
               path="mis-compromisos"
               element={
-                <RoleGuard
-                  allowedRoles={
-                    MIS_COMPROMISOS_ROLES
-                  }
-                >
+                <RoleGuard allowedRoles={MIS_COMPROMISOS_ROLES}>
                   <MisCompromisosPage />
                 </RoleGuard>
               }
@@ -434,11 +394,7 @@ function AppRoutes() {
             <Route
               path="mis-compromisos/:compromisoId"
               element={
-                <RoleGuard
-                  allowedRoles={
-                    MIS_COMPROMISOS_ROLES
-                  }
-                >
+                <RoleGuard allowedRoles={MIS_COMPROMISOS_ROLES}>
                   <CompromisoDetallePage />
                 </RoleGuard>
               }
@@ -447,11 +403,7 @@ function AppRoutes() {
             <Route
               path="usuarios"
               element={
-                <RoleGuard
-                  allowedRoles={
-                    USER_MANAGEMENT_ROLES
-                  }
-                >
+                <RoleGuard allowedRoles={USER_MANAGEMENT_ROLES}>
                   <Users />
                 </RoleGuard>
               }
@@ -460,9 +412,7 @@ function AppRoutes() {
             <Route
               path="profesionales"
               element={
-                <RoleGuard
-                  allowedRoles={INTERNAL_ROLES}
-                >
+                <RoleGuard allowedRoles={INTERNAL_ROLES}>
                   <Professionals />
                 </RoleGuard>
               }
@@ -471,19 +421,14 @@ function AppRoutes() {
             <Route
               path="supermatriz"
               element={
-                <RoleGuard
-                  allowedRoles={SUPERMATRIZ_ROLES}
-                >
+                <RoleGuard allowedRoles={SUPERMATRIZ_ROLES}>
                   <Supermatriz />
                 </RoleGuard>
               }
             />
           </Route>
 
-          <Route
-            path="*"
-            element={<Navigate to="/" replace />}
-          />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
     </div>

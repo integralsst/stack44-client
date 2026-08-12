@@ -14,6 +14,20 @@ import type {
   TipoHallazgo,
 } from "../types/auditorias.types";
 
+const AUDITORIA_UPDATED_EVENT = "stack44:auditoria-updated";
+
+function notificarCambioAuditoria(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(AUDITORIA_UPDATED_EVENT));
+}
+
+function conNotificacion<T>(promise: Promise<T>): Promise<T> {
+  return promise.then((data) => {
+    notificarCambioAuditoria();
+    return data;
+  });
+}
+
 function normalizarFechaCalendario(value: string | null): string | null {
   if (!value) return value;
 
@@ -121,11 +135,13 @@ export function crearAuditoria(
     fechaAuditoria: string;
   }
 ) {
-  return apiRequest<AuditoriaResumen>(
-    "/api/auditorias",
-    { method: "POST", body: JSON.stringify(data) },
-    token
-  ).then(normalizarResumen);
+  return conNotificacion(
+    apiRequest<AuditoriaResumen>(
+      "/api/auditorias",
+      { method: "POST", body: JSON.stringify(data) },
+      token
+    ).then(normalizarResumen)
+  );
 }
 
 export function cambiarEstadoAuditoria(
@@ -134,14 +150,16 @@ export function cambiarEstadoAuditoria(
   estado: EstadoAuditoria,
   motivo?: string | null
 ) {
-  return apiRequest<AuditoriaDetalle>(
-    `/api/auditorias/${encodeURIComponent(auditoriaId)}/estado`,
-    {
-      method: "PATCH",
-      body: JSON.stringify({ estado, motivo: motivo ?? null }),
-    },
-    token
-  ).then(normalizarDetalle);
+  return conNotificacion(
+    apiRequest<AuditoriaDetalle>(
+      `/api/auditorias/${encodeURIComponent(auditoriaId)}/estado`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ estado, motivo: motivo ?? null }),
+      },
+      token
+    ).then(normalizarDetalle)
+  );
 }
 
 export function crearHallazgoAuditoria(
@@ -157,11 +175,13 @@ export function crearHallazgoAuditoria(
     fechaObjetivo?: string | null;
   }
 ) {
-  return apiRequest<HallazgoAuditoria>(
-    `/api/auditorias/${encodeURIComponent(auditoriaId)}/hallazgos`,
-    { method: "POST", body: JSON.stringify(data) },
-    token
-  ).then(normalizarHallazgo);
+  return conNotificacion(
+    apiRequest<HallazgoAuditoria>(
+      `/api/auditorias/${encodeURIComponent(auditoriaId)}/hallazgos`,
+      { method: "POST", body: JSON.stringify(data) },
+      token
+    ).then(normalizarHallazgo)
+  );
 }
 
 export function actualizarHallazgoAuditoria(
@@ -172,11 +192,13 @@ export function actualizarHallazgoAuditoria(
     fechaObjetivo?: string | null;
   }
 ) {
-  return apiRequest<HallazgoAuditoria>(
-    `/api/auditorias/hallazgos/${encodeURIComponent(hallazgoId)}`,
-    { method: "PATCH", body: JSON.stringify(data) },
-    token
-  ).then(normalizarHallazgo);
+  return conNotificacion(
+    apiRequest<HallazgoAuditoria>(
+      `/api/auditorias/hallazgos/${encodeURIComponent(hallazgoId)}`,
+      { method: "PATCH", body: JSON.stringify(data) },
+      token
+    ).then(normalizarHallazgo)
+  );
 }
 
 export function crearRecomendacionAuditoria(
@@ -188,11 +210,13 @@ export function crearRecomendacionAuditoria(
     fechaObjetivo?: string | null;
   }
 ) {
-  return apiRequest<RecomendacionAuditoria>(
-    `/api/auditorias/hallazgos/${encodeURIComponent(hallazgoId)}/recomendaciones`,
-    { method: "POST", body: JSON.stringify(data) },
-    token
-  ).then(normalizarRecomendacion);
+  return conNotificacion(
+    apiRequest<RecomendacionAuditoria>(
+      `/api/auditorias/hallazgos/${encodeURIComponent(hallazgoId)}/recomendaciones`,
+      { method: "POST", body: JSON.stringify(data) },
+      token
+    ).then(normalizarRecomendacion)
+  );
 }
 
 export function registrarSeguimientoAuditoria(
@@ -205,9 +229,11 @@ export function registrarSeguimientoAuditoria(
     estadoRecomendacion?: EstadoRecomendacion | null;
   }
 ) {
-  return apiRequest<SeguimientoAuditoria>(
-    `/api/auditorias/hallazgos/${encodeURIComponent(hallazgoId)}/seguimientos`,
-    { method: "POST", body: JSON.stringify(data) },
-    token
+  return conNotificacion(
+    apiRequest<SeguimientoAuditoria>(
+      `/api/auditorias/hallazgos/${encodeURIComponent(hallazgoId)}/seguimientos`,
+      { method: "POST", body: JSON.stringify(data) },
+      token
+    )
   );
 }
