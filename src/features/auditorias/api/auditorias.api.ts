@@ -14,6 +14,53 @@ import type {
   TipoHallazgo,
 } from "../types/auditorias.types";
 
+function normalizarFechaCalendario(value: string | null): string | null {
+  if (!value) return value;
+
+  const fecha = value.match(/^(\d{4}-\d{2}-\d{2})/)?.[1];
+  if (!fecha) return value;
+
+  // Las fechas objetivo/auditoría son fechas de calendario, no instantes.
+  // Usar mediodía UTC evita que UTC-5 las muestre como el día anterior.
+  return `${fecha}T12:00:00.000Z`;
+}
+
+function normalizarRecomendacion(
+  recomendacion: RecomendacionAuditoria
+): RecomendacionAuditoria {
+  return {
+    ...recomendacion,
+    fechaObjetivo: normalizarFechaCalendario(recomendacion.fechaObjetivo),
+  };
+}
+
+function normalizarHallazgo(hallazgo: HallazgoAuditoria): HallazgoAuditoria {
+  return {
+    ...hallazgo,
+    fechaObjetivo: normalizarFechaCalendario(hallazgo.fechaObjetivo),
+    recomendaciones: hallazgo.recomendaciones.map(normalizarRecomendacion),
+  };
+}
+
+function normalizarResumen(auditoria: AuditoriaResumen): AuditoriaResumen {
+  return {
+    ...auditoria,
+    fechaAuditoria:
+      normalizarFechaCalendario(auditoria.fechaAuditoria) ??
+      auditoria.fechaAuditoria,
+  };
+}
+
+function normalizarDetalle(auditoria: AuditoriaDetalle): AuditoriaDetalle {
+  return {
+    ...auditoria,
+    fechaAuditoria:
+      normalizarFechaCalendario(auditoria.fechaAuditoria) ??
+      auditoria.fechaAuditoria,
+    hallazgos: auditoria.hallazgos.map(normalizarHallazgo),
+  };
+}
+
 function queryAuditorias(consulta: ConsultaAuditorias = {}): string {
   const query = new URLSearchParams();
   if (consulta.busqueda) query.set("busqueda", consulta.busqueda);
@@ -36,7 +83,10 @@ export function listarAuditorias(
     `/api/auditorias${queryAuditorias(consulta)}`,
     {},
     token
-  );
+  ).then((data) => ({
+    ...data,
+    auditorias: data.auditorias.map(normalizarResumen),
+  }));
 }
 
 export function obtenerAuditoria(token: string, auditoriaId: string) {
@@ -44,7 +94,7 @@ export function obtenerAuditoria(token: string, auditoriaId: string) {
     `/api/auditorias/${encodeURIComponent(auditoriaId)}`,
     {},
     token
-  );
+  ).then(normalizarDetalle);
 }
 
 export function obtenerContextoAuditoriaEmpresa(
@@ -75,7 +125,7 @@ export function crearAuditoria(
     "/api/auditorias",
     { method: "POST", body: JSON.stringify(data) },
     token
-  );
+  ).then(normalizarResumen);
 }
 
 export function cambiarEstadoAuditoria(
@@ -91,7 +141,7 @@ export function cambiarEstadoAuditoria(
       body: JSON.stringify({ estado, motivo: motivo ?? null }),
     },
     token
-  );
+  ).then(normalizarDetalle);
 }
 
 export function crearHallazgoAuditoria(
@@ -111,7 +161,7 @@ export function crearHallazgoAuditoria(
     `/api/auditorias/${encodeURIComponent(auditoriaId)}/hallazgos`,
     { method: "POST", body: JSON.stringify(data) },
     token
-  );
+  ).then(normalizarHallazgo);
 }
 
 export function actualizarHallazgoAuditoria(
@@ -126,7 +176,7 @@ export function actualizarHallazgoAuditoria(
     `/api/auditorias/hallazgos/${encodeURIComponent(hallazgoId)}`,
     { method: "PATCH", body: JSON.stringify(data) },
     token
-  );
+  ).then(normalizarHallazgo);
 }
 
 export function crearRecomendacionAuditoria(
@@ -142,7 +192,7 @@ export function crearRecomendacionAuditoria(
     `/api/auditorias/hallazgos/${encodeURIComponent(hallazgoId)}/recomendaciones`,
     { method: "POST", body: JSON.stringify(data) },
     token
-  );
+  ).then(normalizarRecomendacion);
 }
 
 export function registrarSeguimientoAuditoria(

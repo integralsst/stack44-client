@@ -21,6 +21,19 @@ body {
   
 }
 
+/*
+ * Safari puede aplicar estilos nativos adicionales a botones deshabilitados.
+ * Conservamos una apariencia explícita y legible para los botones oscuros
+ * que pasan a estado inactivo, como "Guardar cambios" en Auditorías.
+ */
+button.bg-slate-900.text-white:disabled {
+  opacity: 1 !important;
+  border-color: #cbd5e1 !important;
+  background-color: #f1f5f9 !important;
+  color: #64748b !important;
+  -webkit-text-fill-color: #64748b !important;
+}
+
 /* Nota: Todas las animaciones (@keyframes fadeInUp, bg-gradient-glow, etc.) 
   han sido eliminadas. De ahora en adelante, la UI se controla 100% 
   con Tailwind (para estilos) y Framer Motion (para transiciones).
