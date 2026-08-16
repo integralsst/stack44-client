@@ -12,6 +12,7 @@ import {
   guardarEvaluaciones,
   obtenerContextoEvaluacion,
 } from "../api/evaluacion.api";
+import { escucharCambiosEvidenciaEvaluacion } from "../lib/evidencia-evaluacion.events";
 import type {
   ContextoEvaluacionResponse,
   CrearGestionInput,
@@ -74,6 +75,14 @@ export function useEvaluacionEmpresa(
   useEffect(() => {
     void recargar({ mostrarCarga: true });
   }, [recargar]);
+
+  useEffect(
+    () =>
+      escucharCambiosEvidenciaEvaluacion(() => {
+        void recargar({ mostrarCarga: false });
+      }),
+    [recargar]
+  );
 
   const ejecutar = useCallback(
     async (action: () => Promise<unknown>) => {
