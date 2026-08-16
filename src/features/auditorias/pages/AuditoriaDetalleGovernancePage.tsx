@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { useAuth } from "../../auth/context/AuthContext";
@@ -26,6 +26,7 @@ export default function AuditoriaDetalleGovernancePage() {
   );
 
   const [auditoria, setAuditoria] = useState<AuditoriaDetalle | null>(null);
+  const detalleRef = useRef<HTMLDivElement | null>(null);
 
   const cargar = useCallback(async () => {
     if (!token || !auditoriaId) return;
@@ -43,6 +44,39 @@ export default function AuditoriaDetalleGovernancePage() {
     window.addEventListener(AUDITORIA_UPDATED_EVENT, actualizar);
     return () => window.removeEventListener(AUDITORIA_UPDATED_EVENT, actualizar);
   }, [cargar]);
+
+  useEffect(() => {
+    if (puedeGobernar) return;
+
+    const root = detalleRef.current;
+    if (!root) return;
+
+    const bloquearControles = () => {
+      root
+        .querySelectorAll<HTMLInputElement | HTMLSelectElement>(
+          'article select, article input[type="date"]'
+        )
+        .forEach((control) => {
+          if (!control.disabled) {
+            control.disabled = true;
+          }
+          control.tabIndex = -1;
+          control.setAttribute("aria-disabled", "true");
+        });
+    };
+
+    bloquearControles();
+
+    const observer = new MutationObserver(() => bloquearControles());
+    observer.observe(root, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["disabled"],
+    });
+
+    return () => observer.disconnect();
+  }, [puedeGobernar, auditoria?.id, auditoria?.estado]);
 
   const pendientes = useMemo(
     () =>
@@ -239,6 +273,7 @@ export default function AuditoriaDetalleGovernancePage() {
       )}
 
       <div
+        ref={detalleRef}
         className={clasesDetalle || undefined}
         onFocusCapture={(event) => {
           if (!puedeGobernar && esControlDeGobernanza(event.target)) {
