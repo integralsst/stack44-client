@@ -1,10 +1,15 @@
 import {
   AlertTriangle,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   FileCheck2,
   FolderOpen,
 } from "lucide-react";
-import { useMemo } from "react";
+import {
+  useMemo,
+  useState,
+} from "react";
 import { useSearchParams } from "react-router-dom";
 
 import type {
@@ -48,6 +53,8 @@ export default function VigenciaResumenAlertas({
 }) {
   const [searchParams, setSearchParams] =
     useSearchParams();
+  const [panelEvidenciasAbierto, setPanelEvidenciasAbierto] =
+    useState(false);
 
   const resumen = useMemo(() => {
     const aspectos = new Map(
@@ -139,25 +146,39 @@ export default function VigenciaResumenAlertas({
     <div className="space-y-2 px-3 pt-3 sm:px-4">
       {totalRequierenEvidencia > 0 && (
         <section className="overflow-hidden rounded-2xl border border-amber-300 bg-amber-50 text-amber-950 shadow-sm">
-          <div className="border-b border-amber-200 px-4 py-4 sm:px-5">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-              <div className="flex min-w-0 gap-3">
-                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
-                  <FileCheck2 size={18} />
-                </span>
-                <div className="min-w-0">
+          <button
+            type="button"
+            onClick={() =>
+              setPanelEvidenciasAbierto((actual) => !actual)
+            }
+            aria-expanded={panelEvidenciasAbierto}
+            className="flex w-full flex-col gap-3 px-4 py-4 text-left transition hover:bg-amber-100/60 sm:px-5 lg:flex-row lg:items-center lg:justify-between"
+          >
+            <div className="flex min-w-0 gap-3">
+              <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                <FileCheck2 size={18} />
+              </span>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-sm font-bold sm:text-base">
                     Estado documental de evidencias
                   </h3>
-                  <p className="mt-1 max-w-3xl text-xs leading-5 text-amber-900/80">
-                    Aquí aparecen todos los aspectos configurados con evidencia obligatoria. “Evidencia pendiente” significa que la evaluación oficial conserva nota 5, pero todavía no tiene un soporte válido relacionado.
-                  </p>
+                  <span className="text-[10px] font-semibold text-amber-800 sm:text-xs">
+                    {panelEvidenciasAbierto
+                      ? "Ocultar aspectos"
+                      : "Ver aspectos"}
+                  </span>
                 </div>
+                <p className="mt-1 max-w-3xl text-xs leading-5 text-amber-900/80">
+                  Consulta los aspectos con evidencia obligatoria y su estado documental sin ocupar espacio en la matriz.
+                </p>
               </div>
+            </div>
 
+            <div className="flex items-center gap-3">
               <div className="flex flex-wrap gap-2 text-[10px] font-bold sm:text-xs">
                 <span className="rounded-full border border-cyan-200 bg-white px-2.5 py-1 text-cyan-800">
-                  Requieren evidencia: {totalRequierenEvidencia}
+                  Requieren: {totalRequierenEvidencia}
                 </span>
                 <span className="rounded-full border border-amber-300 bg-amber-100 px-2.5 py-1 text-amber-950">
                   Pendientes: {resumen.evidenciasPendientes}
@@ -166,70 +187,80 @@ export default function VigenciaResumenAlertas({
                   Completas: {resumen.evidenciasCompletas}
                 </span>
               </div>
+
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-amber-300 bg-white text-amber-800">
+                {panelEvidenciasAbierto ? (
+                  <ChevronUp size={16} />
+                ) : (
+                  <ChevronDown size={16} />
+                )}
+              </span>
             </div>
-          </div>
+          </button>
 
-          <div className="max-h-80 divide-y divide-amber-200 overflow-y-auto bg-white/55">
-            {resumen.requierenEvidencia.map((fila) => {
-              const descripcion =
-                fila.aspecto.configuracionEvidencia
-                  ?.descripcionEvidencia?.trim() ||
-                "El aspecto exige un soporte documental válido.";
+          {panelEvidenciasAbierto && (
+            <div className="max-h-80 divide-y divide-amber-200 overflow-y-auto border-t border-amber-200 bg-white/55">
+              {resumen.requierenEvidencia.map((fila) => {
+                const descripcion =
+                  fila.aspecto.configuracionEvidencia
+                    ?.descripcionEvidencia?.trim() ||
+                  "El aspecto exige un soporte documental válido.";
 
-              return (
-                <article
-                  key={fila.aspecto.id}
-                  className="flex flex-col gap-3 px-4 py-3.5 sm:px-5 lg:flex-row lg:items-center lg:justify-between"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className={`rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${estadoDocumentalClass(
-                          fila.estadoEvidencia
-                        )}`}
-                      >
-                        {estadoDocumentalLabel(
-                          fila.estadoEvidencia
-                        )}
-                      </span>
-                      <span className="text-[10px] font-semibold text-slate-500">
-                        Orden {fila.orden}
-                        {fila.codigo
-                          ? ` · ${fila.codigo}`
-                          : ""}
-                      </span>
+                return (
+                  <article
+                    key={fila.aspecto.id}
+                    className="flex flex-col gap-3 px-4 py-3.5 sm:px-5 lg:flex-row lg:items-center lg:justify-between"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className={`rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${estadoDocumentalClass(
+                            fila.estadoEvidencia
+                          )}`}
+                        >
+                          {estadoDocumentalLabel(
+                            fila.estadoEvidencia
+                          )}
+                        </span>
+                        <span className="text-[10px] font-semibold text-slate-500">
+                          Orden {fila.orden}
+                          {fila.codigo
+                            ? ` · ${fila.codigo}`
+                            : ""}
+                        </span>
+                      </div>
+
+                      <p className="mt-2 whitespace-normal text-sm font-bold leading-5 text-slate-950">
+                        {fila.aspecto.nombre}
+                      </p>
+                      <p className="mt-1 whitespace-normal text-xs leading-5 text-slate-600">
+                        {descripcion}
+                      </p>
                     </div>
 
-                    <p className="mt-2 whitespace-normal text-sm font-bold leading-5 text-slate-950">
-                      {fila.aspecto.nombre}
-                    </p>
-                    <p className="mt-1 whitespace-normal text-xs leading-5 text-slate-600">
-                      {descripcion}
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => abrirEvidencias(fila)}
-                    className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-bold transition ${
-                      fila.evidenciaPendiente
-                        ? "border-amber-400 bg-amber-100 text-amber-950 hover:bg-amber-200"
-                        : "border-slate-300 bg-white text-slate-800 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
-                    }`}
-                  >
-                    {fila.evidenciaPendiente ? (
-                      <AlertTriangle size={14} />
-                    ) : fila.estadoEvidencia === "COMPLETA" ? (
-                      <CheckCircle2 size={14} />
-                    ) : (
-                      <FolderOpen size={14} />
-                    )}
-                    Abrir evidencias
-                  </button>
-                </article>
-              );
-            })}
-          </div>
+                    <button
+                      type="button"
+                      onClick={() => abrirEvidencias(fila)}
+                      className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-bold transition ${
+                        fila.evidenciaPendiente
+                          ? "border-amber-400 bg-amber-100 text-amber-950 hover:bg-amber-200"
+                          : "border-slate-300 bg-white text-slate-800 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
+                      }`}
+                    >
+                      {fila.evidenciaPendiente ? (
+                        <AlertTriangle size={14} />
+                      ) : fila.estadoEvidencia === "COMPLETA" ? (
+                        <CheckCircle2 size={14} />
+                      ) : (
+                        <FolderOpen size={14} />
+                      )}
+                      Abrir evidencias
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </section>
       )}
 
