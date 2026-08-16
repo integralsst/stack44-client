@@ -16,9 +16,10 @@ export default function VigenciaResumenAlertas({
       ])
     );
 
-    const unicas = [
-      ...aspectos.values(),
-    ];
+    const unicas = [...aspectos.values()];
+    const evidenciasPendientes = unicas.filter(
+      (fila) => fila.evidenciaPendiente
+    );
 
     return {
       faltaFecha: unicas.filter(
@@ -31,39 +32,66 @@ export default function VigenciaResumenAlertas({
           fila.estadoVigencia ===
           "PERIODICIDAD_NO_CONFIGURADA"
       ).length,
+      evidenciasPendientes,
     };
   }, [filas]);
 
-  const total =
-    resumen.faltaFecha +
-    resumen.periodicidad;
+  const totalVigencia =
+    resumen.faltaFecha + resumen.periodicidad;
+  const totalEvidencias =
+    resumen.evidenciasPendientes.length;
 
-  if (total === 0) {
+  if (totalVigencia === 0 && totalEvidencias === 0) {
     return null;
   }
 
-  const partes: string[] = [];
+  const partesVigencia: string[] = [];
 
   if (resumen.faltaFecha > 0) {
-    partes.push(
+    partesVigencia.push(
       `${resumen.faltaFecha} sin fecha del documento`
     );
   }
 
   if (resumen.periodicidad > 0) {
-    partes.push(
+    partesVigencia.push(
       `${resumen.periodicidad} sin periodicidad completa`
     );
   }
 
+  const nombresPendientes = resumen.evidenciasPendientes
+    .slice(0, 3)
+    .map((fila) => fila.aspecto.nombre);
+  const adicionales = Math.max(
+    0,
+    totalEvidencias - nombresPendientes.length
+  );
+
   return (
-    <AppAlert
-      tone="warning"
-      title={`${total} aspecto(s) requieren completar la vigencia`}
-      description={`${partes.join(
-        " · "
-      )}. Abre o edita la evaluación correspondiente para completar la información.`}
-      className="mx-3 mt-3 sm:mx-4"
-    />
+    <div className="space-y-2 px-3 pt-3 sm:px-4">
+      {totalEvidencias > 0 && (
+        <AppAlert
+          tone="warning"
+          title={`${totalEvidencias} aspecto(s) tienen evidencia pendiente`}
+          description={`Conservan su calificación en 5, pero requieren completar soporte documental. ${nombresPendientes.join(
+            " · "
+          )}${
+            adicionales > 0
+              ? ` · y ${adicionales} más`
+              : ""
+          }.`}
+        />
+      )}
+
+      {totalVigencia > 0 && (
+        <AppAlert
+          tone="warning"
+          title={`${totalVigencia} aspecto(s) requieren completar la vigencia`}
+          description={`${partesVigencia.join(
+            " · "
+          )}. Abre o edita la evaluación correspondiente para completar la información.`}
+        />
+      )}
+    </div>
   );
 }
