@@ -25,6 +25,11 @@ type CambioEstadoAuditoriaResponse = {
   motivoCancelacion?: string | null;
 };
 
+type HallazgoMutacionResponse = {
+  id: string;
+  fechaObjetivo?: string | null;
+};
+
 function notificarCambioAuditoria(): void {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(AUDITORIA_UPDATED_EVENT));
@@ -62,6 +67,17 @@ function normalizarHallazgo(hallazgo: HallazgoAuditoria): HallazgoAuditoria {
     ...hallazgo,
     fechaObjetivo: normalizarFechaCalendario(hallazgo.fechaObjetivo),
     recomendaciones: hallazgo.recomendaciones.map(normalizarRecomendacion),
+  };
+}
+
+function normalizarHallazgoMutacion<T extends HallazgoMutacionResponse>(
+  hallazgo: T
+): T {
+  if (hallazgo.fechaObjetivo === undefined) return hallazgo;
+
+  return {
+    ...hallazgo,
+    fechaObjetivo: normalizarFechaCalendario(hallazgo.fechaObjetivo),
   };
 }
 
@@ -187,12 +203,15 @@ export function crearHallazgoAuditoria(
     fechaObjetivo?: string | null;
   }
 ) {
+  // Las mutaciones de hallazgo devuelven el registro persistido, no el
+  // detalle hidratado con recomendaciones/seguimientos. Normalizamos solo
+  // los campos realmente presentes y luego la pantalla recarga el detalle.
   return conNotificacion(
-    apiRequest<HallazgoAuditoria>(
+    apiRequest<HallazgoMutacionResponse>(
       `/api/auditorias/${encodeURIComponent(auditoriaId)}/hallazgos`,
       { method: "POST", body: JSON.stringify(data) },
       token
-    ).then(normalizarHallazgo)
+    ).then(normalizarHallazgoMutacion)
   );
 }
 
@@ -205,11 +224,11 @@ export function actualizarHallazgoAuditoria(
   }
 ) {
   return conNotificacion(
-    apiRequest<HallazgoAuditoria>(
+    apiRequest<HallazgoMutacionResponse>(
       `/api/auditorias/hallazgos/${encodeURIComponent(hallazgoId)}`,
       { method: "PATCH", body: JSON.stringify(data) },
       token
-    ).then(normalizarHallazgo)
+    ).then(normalizarHallazgoMutacion)
   );
 }
 
