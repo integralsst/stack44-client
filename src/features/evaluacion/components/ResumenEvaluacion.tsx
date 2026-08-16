@@ -49,7 +49,7 @@ export default function ResumenEvaluacion({
     {
       label: "Evidencias pendientes",
       value: resumen.evidenciasPendientes ?? 0,
-      detail: "Cumplen en 5 · falta soporte",
+      detail: "Cumplen con nota 5, pero todavía falta un soporte documental válido",
       icon: FileWarning,
       attention: (resumen.evidenciasPendientes ?? 0) > 0,
     },
@@ -63,27 +63,27 @@ export default function ResumenEvaluacion({
     {
       label: "Ministerial",
       value: resumen.calificacionMinisterial.toFixed(2),
-      detail: `de ${resumen.calificacionMinisterialMaxima.toFixed(2)}`,
+      detail: `Calificación obtenida de ${resumen.calificacionMinisterialMaxima.toFixed(2)}`,
       icon: Scale,
       attention: false,
     },
   ];
 
   return (
-    <section className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-7">
+    <section className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7">
       {cards.map(
         ({ label, value, detail, icon: Icon, attention }) => (
           <article
             key={label}
-            className={`min-w-0 rounded-xl border p-3 shadow-sm ${
+            className={`min-w-0 rounded-xl border p-3.5 shadow-sm ${
               attention
                 ? "border-amber-300 bg-amber-50"
                 : "border-slate-200 bg-white"
             }`}
           >
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-start justify-between gap-2">
               <p
-                className={`truncate text-[9px] font-bold uppercase tracking-wider sm:text-[10px] ${
+                className={`min-w-0 whitespace-normal text-[9px] font-bold uppercase leading-4 tracking-wider sm:text-[10px] ${
                   attention
                     ? "text-amber-900"
                     : "text-slate-600"
@@ -103,7 +103,7 @@ export default function ResumenEvaluacion({
             </div>
 
             <p
-              className={`mt-1.5 text-lg font-bold leading-none sm:text-xl ${
+              className={`mt-2 text-lg font-bold leading-none sm:text-xl ${
                 attention
                   ? "text-amber-950"
                   : "text-slate-900"
@@ -113,7 +113,7 @@ export default function ResumenEvaluacion({
             </p>
 
             <p
-              className={`mt-1 truncate text-[10px] sm:text-[11px] ${
+              className={`mt-2 whitespace-normal text-[10px] leading-4 sm:text-[11px] ${
                 attention
                   ? "text-amber-800"
                   : "text-slate-600"
