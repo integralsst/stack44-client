@@ -942,7 +942,7 @@ function NuevoHallazgoModal({
             </select>
           </Campo>
           <Campo label="Fecha objetivo">
-            <input type="date" value={form.fechaObjetivo} onChange={(event) => setForm(event.target.value)} className={inputClass} />
+            <input type="date" value={form.fechaObjetivo} onChange={(event) => setForm((current) => ({ ...current, fechaObjetivo: event.target.value }))} className={inputClass} />
           </Campo>
         </div>
         <ModalActions busy={busy} onClose={onClose} label="Guardar hallazgo" />
