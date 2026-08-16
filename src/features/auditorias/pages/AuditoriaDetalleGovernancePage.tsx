@@ -8,6 +8,13 @@ import AuditoriaDetallePage from "./AuditoriaDetallePage";
 
 const AUDITORIA_UPDATED_EVENT = "stack44:auditoria-updated";
 
+function esControlDeGobernanza(target: EventTarget | null): target is HTMLInputElement | HTMLSelectElement {
+  return (
+    target instanceof HTMLSelectElement ||
+    (target instanceof HTMLInputElement && target.type === "date")
+  );
+}
+
 export default function AuditoriaDetalleGovernancePage() {
   const { auditoriaId = "" } = useParams<{ auditoriaId: string }>();
   const { token, hasRole } = useAuth();
@@ -189,10 +196,18 @@ export default function AuditoriaDetalleGovernancePage() {
             pointer-events: none !important;
             cursor: default !important;
             appearance: none !important;
+            -webkit-appearance: none !important;
             background-color: #ffffff !important;
             border-color: #e2e8f0 !important;
             color: #0f172a !important;
             box-shadow: none !important;
+            caret-color: transparent !important;
+          }
+
+          .auditoria-participacion-operativa article input[type="date"]::-webkit-calendar-picker-indicator {
+            display: none !important;
+            pointer-events: none !important;
+            opacity: 0 !important;
           }
 
           .auditoria-participacion-operativa article button.border-slate-900.bg-slate-900,
@@ -223,7 +238,19 @@ export default function AuditoriaDetalleGovernancePage() {
         `}</style>
       )}
 
-      <div className={clasesDetalle || undefined}>
+      <div
+        className={clasesDetalle || undefined}
+        onFocusCapture={(event) => {
+          if (!puedeGobernar && esControlDeGobernanza(event.target)) {
+            event.target.blur();
+          }
+        }}
+        onKeyDownCapture={(event) => {
+          if (!puedeGobernar && esControlDeGobernanza(event.target)) {
+            event.preventDefault();
+          }
+        }}
+      >
         <AuditoriaDetallePage />
       </div>
     </div>
