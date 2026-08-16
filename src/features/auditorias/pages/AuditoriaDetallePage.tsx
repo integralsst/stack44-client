@@ -194,9 +194,7 @@ export default function AuditoriaDetallePage() {
   }
 
   const editableContenido =
-    puedeEditar &&
-    auditoria.estado !== "FINALIZADA" &&
-    auditoria.estado !== "CANCELADA";
+    puedeGobernar && auditoria.estado === "EN_EJECUCION";
 
   const confirmacionTitulo =
     estadoPendiente === "FINALIZADA"
@@ -375,7 +373,6 @@ export default function AuditoriaDetallePage() {
       <SeguimientoModal
         hallazgo={hallazgoSeguimiento}
         token={token}
-        puedeGobernar={puedeGobernar}
         onClose={() => setHallazgoSeguimiento(null)}
         onSaved={async () => {
           setHallazgoSeguimiento(null);
@@ -544,11 +541,13 @@ function HallazgoCard({
   const recomendacionesRegistradas = hallazgo.recomendaciones.length > 0;
   const seguimientosRegistrados = hallazgo.seguimientos.length > 0;
   const resuelto = hallazgo.estado === "RESUELTO" || hallazgo.estado === "CERRADO";
-  const puedeEditarAspecto = puedeCrearContenido && !resuelto;
-  const puedeEditarAsignacion = puedeEditar && (!resuelto || puedeGobernar);
-  const puedeAgregarRecomendacion = puedeCrearContenido && !resuelto;
-  const puedeRegistrarSeguimiento =
-    puedeEditar && (hallazgo.estado !== "CERRADO" || puedeGobernar);
+  const puedeEditarAspecto =
+    puedeCrearContenido && puedeGobernar && !resuelto;
+  const puedeEditarAsignacion =
+    puedeEditar && puedeCrearContenido && puedeGobernar && !resuelto;
+  const puedeAgregarRecomendacion =
+    puedeCrearContenido && puedeGobernar && !resuelto;
+  const puedeRegistrarSeguimiento = puedeEditar;
   const cambiosModificados =
     aspectoId !== (hallazgo.aspectoId ? String(hallazgo.aspectoId) : "") ||
     responsable !== (hallazgo.responsableUsuarioId ?? "") ||
@@ -639,11 +638,11 @@ function HallazgoCard({
             <PasoHallazgo numero="4" titulo="Resolución" completo={resuelto} descripcion={resuelto ? "Resuelto" : "Pendiente"} />
           </div>
 
-          {resuelto && !puedeGobernar && (
+          {resuelto && (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
               <p className="text-xs font-black text-emerald-900">Hallazgo resuelto · modo de consulta</p>
               <p className="mt-1 text-xs leading-5 text-emerald-800">
-                La asignación y las recomendaciones quedan protegidas. Puedes consultar la trazabilidad y registrar un seguimiento posterior sin reabrir ni cambiar estados.
+                La clasificación, asignación, plazo y recomendaciones quedan protegidos. Puedes consultar la trazabilidad y registrar un seguimiento posterior únicamente informativo, sin reabrir ni cambiar estados.
               </p>
             </div>
           )}
@@ -943,7 +942,7 @@ function NuevoHallazgoModal({
             </select>
           </Campo>
           <Campo label="Fecha objetivo">
-            <input type="date" value={form.fechaObjetivo} onChange={(event) => setForm((current) => ({ ...current, fechaObjetivo: event.target.value }))} className={inputClass} />
+            <input type="date" value={form.fechaObjetivo} onChange={(event) => setForm(event.target.value)} className={inputClass} />
           </Campo>
         </div>
         <ModalActions busy={busy} onClose={onClose} label="Guardar hallazgo" />
@@ -1024,14 +1023,12 @@ function RecomendacionModal({
 function SeguimientoModal({
   hallazgo,
   token,
-  puedeGobernar,
   onClose,
   onSaved,
   onError,
 }: {
   hallazgo: HallazgoAuditoria | null;
   token: string | null;
-  puedeGobernar: boolean;
   onClose: () => void;
   onSaved: () => Promise<void>;
   onError: (value: string | null) => void;
@@ -1051,7 +1048,8 @@ function SeguimientoModal({
   }, [hallazgo]);
 
   const seguimientoInformativo = Boolean(
-    hallazgo && !puedeGobernar && hallazgo.estado === "RESUELTO"
+    hallazgo &&
+      (hallazgo.estado === "RESUELTO" || hallazgo.estado === "CERRADO")
   );
 
   const guardar = async (event: FormEvent) => {
@@ -1082,7 +1080,7 @@ function SeguimientoModal({
       <form className="space-y-4" onSubmit={guardar}>
         {seguimientoInformativo && (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 text-xs leading-5 text-emerald-800">
-            Este hallazgo ya está resuelto. El seguimiento que registres será informativo y conservará los estados actuales. La reapertura corresponde a coordinación o administración.
+            Este hallazgo forma parte del registro histórico. El seguimiento que registres será únicamente informativo y conservará los estados actuales.
           </div>
         )}
         <Campo label="Seguimiento">
