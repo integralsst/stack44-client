@@ -45,14 +45,29 @@ export default function AuditoriaDetalleGovernancePage() {
     [auditoria]
   );
 
+  const tieneHallazgos = Boolean(auditoria && auditoria.hallazgos.length > 0);
   const ejecucionCompleta =
     auditoria?.estado === "EN_EJECUCION" || auditoria?.estado === "FINALIZADA";
   const seguimientoCompleto = Boolean(
-    ejecucionCompleta &&
-      auditoria &&
-      (auditoria.hallazgos.length === 0 || pendientes === 0)
+    auditoria &&
+      ((auditoria.estado === "EN_EJECUCION" && tieneHallazgos && pendientes === 0) ||
+        (auditoria.estado === "FINALIZADA" &&
+          (auditoria.hallazgos.length === 0 || pendientes === 0)))
   );
   const cierreCompleto = auditoria?.estado === "FINALIZADA";
+
+  const descripcionSeguimiento = useMemo(() => {
+    if (!auditoria) return "Pendiente";
+    if (auditoria.estado === "BORRADOR") return "Pendiente de ejecución";
+    if (auditoria.hallazgos.length === 0) {
+      return auditoria.estado === "FINALIZADA"
+        ? "Sin hallazgos"
+        : "Revisión en curso";
+    }
+    return pendientes === 0
+      ? "Sin pendientes operativos"
+      : `${pendientes} pendiente(s)`;
+  }, [auditoria, pendientes]);
 
   const mensaje = useMemo(() => {
     if (!auditoria) return null;
@@ -75,6 +90,15 @@ export default function AuditoriaDetalleGovernancePage() {
       };
     }
 
+    if (auditoria.estado === "BORRADOR") {
+      return {
+        titulo: "Auditoría preparada para iniciar",
+        descripcion:
+          "Revisa objetivo, alcance y periodo. Los hallazgos se habilitarán cuando coordinación o administración inicie formalmente la auditoría.",
+        tono: "cyan" as const,
+      };
+    }
+
     if (!puedeGobernar) {
       return {
         titulo: "Participación operativa en la auditoría",
@@ -84,11 +108,11 @@ export default function AuditoriaDetalleGovernancePage() {
       };
     }
 
-    if (auditoria.estado === "BORRADOR") {
+    if (auditoria.hallazgos.length === 0) {
       return {
-        titulo: "Auditoría preparada para iniciar",
+        titulo: "Auditoría en ejecución",
         descripcion:
-          "Revisa objetivo, alcance y periodo. Cuando estén correctos, inicia formalmente la ejecución desde el encabezado de la auditoría.",
+          "Continúa la revisión del alcance y registra los hallazgos encontrados. Si la revisión concluye sin hallazgos, podrás finalizar la auditoría mediante confirmación.",
         tono: "cyan" as const,
       };
     }
@@ -105,10 +129,20 @@ export default function AuditoriaDetalleGovernancePage() {
     return {
       titulo: `${pendientes} hallazgo(s) continúan en seguimiento`,
       descripcion:
-        "Puedes continuar su gestión antes del cierre o finalizar el ejercicio auditor dejando el seguimiento operativo posterior. Finalizar la auditoría no borra ni cierra automáticamente los hallazgos pendientes.",
+        "Resuelve o cierra los hallazgos operativos pendientes antes de formalizar el cierre de la auditoría. La trazabilidad registrada se conservará durante todo el proceso.",
       tono: "amber" as const,
     };
   }, [auditoria, pendientes, puedeGobernar]);
+
+  const clasesDetalle = [
+    !puedeGobernar ? "auditoria-participacion-operativa" : "",
+    auditoria?.estado === "BORRADOR" ? "auditoria-en-preparacion" : "",
+    auditoria?.estado === "EN_EJECUCION" && pendientes > 0
+      ? "auditoria-con-pendientes"
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <div className="space-y-4">
@@ -125,11 +159,7 @@ export default function AuditoriaDetalleGovernancePage() {
             <Paso
               numero="3"
               titulo="Hallazgos y seguimiento"
-              descripcion={
-                seguimientoCompleto
-                  ? "Sin pendientes operativos"
-                  : `${pendientes} pendiente(s)`
-              }
+              descripcion={descripcionSeguimiento}
               completo={seguimientoCompleto}
             />
             <Paso
@@ -155,7 +185,24 @@ export default function AuditoriaDetalleGovernancePage() {
         `}</style>
       )}
 
-      <div className={!puedeGobernar ? "auditoria-participacion-operativa" : undefined}>
+      {auditoria?.estado === "BORRADOR" && (
+        <style>{`
+          .auditoria-en-preparacion > section > div.flex.items-center.justify-between.gap-3,
+          .auditoria-en-preparacion > section > div.flex.items-center.justify-between.gap-3 + div {
+            display: none !important;
+          }
+        `}</style>
+      )}
+
+      {auditoria?.estado === "EN_EJECUCION" && pendientes > 0 && puedeGobernar && (
+        <style>{`
+          .auditoria-con-pendientes > section > header > div:first-child > div:last-child > button:first-child {
+            display: none !important;
+          }
+        `}</style>
+      )}
+
+      <div className={clasesDetalle || undefined}>
         <AuditoriaDetallePage />
       </div>
     </div>
