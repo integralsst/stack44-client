@@ -103,7 +103,7 @@ export default function AuditoriaDetalleGovernancePage() {
       return {
         titulo: "Participación operativa en la auditoría",
         descripcion:
-          "Puedes gestionar hallazgos, recomendaciones y seguimientos asignados. El inicio, cierre o cancelación global de la auditoría corresponde a coordinación o administración.",
+          "La clasificación del hallazgo, su responsable, plazo y recomendaciones son de consulta. Como profesional puedes documentar el avance mediante seguimientos y actualizar los estados operativos cuando corresponda. El gobierno de la auditoría pertenece a coordinación o administración.",
         tono: "cyan" as const,
       };
     }
@@ -179,7 +179,28 @@ export default function AuditoriaDetalleGovernancePage() {
 
       {!puedeGobernar && (
         <style>{`
-          .auditoria-participacion-operativa > section > header > div:first-child > div:last-child {
+          .auditoria-participacion-operativa > section > header > div:first-child > div:last-child,
+          .auditoria-participacion-operativa > section > div.flex.items-center.justify-between.gap-3 > button {
+            display: none !important;
+          }
+
+          .auditoria-participacion-operativa article select,
+          .auditoria-participacion-operativa article input[type="date"] {
+            pointer-events: none !important;
+            cursor: default !important;
+            appearance: none !important;
+            background-color: #ffffff !important;
+            border-color: #e2e8f0 !important;
+            color: #0f172a !important;
+            box-shadow: none !important;
+          }
+
+          .auditoria-participacion-operativa article button.border-slate-900.bg-slate-900,
+          .auditoria-participacion-operativa article button:has(svg.lucide-plus) {
+            display: none !important;
+          }
+
+          .auditoria-participacion-operativa article div.flex.flex-col.gap-3.rounded-2xl:has(button svg.lucide-plus) {
             display: none !important;
           }
         `}</style>
