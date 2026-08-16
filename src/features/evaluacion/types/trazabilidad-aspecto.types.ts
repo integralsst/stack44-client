@@ -5,6 +5,7 @@ import type {
 
 export type TipoEventoTrazabilidadAspecto =
   | "EVALUACION"
+  | "EVIDENCIA"
   | "NO_APLICA"
   | "APROBACION_GESTION"
   | "REVISION_TECNICA"

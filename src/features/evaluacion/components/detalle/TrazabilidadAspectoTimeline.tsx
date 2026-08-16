@@ -5,6 +5,7 @@ import {
   FileSearch,
   GitPullRequestArrow,
   History,
+  Paperclip,
   ShieldCheck,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -21,6 +22,7 @@ import { formatDate } from "./DetalleAspectoUi";
 type FiltroTrazabilidad =
   | "TODOS"
   | "EVALUACION"
+  | "EVIDENCIA"
   | "DECISIONES"
   | "REVISION_TECNICA"
   | "COMPROMISO"
@@ -37,6 +39,7 @@ const filtros: Array<{
 }> = [
   { id: "TODOS", label: "Todo" },
   { id: "EVALUACION", label: "Evaluaciones" },
+  { id: "EVIDENCIA", label: "Evidencias" },
   { id: "DECISIONES", label: "Decisiones" },
   { id: "REVISION_TECNICA", label: "Revisión técnica" },
   { id: "COMPROMISO", label: "Compromisos" },
@@ -64,6 +67,15 @@ function configTipo(tipo: TipoEventoTrazabilidadAspecto) {
       label: "Revisión técnica",
       circle: "border-violet-200 bg-violet-50 text-violet-700",
       badge: "border-violet-200 bg-violet-50 text-violet-700",
+    };
+  }
+
+  if (tipo === "EVIDENCIA") {
+    return {
+      icon: Paperclip,
+      label: "Evidencia",
+      circle: "border-emerald-200 bg-emerald-50 text-emerald-700",
+      badge: "border-emerald-200 bg-emerald-50 text-emerald-700",
     };
   }
 
@@ -129,6 +141,7 @@ export default function TrazabilidadAspectoTimeline({
   const conteos = useMemo(() => {
     return {
       evaluaciones: eventos.filter((item) => item.tipo === "EVALUACION").length,
+      evidencias: eventos.filter((item) => item.tipo === "EVIDENCIA").length,
       decisiones: eventos.filter(
         (item) =>
           item.tipo === "NO_APLICA" ||
@@ -166,8 +179,9 @@ export default function TrazabilidadAspectoTimeline({
           </span>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
           <ResumenMini label="Evaluaciones" value={conteos.evaluaciones} />
+          <ResumenMini label="Evidencias" value={conteos.evidencias} />
           <ResumenMini label="Decisiones" value={conteos.decisiones} />
           <ResumenMini label="Revisiones" value={conteos.revisiones} />
           <ResumenMini label="Compromisos" value={conteos.compromisos} />

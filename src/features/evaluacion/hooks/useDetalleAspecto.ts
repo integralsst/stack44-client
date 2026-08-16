@@ -17,6 +17,7 @@ import {
   crearEvidenciaEvaluacion,
   desactivarEvidenciaEvaluacion,
 } from "../api/evidencias-evaluacion.api";
+import { notificarCambioEvidenciaEvaluacion } from "../lib/evidencia-evaluacion.events";
 import type {
   DetalleAspectoResumenRapidoResponse,
   HistorialPaginacion,
@@ -106,8 +107,13 @@ function construirDetalleParcial(
     revisionesTecnicas: [],
     trazabilidad: [],
     evidenciaObjetivo: null,
+    estadoEvidencia: "NO_APLICA",
+    evidenciaPendiente: false,
+    detalleEvidencia: null,
+    evidenciaPendienteObjetivo: null,
     permisos: {
       puedeGestionarEvidencias: false,
+      puedeCompletarEvidenciaPendiente: false,
       puedeVerRevisionTecnica:
         response.permisos.puedeVerRevisionTecnica,
       motivoEvidencias: null,
@@ -296,6 +302,14 @@ export function useDetalleAspecto({
                     response.evidenciasCompromiso,
                   evidenciaObjetivo:
                     response.evidenciaObjetivo,
+                  estadoEvidencia:
+                    response.estadoEvidencia,
+                  evidenciaPendiente:
+                    response.evidenciaPendiente,
+                  detalleEvidencia:
+                    response.detalleEvidencia,
+                  evidenciaPendienteObjetivo:
+                    response.evidenciaPendienteObjetivo,
                   permisos: response.permisos,
                 }
               : current
@@ -462,6 +476,12 @@ export function useDetalleAspecto({
       try {
         await action();
         await loadSection("EVIDENCIAS", true);
+
+        if (loadedSections.HISTORIAL) {
+          await loadSection("HISTORIAL", true);
+        }
+
+        notificarCambioEvidenciaEvaluacion();
       } catch (currentError) {
         const message =
           currentError instanceof Error
@@ -473,15 +493,19 @@ export function useDetalleAspecto({
         setBusy(false);
       }
     },
-    [loadSection]
+    [loadSection, loadedSections.HISTORIAL]
   );
 
   const createEvidence = useCallback(
-    async (input: EvidenciaEvaluacionFormInput) => {
-      if (
-        !token ||
-        !data?.evidenciaObjetivo?.evaluacionId
-      ) {
+    async (
+      input: EvidenciaEvaluacionFormInput,
+      evaluacionIdObjetivo?: string
+    ) => {
+      const evaluacionId =
+        evaluacionIdObjetivo ??
+        data?.evidenciaObjetivo?.evaluacionId;
+
+      if (!token || !evaluacionId) {
         throw new Error(
           "Primero guarda la evaluación del aspecto."
         );
@@ -489,7 +513,7 @@ export function useDetalleAspecto({
 
       await runEvidenceAction(() =>
         crearEvidenciaEvaluacion(
-          data.evidenciaObjetivo!.evaluacionId,
+          evaluacionId,
           input,
           token
         )
