@@ -1,6 +1,8 @@
 import type {
+  DetalleEstadoEvidenciaAspecto,
   DetalleVigenciaEvaluacion,
   EstadoCumplimientoAspecto,
+  EstadoEvidenciaAspecto,
   EstadoGestionSgsst,
   ModalidadGestion,
 } from "../../../types/evaluacion.types";
@@ -149,6 +151,13 @@ export interface EvidenciaCompromisoAspecto {
     descripcion: string;
     estado: string;
   };
+  soporteValidoParaEvaluacionObjetivo: boolean;
+}
+
+export interface DetalleEvidenciaAspecto
+  extends DetalleEstadoEvidenciaAspecto {
+  evaluacionId: string;
+  puedeCompletarPosteriormente: boolean;
 }
 
 export interface DetalleAspectoBaseResponse {
@@ -294,8 +303,16 @@ export interface DetalleAspectoBaseResponse {
     evaluacionId: string;
     esBorrador: boolean;
   } | null;
+  estadoEvidencia: EstadoEvidenciaAspecto;
+  evidenciaPendiente: boolean;
+  detalleEvidencia: DetalleEvidenciaAspecto | null;
+  evidenciaPendienteObjetivo: {
+    evaluacionId: string;
+    esBorrador: false;
+  } | null;
   permisos: {
     puedeGestionarEvidencias: boolean;
+    puedeCompletarEvidenciaPendiente: boolean;
     puedeVerRevisionTecnica: boolean;
     motivoEvidencias: string | null;
   };
@@ -360,6 +377,13 @@ export interface DetalleAspectoEvidenciasResponse {
   evidenciaObjetivo: {
     evaluacionId: string;
     esBorrador: boolean;
+  } | null;
+  estadoEvidencia: EstadoEvidenciaAspecto;
+  evidenciaPendiente: boolean;
+  detalleEvidencia: DetalleEvidenciaAspecto | null;
+  evidenciaPendienteObjetivo: {
+    evaluacionId: string;
+    esBorrador: false;
   } | null;
   permisos: DetalleAspectoBaseResponse["permisos"];
 }
