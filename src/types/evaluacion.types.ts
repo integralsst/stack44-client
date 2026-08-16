@@ -11,6 +11,28 @@ export type EstadoCumplimientoAspecto =
   | "NO_CUMPLIDO"
   | "NO_APLICA";
 
+export type EstadoEvidenciaAspecto =
+  | "NO_REQUERIDA"
+  | "NO_APLICA"
+  | "PENDIENTE"
+  | "COMPLETA";
+
+export type FuenteSoporteEvidencia =
+  | "EVALUACION"
+  | "COMPROMISO"
+  | "MIXTA"
+  | null;
+
+export interface DetalleEstadoEvidenciaAspecto {
+  estado: EstadoEvidenciaAspecto;
+  requiereEvidencia: boolean;
+  evidenciaPendiente: boolean;
+  tieneEvidenciaEvaluacion: boolean;
+  tieneEvidenciaCompromisoRelacionada: boolean;
+  fuenteSoporte: FuenteSoporteEvidencia;
+  compromisosConSoporte: string[];
+}
+
 export type EstadoRevisionTecnica =
   | "PENDIENTE"
   | "APROBADA"
@@ -260,6 +282,9 @@ export interface FilaEvaluacion {
     DetalleVigenciaEvaluacion;
   estadoVigenciaOficial:
     EstadoVigenciaEvaluacion;
+  estadoEvidencia: EstadoEvidenciaAspecto;
+  evidenciaPendiente: boolean;
+  detalleEvidencia: DetalleEstadoEvidenciaAspecto;
 }
 
 export interface ResumenEvaluacion {
@@ -270,6 +295,7 @@ export interface ResumenEvaluacion {
   porVencer: number;
   vencidos: number;
   pendientesVigencia: number;
+  evidenciasPendientes: number;
   cumplimientoAdministrativo: number;
   calificacionMinisterial: number;
   calificacionMinisterialMaxima: number;
