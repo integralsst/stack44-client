@@ -510,14 +510,18 @@ function HallazgoCard({
   onFollowUp: () => void;
 }) {
   const { token } = useAuth();
+  const [aspectoId, setAspectoId] = useState(
+    hallazgo.aspectoId ? String(hallazgo.aspectoId) : ""
+  );
   const [responsable, setResponsable] = useState(hallazgo.responsableUsuarioId ?? "");
   const [fechaObjetivo, setFechaObjetivo] = useState(hallazgo.fechaObjetivo?.slice(0, 10) ?? "");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    setAspectoId(hallazgo.aspectoId ? String(hallazgo.aspectoId) : "");
     setResponsable(hallazgo.responsableUsuarioId ?? "");
     setFechaObjetivo(hallazgo.fechaObjetivo?.slice(0, 10) ?? "");
-  }, [hallazgo.responsableUsuarioId, hallazgo.fechaObjetivo]);
+  }, [hallazgo.aspectoId, hallazgo.responsableUsuarioId, hallazgo.fechaObjetivo]);
 
   const guardarAsignacion = async () => {
     if (!token) return;
@@ -525,6 +529,7 @@ function HallazgoCard({
     onError(null);
     try {
       await actualizarHallazgoAuditoria(token, hallazgo.id, {
+        aspectoId: aspectoId ? Number(aspectoId) : null,
         responsableUsuarioId: responsable || null,
         fechaObjetivo: fechaObjetivo || null,
       });
@@ -539,11 +544,13 @@ function HallazgoCard({
   const recomendacionesRegistradas = hallazgo.recomendaciones.length > 0;
   const seguimientosRegistrados = hallazgo.seguimientos.length > 0;
   const resuelto = hallazgo.estado === "RESUELTO" || hallazgo.estado === "CERRADO";
+  const puedeEditarAspecto = puedeCrearContenido && !resuelto;
   const puedeEditarAsignacion = puedeEditar && (!resuelto || puedeGobernar);
   const puedeAgregarRecomendacion = puedeCrearContenido && !resuelto;
   const puedeRegistrarSeguimiento =
     puedeEditar && (hallazgo.estado !== "CERRADO" || puedeGobernar);
-  const asignacionModificada =
+  const cambiosModificados =
+    aspectoId !== (hallazgo.aspectoId ? String(hallazgo.aspectoId) : "") ||
     responsable !== (hallazgo.responsableUsuarioId ?? "") ||
     fechaObjetivo !== (hallazgo.fechaObjetivo?.slice(0, 10) ?? "");
 
@@ -673,11 +680,35 @@ function HallazgoCard({
             <div className="rounded-2xl border border-slate-200 bg-white p-4">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-sm font-black text-slate-950">Asignación y plazo</p>
-                  <p className="mt-1 text-xs text-slate-500">Define quién gestiona el hallazgo y la fecha objetivo. Los cambios quedan guardados al confirmar.</p>
+                  <p className="text-sm font-black text-slate-950">Clasificación, asignación y plazo</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Corrige el aspecto relacionado mientras el hallazgo siga operativo y define quién lo gestiona y su fecha objetivo.
+                  </p>
                 </div>
                 <span className="text-[10px] font-semibold text-slate-500">Registrado por {hallazgo.creadoPor.nombre}</span>
               </div>
+
+              {puedeEditarAspecto && (
+                <div className="mt-3">
+                  <Campo label="Aspecto relacionado">
+                    <select
+                      value={aspectoId}
+                      onChange={(event) => setAspectoId(event.target.value)}
+                      className={inputClass}
+                    >
+                      <option value="">Hallazgo general</option>
+                      {contexto?.aspectos.map((aspecto) => (
+                        <option key={aspecto.id} value={aspecto.id}>
+                          {aspecto.codigo ? `${aspecto.codigo} · ` : ""}{aspecto.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </Campo>
+                  <p className="mt-1.5 text-[10px] leading-4 text-slate-500">
+                    Al vincular un aspecto, el hallazgo aparecerá también en su trazabilidad. Esta clasificación queda protegida cuando el hallazgo se resuelve o la auditoría finaliza.
+                  </p>
+                </div>
+              )}
 
               <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(190px,240px)]">
                 <Campo label="Responsable">
@@ -695,12 +726,12 @@ function HallazgoCard({
 
               <div className="mt-3 flex flex-col gap-2 border-t border-slate-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs text-slate-500">
-                  {asignacionModificada ? "Hay cambios de asignación pendientes de guardar." : "La asignación mostrada está guardada."}
+                  {cambiosModificados ? "Hay cambios pendientes de guardar." : "La clasificación y asignación mostradas están guardadas."}
                 </p>
                 <button
                   type="button"
                   onClick={() => void guardarAsignacion()}
-                  disabled={saving || !asignacionModificada}
+                  disabled={saving || !cambiosModificados}
                   className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-900 bg-slate-900 px-4 py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {saving ? "Guardando…" : "Guardar cambios"}
