@@ -219,6 +219,7 @@ export function actualizarHallazgoAuditoria(
   token: string,
   hallazgoId: string,
   data: {
+    aspectoId?: number | null;
     responsableUsuarioId?: string | null;
     fechaObjetivo?: string | null;
   }
