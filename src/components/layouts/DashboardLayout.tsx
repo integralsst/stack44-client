@@ -23,6 +23,7 @@ import {
 } from "react-router-dom";
 
 import {
+  useCallback,
   useEffect,
   useState,
 } from "react";
@@ -57,6 +58,16 @@ export default function DashboardLayout() {
         ) === "true"
       );
     });
+
+  const [accionesPendientesTotal, setAccionesPendientesTotal] =
+    useState(0);
+
+  const actualizarTotalAcciones = useCallback(
+    (total: number) => {
+      setAccionesPendientesTotal(total);
+    },
+    []
+  );
 
   useEffect(() => {
     setMobileOpen(false);
@@ -306,6 +317,10 @@ export default function DashboardLayout() {
                 item.exact
               );
 
+            const mostrarContador =
+              item.to === "/dashboard/acciones" &&
+              accionesPendientesTotal > 0;
+
             return (
               <Link
                 key={item.to}
@@ -315,7 +330,7 @@ export default function DashboardLayout() {
                     ? item.label
                     : undefined
                 }
-                className={`group flex items-center rounded-xl py-3 transition-all ${
+                className={`group relative flex items-center rounded-xl py-3 transition-all ${
                   compact
                     ? "justify-center px-3"
                     : "gap-3 px-4"
@@ -331,8 +346,25 @@ export default function DashboardLayout() {
                 />
 
                 {!compact && (
-                  <span className="truncate text-sm font-medium">
-                    {item.label}
+                  <>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                      {item.label}
+                    </span>
+                    {mostrarContador && (
+                      <span className="flex min-h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-cyan-600 px-1.5 text-[10px] font-bold text-white">
+                        {accionesPendientesTotal > 99
+                          ? "99+"
+                          : accionesPendientesTotal}
+                      </span>
+                    )}
+                  </>
+                )}
+
+                {compact && mostrarContador && (
+                  <span className="absolute right-1 top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-cyan-600 px-1 text-[9px] font-bold text-white ring-2 ring-white">
+                    {accionesPendientesTotal > 9
+                      ? "9+"
+                      : accionesPendientesTotal}
                   </span>
                 )}
               </Link>
@@ -468,7 +500,9 @@ export default function DashboardLayout() {
 
           <div className="flex items-center gap-2">
             {canViewOwnCommitments && (
-              <CentroAlertasCompromisos />
+              <CentroAlertasCompromisos
+                onTotalChange={actualizarTotalAcciones}
+              />
             )}
             <div
               className="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-200 bg-cyan-50 text-xs font-bold text-cyan-700 sm:h-10 sm:w-10"
