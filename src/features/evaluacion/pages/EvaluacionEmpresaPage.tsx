@@ -6,6 +6,7 @@ import {
   History,
   Plus,
   ShieldCheck,
+  Users,
   Wrench,
 } from "lucide-react";
 import {
@@ -30,6 +31,7 @@ import EvaluacionEmpresaHeader from "../components/EvaluacionEmpresaHeader";
 import AppAlert from "../components/feedback/AppAlert";
 import EvaluacionPageSkeleton from "../components/feedback/EvaluacionPageSkeleton";
 import AppSpinner from "../components/feedback/AppSpinner";
+import EquipoGestionModal from "../components/gestiones/EquipoGestionModal";
 import HistorialGestionesEmpresa from "../components/gestiones/HistorialGestionesEmpresa";
 import InformesPeriodoPanel from "../components/informes/InformesPeriodoPanel";
 import MatrizEvaluacion from "../components/MatrizEvaluacion";
@@ -119,6 +121,8 @@ export default function EvaluacionEmpresaPage() {
 
   const [gestionModalOpen, setGestionModalOpen] =
     useState(false);
+  const [equipoModalOpen, setEquipoModalOpen] =
+    useState(false);
   const [historialModalOpen, setHistorialModalOpen] =
     useState(false);
   const [revisionesModalOpen, setRevisionesModalOpen] =
@@ -157,6 +161,24 @@ export default function EvaluacionEmpresaPage() {
     "ADMIN",
     "OWNER",
     "SUPERADMIN"
+  );
+
+  const esAdministradorEvaluacion = hasRole(
+    "ADMIN",
+    "OWNER",
+    "SUPERADMIN"
+  );
+
+  const puedeEditarGestionActiva = Boolean(
+    contexto?.gestionActiva &&
+      (esAdministradorEvaluacion ||
+        contexto.gestionActiva.participacionActual?.puedeEvaluar)
+  );
+
+  const puedeFinalizarGestionActiva = Boolean(
+    contexto?.gestionActiva &&
+      (esAdministradorEvaluacion ||
+        contexto.gestionActiva.participacionActual?.esLider)
   );
 
   const puedeVerRevisiones = hasRole(
@@ -236,6 +258,12 @@ export default function EvaluacionEmpresaPage() {
     if (!gestionId) {
       throw new Error(
         "No hay una gestión en borrador para finalizar."
+      );
+    }
+
+    if (!puedeFinalizarGestionActiva) {
+      throw new Error(
+        "Solo el líder de la gestión puede preparar y ejecutar la finalización."
       );
     }
 
@@ -481,6 +509,12 @@ export default function EvaluacionEmpresaPage() {
                     Gestión en borrador
                   </span>
 
+                  {contexto.gestionActiva.participacionActual?.esLider && (
+                    <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-emerald-300 sm:text-[10px]">
+                      Líder
+                    </span>
+                  )}
+
                   <span className="text-[11px] text-neutral-500 sm:text-xs">
                     {new Date(
                       contexto.gestionActiva.fechaGestion
@@ -535,6 +569,17 @@ export default function EvaluacionEmpresaPage() {
                 Informes
               </button>
 
+              {contexto.gestionActiva && puedeEvaluar && (
+                <button
+                  type="button"
+                  onClick={() => setEquipoModalOpen(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2.5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-400/50 hover:bg-cyan-500/15 sm:w-auto"
+                >
+                  <Users size={17} />
+                  Equipo de gestión
+                </button>
+              )}
+
               {puedeVerRevisiones && (
                 <button
                   type="button"
@@ -587,6 +632,26 @@ export default function EvaluacionEmpresaPage() {
             </div>
           </section>
 
+          {contexto.gestionActiva &&
+            puedeEvaluar &&
+            !puedeEditarGestionActiva && (
+              <AppAlert
+                tone="info"
+                title="Participación en modo consulta"
+                description="Formas parte de esta gestión, pero tu participación actual no permite registrar evaluaciones. El líder puede habilitar ese permiso desde Equipo de gestión."
+              />
+            )}
+
+          {contexto.gestionActiva &&
+            puedeEditarGestionActiva &&
+            !puedeFinalizarGestionActiva && (
+              <AppAlert
+                tone="info"
+                title="Puedes evaluar, pero no cerrar la gestión"
+                description="Los participantes pueden trabajar sobre el mismo borrador. La preparación y finalización permanecen reservadas al líder de la gestión."
+              />
+            )}
+
           {ajustesActivos > 0 && (
             <div className="flex flex-col gap-3 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 ring-1 ring-red-500/20 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex gap-3">
@@ -621,7 +686,7 @@ export default function EvaluacionEmpresaPage() {
 
           <MatrizEvaluacion
             filas={contexto.filas}
-            gestionActiva={Boolean(contexto.gestionActiva)}
+            gestionActiva={puedeEditarGestionActiva}
             procesando={
               procesando ||
               finalizacionCompromisos.cargando ||
@@ -685,6 +750,16 @@ export default function EvaluacionEmpresaPage() {
         }
         onClose={() => setGestionModalOpen(false)}
         onSubmit={crearGestion}
+      />
+
+      <EquipoGestionModal
+        open={equipoModalOpen}
+        gestionId={contexto.gestionActiva?.id ?? null}
+        gestionNombre={
+          contexto.gestionActiva?.tipoActividad ?? "Gestión SG-SST"
+        }
+        onClose={() => setEquipoModalOpen(false)}
+        onChanged={recargar}
       />
 
       {contexto.periodo && (
