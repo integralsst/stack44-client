@@ -14,7 +14,21 @@ function detallePath(
   anio: number,
   extras = ""
 ) {
-  return `/api/evaluacion/empresas/${empresaId}/tareas/${tareaId}/detalle/${seccion}?anio=${anio}${extras}`;
+  const params = new URLSearchParams({
+    anio: String(anio),
+  });
+  const gestionId =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get(
+          "gestionId"
+        )
+      : null;
+
+  if (gestionId) {
+    params.set("gestionId", gestionId);
+  }
+
+  return `/api/evaluacion/empresas/${empresaId}/tareas/${tareaId}/detalle/${seccion}?${params.toString()}${extras}`;
 }
 
 export function obtenerResumenRapidoAspecto(
