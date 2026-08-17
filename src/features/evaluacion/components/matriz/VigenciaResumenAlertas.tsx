@@ -46,6 +46,20 @@ function estadoDocumentalClass(
   return "border-cyan-200 bg-cyan-50 text-cyan-800";
 }
 
+function filaDocumentalClass(
+  fila: FilaEvaluacion
+): string {
+  if (fila.evidenciaPendiente) {
+    return "bg-amber-50/70";
+  }
+
+  if (fila.estadoEvidencia === "COMPLETA") {
+    return "bg-emerald-50/30";
+  }
+
+  return "bg-white";
+}
+
 export default function VigenciaResumenAlertas({
   filas,
 }: {
@@ -143,33 +157,33 @@ export default function VigenciaResumenAlertas({
   };
 
   return (
-    <div className="space-y-2 px-3 pt-3 sm:px-4">
+    <div className="space-y-3 px-4 pb-4 pt-4 sm:px-5 sm:pb-5">
       {totalRequierenEvidencia > 0 && (
-        <section className="overflow-hidden rounded-2xl border border-amber-300 bg-amber-50 text-amber-950 shadow-sm">
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-sm">
           <button
             type="button"
             onClick={() =>
               setPanelEvidenciasAbierto((actual) => !actual)
             }
             aria-expanded={panelEvidenciasAbierto}
-            className="flex w-full flex-col gap-3 px-4 py-4 text-left transition hover:bg-amber-100/60 sm:px-5 lg:flex-row lg:items-center lg:justify-between"
+            className="flex w-full flex-col gap-4 px-5 py-4 text-left transition hover:bg-slate-50 sm:px-6 lg:flex-row lg:items-center lg:justify-between"
           >
-            <div className="flex min-w-0 gap-3">
-              <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+            <div className="flex min-w-0 gap-3.5">
+              <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-cyan-700 ring-1 ring-cyan-100">
                 <FileCheck2 size={18} />
               </span>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-sm font-bold sm:text-base">
+                  <h3 className="text-sm font-bold text-slate-950 sm:text-base">
                     Estado documental de evidencias
                   </h3>
-                  <span className="text-[10px] font-semibold text-amber-800 sm:text-xs">
+                  <span className="text-[10px] font-semibold text-cyan-700 sm:text-xs">
                     {panelEvidenciasAbierto
                       ? "Ocultar aspectos"
                       : "Ver aspectos"}
                   </span>
                 </div>
-                <p className="mt-1 max-w-3xl text-xs leading-5 text-amber-900/80">
+                <p className="mt-1.5 max-w-3xl text-xs leading-5 text-slate-600">
                   Consulta los aspectos con evidencia obligatoria y su estado documental sin ocupar espacio en la matriz.
                 </p>
               </div>
@@ -177,18 +191,18 @@ export default function VigenciaResumenAlertas({
 
             <div className="flex items-center gap-3">
               <div className="flex flex-wrap gap-2 text-[10px] font-bold sm:text-xs">
-                <span className="rounded-full border border-cyan-200 bg-white px-2.5 py-1 text-cyan-800">
+                <span className="rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-cyan-800">
                   Requieren: {totalRequierenEvidencia}
                 </span>
-                <span className="rounded-full border border-amber-300 bg-amber-100 px-2.5 py-1 text-amber-950">
+                <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-1 text-amber-900">
                   Pendientes: {resumen.evidenciasPendientes}
                 </span>
-                <span className="rounded-full border border-emerald-200 bg-emerald-100 px-2.5 py-1 text-emerald-800">
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-800">
                   Completas: {resumen.evidenciasCompletas}
                 </span>
               </div>
 
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-amber-300 bg-white text-amber-800">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm">
                 {panelEvidenciasAbierto ? (
                   <ChevronUp size={16} />
                 ) : (
@@ -199,7 +213,7 @@ export default function VigenciaResumenAlertas({
           </button>
 
           {panelEvidenciasAbierto && (
-            <div className="max-h-80 divide-y divide-amber-200 overflow-y-auto border-t border-amber-200 bg-white/55">
+            <div className="max-h-80 divide-y divide-slate-200 overflow-y-auto border-t border-slate-200 bg-slate-50/60 p-2 sm:p-3">
               {resumen.requierenEvidencia.map((fila) => {
                 const descripcion =
                   fila.aspecto.configuracionEvidencia
@@ -209,7 +223,9 @@ export default function VigenciaResumenAlertas({
                 return (
                   <article
                     key={fila.aspecto.id}
-                    className="flex flex-col gap-3 px-4 py-3.5 sm:px-5 lg:flex-row lg:items-center lg:justify-between"
+                    className={`flex flex-col gap-3 px-4 py-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between ${filaDocumentalClass(
+                      fila
+                    )}`}
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -243,7 +259,7 @@ export default function VigenciaResumenAlertas({
                       onClick={() => abrirEvidencias(fila)}
                       className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-bold transition ${
                         fila.evidenciaPendiente
-                          ? "border-amber-400 bg-amber-100 text-amber-950 hover:bg-amber-200"
+                          ? "border-amber-300 bg-amber-100 text-amber-950 hover:bg-amber-200"
                           : "border-slate-300 bg-white text-slate-800 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
                       }`}
                     >
