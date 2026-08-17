@@ -26,7 +26,13 @@ import { COMPROMISOS_ACTUALIZADOS_EVENT } from "../../lib/alertas-compromisos.ev
 
 const ACTUALIZACION_MS = 60_000;
 
-export default function CentroAlertasCompromisos() {
+interface Props {
+  onTotalChange?: (total: number) => void;
+}
+
+export default function CentroAlertasCompromisos({
+  onTotalChange,
+}: Props) {
   const { token } = useAuth();
   const location = useLocation();
   const contenedorRef = useRef<HTMLDivElement>(null);
@@ -43,7 +49,9 @@ export default function CentroAlertasCompromisos() {
     setError(null);
 
     try {
-      setData(await obtenerAlertasCompromisos(token));
+      const response = await obtenerAlertasCompromisos(token);
+      setData(response);
+      onTotalChange?.(response.resumen.total);
     } catch (currentError) {
       setError(
         currentError instanceof Error
@@ -53,7 +61,7 @@ export default function CentroAlertasCompromisos() {
     } finally {
       setCargando(false);
     }
-  }, [token]);
+  }, [onTotalChange, token]);
 
   useEffect(() => {
     void cargar();
