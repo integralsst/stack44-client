@@ -21,11 +21,13 @@ import type {
 
 interface RecargarEvaluacionOptions {
   mostrarCarga?: boolean;
+  gestionId?: string | null;
 }
 
 export function useEvaluacionEmpresa(
   empresaId: string | undefined,
-  anio: number
+  anio: number,
+  gestionId?: string | null
 ) {
   const { token } = useAuth();
 
@@ -44,6 +46,10 @@ export function useEvaluacionEmpresa(
       }
 
       const mostrarCarga = options.mostrarCarga ?? true;
+      const gestionConsulta =
+        options.gestionId === undefined
+          ? gestionId
+          : options.gestionId;
 
       if (mostrarCarga) {
         setCargando(true);
@@ -54,7 +60,8 @@ export function useEvaluacionEmpresa(
         const data = await obtenerContextoEvaluacion(
           empresaId,
           anio,
-          token
+          token,
+          gestionConsulta
         );
         setContexto(data);
       } catch (currentError) {
@@ -69,7 +76,7 @@ export function useEvaluacionEmpresa(
         }
       }
     },
-    [anio, empresaId, token]
+    [anio, empresaId, gestionId, token]
   );
 
   useEffect(() => {
@@ -116,17 +123,34 @@ export function useEvaluacionEmpresa(
 
   const crearGestion = useCallback(
     async (data: CrearGestionInput) => {
-      if (!contexto?.periodo || !token) return;
+      if (!contexto?.periodo || !token) return null;
 
-      await ejecutar(() =>
-        crearGestionEvaluacion(
-          contexto.periodo!.id,
+      setProcesando(true);
+      setError(null);
+
+      try {
+        const creada = await crearGestionEvaluacion(
+          contexto.periodo.id,
           data,
           token
-        )
-      );
+        );
+        await recargar({
+          mostrarCarga: false,
+          gestionId: creada.id,
+        });
+        return creada;
+      } catch (currentError) {
+        const message =
+          currentError instanceof Error
+            ? currentError.message
+            : "No fue posible crear la gestión.";
+        setError(message);
+        throw currentError;
+      } finally {
+        setProcesando(false);
+      }
     },
-    [contexto?.periodo, ejecutar, token]
+    [contexto?.periodo, recargar, token]
   );
 
   const guardar = useCallback(
@@ -147,13 +171,29 @@ export function useEvaluacionEmpresa(
   const finalizar = useCallback(async () => {
     if (!contexto?.gestionActiva || !token) return;
 
-    await ejecutar(() =>
-      finalizarGestionEvaluacion(
-        contexto.gestionActiva!.id,
+    setProcesando(true);
+    setError(null);
+
+    try {
+      await finalizarGestionEvaluacion(
+        contexto.gestionActiva.id,
         token
-      )
-    );
-  }, [contexto?.gestionActiva, ejecutar, token]);
+      );
+      await recargar({
+        mostrarCarga: false,
+        gestionId: null,
+      });
+    } catch (currentError) {
+      const message =
+        currentError instanceof Error
+          ? currentError.message
+          : "No fue posible finalizar la gestión.";
+      setError(message);
+      throw currentError;
+    } finally {
+      setProcesando(false);
+    }
+  }, [contexto?.gestionActiva, recargar, token]);
 
   return {
     contexto,
