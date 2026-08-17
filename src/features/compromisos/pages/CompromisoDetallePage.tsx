@@ -3,6 +3,7 @@ import {
 } from "react";
 import {
   ArrowLeft,
+  ArrowUpRight,
   RefreshCw,
 } from "lucide-react";
 import {
@@ -83,6 +84,23 @@ export default function CompromisoDetallePage() {
     );
   }
 
+  const abrirAspectoEnMatriz = () => {
+    const parametros = new URLSearchParams();
+    const anioOrigen = Number(
+      detalle.data.gestionOrigen.fechaGestion.slice(0, 4)
+    );
+
+    if (Number.isInteger(anioOrigen)) {
+      parametros.set("anio", String(anioOrigen));
+    }
+
+    parametros.set("aspecto", detalle.data.aspecto.nombre);
+
+    navigate(
+      `/dashboard/empresas/${detalle.data.empresa.id}/evaluacion?${parametros.toString()}`
+    );
+  };
+
   return (
     <div className="flex w-full flex-col gap-5 pb-8">
       <header className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
@@ -104,24 +122,35 @@ export default function CompromisoDetallePage() {
             </h1>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() =>
-            void recargarTodo()
-          }
-          disabled={actualizando}
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-        >
-          <RefreshCw
-            size={16}
-            className={
-              actualizando
-                ? "animate-spin"
-                : ""
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <button
+            type="button"
+            onClick={abrirAspectoEnMatriz}
+            title={`Ver en la matriz: ${detalle.data.aspecto.nombre}`}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-4 text-sm font-semibold text-cyan-800 transition hover:border-cyan-300 hover:bg-cyan-100"
+          >
+            <ArrowUpRight size={16} />
+            Ver aspecto en matriz
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              void recargarTodo()
             }
-          />
-          Actualizar
-        </button>
+            disabled={actualizando}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+          >
+            <RefreshCw
+              size={16}
+              className={
+                actualizando
+                  ? "animate-spin"
+                  : ""
+              }
+            />
+            Actualizar
+          </button>
+        </div>
       </header>
 
       {detalle.error && (
