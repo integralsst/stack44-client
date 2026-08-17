@@ -33,6 +33,7 @@ import EvaluacionPageSkeleton from "../components/feedback/EvaluacionPageSkeleto
 import AppSpinner from "../components/feedback/AppSpinner";
 import EquipoGestionModal from "../components/gestiones/EquipoGestionModal";
 import HistorialGestionesEmpresa from "../components/gestiones/HistorialGestionesEmpresa";
+import SelectorGestionesBorrador from "../components/gestiones/SelectorGestionesBorrador";
 import InformesPeriodoPanel from "../components/informes/InformesPeriodoPanel";
 import MatrizEvaluacion from "../components/MatrizEvaluacion";
 import NuevaGestionModal from "../components/NuevaGestionModal";
@@ -44,6 +45,7 @@ import { useInformesPeriodo } from "../hooks/useInformesPeriodo";
 import { useResultadosEvaluacion } from "../hooks/useResultadosEvaluacion";
 import { useRevisionesTecnicas } from "../hooks/useRevisionesTecnicas";
 import type { RevisionTecnicaEvaluacionItem } from "../types/revision-tecnica.types";
+import type { CrearGestionInput } from "../../../types/evaluacion.types";
 
 function enfocarAspectoEnMatriz(aspectoNombre: string) {
   const title = `Abrir detalle de ${aspectoNombre}`;
@@ -84,10 +86,12 @@ export default function EvaluacionEmpresaPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] =
     useSearchParams();
-  const { hasRole } = useAuth();
+  const { hasRole, user } = useAuth();
   const anioSolicitado = Number(
     searchParams.get("anio")
   );
+  const gestionIdSolicitada =
+    searchParams.get("gestionId")?.trim() || null;
   const aspectoSolicitado =
     searchParams.get("aspecto")?.trim() || null;
   const compromisoParaRecalificar =
@@ -116,6 +120,20 @@ export default function EvaluacionEmpresaPage() {
       "anio",
       String(siguienteAnio)
     );
+    siguientesParametros.delete("gestionId");
+    setSearchParams(siguientesParametros);
+  };
+
+  const seleccionarGestion = (gestionId: string) => {
+    if (!gestionId) return;
+
+    const siguientesParametros =
+      new URLSearchParams(searchParams);
+    siguientesParametros.set("gestionId", gestionId);
+    siguientesParametros.delete("aspecto");
+    siguientesParametros.delete("compromiso");
+    siguientesParametros.delete("tareaId");
+    siguientesParametros.delete("detalle");
     setSearchParams(siguientesParametros);
   };
 
@@ -150,7 +168,11 @@ export default function EvaluacionEmpresaPage() {
     abrirPeriodo,
     crearGestion,
     guardar,
-  } = useEvaluacionEmpresa(empresaId, anio);
+  } = useEvaluacionEmpresa(
+    empresaId,
+    anio,
+    gestionIdSolicitada
+  );
 
   const finalizacionCompromisos =
     usePreparacionFinalizacion();
@@ -168,6 +190,15 @@ export default function EvaluacionEmpresaPage() {
     "OWNER",
     "SUPERADMIN"
   );
+
+  const tieneBorradorPropio = Boolean(
+    user &&
+      contexto?.gestionesActivas.some(
+        (gestion) => gestion.usuarioCreador.id === user.id
+      )
+  );
+  const puedeCrearGestionPropia =
+    puedeEvaluar && !tieneBorradorPropio;
 
   const puedeEditarGestionActiva = Boolean(
     contexto?.gestionActiva &&
@@ -207,7 +238,7 @@ export default function EvaluacionEmpresaPage() {
 
   const recargarDespuesDeFinalizar = async () => {
     await Promise.all([
-      recargar(),
+      recargar({ gestionId: null }),
       revisiones.recargar(),
       resultados.recargar(),
     ]);
@@ -230,25 +261,19 @@ export default function EvaluacionEmpresaPage() {
         compromisos,
       }
     );
+
+    const siguientesParametros =
+      new URLSearchParams(searchParams);
+    siguientesParametros.delete("gestionId");
+    siguientesParametros.delete("compromiso");
+    siguientesParametros.delete("aspecto");
+    siguientesParametros.delete("tareaId");
+    siguientesParametros.delete("detalle");
+    setSearchParams(siguientesParametros, {
+      replace: true,
+    });
+
     await recargarDespuesDeFinalizar();
-
-    if (
-      searchParams.has("compromiso") ||
-      searchParams.has("aspecto") ||
-      searchParams.has("tareaId")
-    ) {
-      const siguientesParametros =
-        new URLSearchParams(searchParams);
-
-      siguientesParametros.delete("compromiso");
-      siguientesParametros.delete("aspecto");
-      siguientesParametros.delete("tareaId");
-      siguientesParametros.delete("detalle");
-      setSearchParams(siguientesParametros, {
-        replace: true,
-      });
-    }
-
     notificarCambioCompromisos();
   };
 
@@ -282,12 +307,38 @@ export default function EvaluacionEmpresaPage() {
   };
 
   const recargarDespuesDeInvalidar = async () => {
+    const siguientesParametros =
+      new URLSearchParams(searchParams);
+    siguientesParametros.delete("gestionId");
+    setSearchParams(siguientesParametros, {
+      replace: true,
+    });
+
     await Promise.all([
-      recargar(),
+      recargar({ gestionId: null }),
       revisiones.recargar(),
       resultados.recargar(),
     ]);
     notificarCambioCompromisos();
+  };
+
+  const crearGestionYSeleccionar = async (
+    data: CrearGestionInput
+  ): Promise<void> => {
+    const creada = await crearGestion(data);
+
+    if (!creada?.id) return;
+
+    const siguientesParametros =
+      new URLSearchParams(searchParams);
+    siguientesParametros.set("gestionId", creada.id);
+    siguientesParametros.delete("aspecto");
+    siguientesParametros.delete("compromiso");
+    siguientesParametros.delete("tareaId");
+    siguientesParametros.delete("detalle");
+    setSearchParams(siguientesParametros, {
+      replace: true,
+    });
   };
 
   const enfocarRevision = useCallback(
@@ -308,6 +359,30 @@ export default function EvaluacionEmpresaPage() {
     },
     [contexto?.gestionActiva]
   );
+
+  useEffect(() => {
+    if (
+      !contexto?.gestionActiva ||
+      gestionIdSolicitada
+    ) {
+      return;
+    }
+
+    const siguientesParametros =
+      new URLSearchParams(searchParams);
+    siguientesParametros.set(
+      "gestionId",
+      contexto.gestionActiva.id
+    );
+    setSearchParams(siguientesParametros, {
+      replace: true,
+    });
+  }, [
+    contexto?.gestionActiva,
+    gestionIdSolicitada,
+    searchParams,
+    setSearchParams,
+  ]);
 
   useEffect(() => {
     if (!contexto?.periodo || !aspectoSolicitado) {
@@ -501,6 +576,13 @@ export default function EvaluacionEmpresaPage() {
         </section>
       ) : (
         <>
+          <SelectorGestionesBorrador
+            gestiones={contexto.gestionesActivas}
+            gestionActivaId={contexto.gestionActiva?.id ?? null}
+            disabled={procesando}
+            onChange={seleccionarGestion}
+          />
+
           <section className="flex flex-col gap-3 rounded-2xl border border-neutral-800 bg-[#101112] p-3 shadow-xl sm:p-4 lg:flex-row lg:items-center lg:justify-between">
             {contexto.gestionActiva ? (
               <div className="min-w-0">
@@ -536,6 +618,9 @@ export default function EvaluacionEmpresaPage() {
                   )}
                   {contexto.gestionActiva.categoriaGestion
                     ? ` · ${contexto.gestionActiva.categoriaGestion.nombre}`
+                    : ""}
+                  {contexto.gestionActiva.lider
+                    ? ` · Líder: ${contexto.gestionActiva.lider.nombres} ${contexto.gestionActiva.lider.apellidos}`
                     : ""}
                 </p>
               </div>
@@ -616,7 +701,7 @@ export default function EvaluacionEmpresaPage() {
                 Historial de gestiones
               </button>
 
-              {!contexto.gestionActiva && puedeEvaluar && (
+              {puedeCrearGestionPropia && (
                 <button
                   type="button"
                   onClick={() => {
@@ -626,7 +711,9 @@ export default function EvaluacionEmpresaPage() {
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black transition hover:bg-neutral-200 sm:w-auto"
                 >
                   <Plus size={17} />
-                  Nueva gestión
+                  {contexto.gestionActiva
+                    ? "Nueva gestión propia"
+                    : "Nueva gestión"}
                 </button>
               )}
             </div>
@@ -749,7 +836,7 @@ export default function EvaluacionEmpresaPage() {
             : null
         }
         onClose={() => setGestionModalOpen(false)}
-        onSubmit={crearGestion}
+        onSubmit={crearGestionYSeleccionar}
       />
 
       <EquipoGestionModal
