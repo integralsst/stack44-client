@@ -56,20 +56,33 @@ export default function NuevaGestionModal({
     useState("");
   const [error, setError] = useState<string | null>(null);
 
+  const initialFechaGestion = initialValues?.fechaGestion;
+  const initialModalidad = initialValues?.modalidad;
+  const initialTipoActividad = initialValues?.tipoActividad;
+  const initialCategoriaGestionId = initialValues?.categoriaGestionId;
+  const initialObservacionGeneral = initialValues?.observacionGeneral;
+
   useEffect(() => {
     if (!open) return;
 
-    setFechaGestion(initialValues?.fechaGestion ?? todayInput());
-    setModalidad(initialValues?.modalidad ?? "PRESENCIAL");
-    setTipoActividad(initialValues?.tipoActividad ?? "");
+    setFechaGestion(initialFechaGestion ?? todayInput());
+    setModalidad(initialModalidad ?? "PRESENCIAL");
+    setTipoActividad(initialTipoActividad ?? "");
     setCategoriaGestionId(
-      initialValues?.categoriaGestionId
-        ? String(initialValues.categoriaGestionId)
+      initialCategoriaGestionId
+        ? String(initialCategoriaGestionId)
         : ""
     );
-    setObservacionGeneral(initialValues?.observacionGeneral ?? "");
+    setObservacionGeneral(initialObservacionGeneral ?? "");
     setError(null);
-  }, [initialValues, open]);
+  }, [
+    initialCategoriaGestionId,
+    initialFechaGestion,
+    initialModalidad,
+    initialObservacionGeneral,
+    initialTipoActividad,
+    open,
+  ]);
 
   const handleSubmit = async (
     event: FormEvent<HTMLFormElement>
