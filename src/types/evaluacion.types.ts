@@ -150,6 +150,15 @@ export interface GestionActivaEvaluacion {
     nombres: string;
     apellidos: string;
   } | null;
+  usuarioCreador: {
+    id: string;
+    nombre: string;
+  };
+  lider: {
+    id: string;
+    nombres: string;
+    apellidos: string;
+  } | null;
   participacionActual: ParticipacionActualGestion | null;
 }
 
@@ -321,6 +330,7 @@ export interface ContextoEvaluacionResponse {
   gestionActiva:
     | GestionActivaEvaluacion
     | null;
+  gestionesActivas: GestionActivaEvaluacion[];
   categoriasGestion:
     CategoriaGestionEvaluacion[];
   filas: FilaEvaluacion[];
