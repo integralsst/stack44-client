@@ -128,6 +128,13 @@ export interface CategoriaGestionEvaluacion {
   nombre: string;
 }
 
+export interface ParticipacionActualGestion {
+  id: string;
+  esLider: boolean;
+  puedeEvaluar: boolean;
+  puedeGestionarEvidencias: boolean;
+}
+
 export interface GestionActivaEvaluacion {
   id: string;
   fechaGestion: string;
@@ -143,6 +150,7 @@ export interface GestionActivaEvaluacion {
     nombres: string;
     apellidos: string;
   } | null;
+  participacionActual: ParticipacionActualGestion | null;
 }
 
 export interface EvaluacionRegistrada {
