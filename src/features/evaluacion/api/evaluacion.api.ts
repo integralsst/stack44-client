@@ -31,10 +31,19 @@ function aplicarResultadoEfectivoEnVista(
 export async function obtenerContextoEvaluacion(
   empresaId: string,
   anio: number,
-  token: string
+  token: string,
+  gestionId?: string | null
 ) {
+  const params = new URLSearchParams({
+    anio: String(anio),
+  });
+
+  if (gestionId) {
+    params.set("gestionId", gestionId);
+  }
+
   const contexto = await apiRequest<ContextoEvaluacionResponse>(
-    `/api/evaluacion/empresas/${empresaId}/contexto?anio=${anio}`,
+    `/api/evaluacion/empresas/${empresaId}/contexto?${params.toString()}`,
     {},
     token
   );
@@ -62,7 +71,7 @@ export function crearGestionEvaluacion(
   data: CrearGestionInput,
   token: string
 ) {
-  return apiRequest(
+  return apiRequest<{ id: string }>(
     `/api/evaluacion/periodos/${periodoId}/gestiones`,
     {
       method: "POST",
