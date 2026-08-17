@@ -3,6 +3,7 @@ import {
   Building2,
   CalendarClock,
   ClipboardCheck,
+  History,
   Workflow,
 } from "lucide-react";
 
@@ -22,6 +23,19 @@ interface Props {
 export default function CompromisoDetalleResumen({
   compromiso,
 }: Props) {
+  const ultimaEvaluacionPosterior = [
+    ...compromiso.evaluacionesSeguimiento,
+  ]
+    .sort(
+      (primera, segunda) =>
+        new Date(segunda.evaluacion.createdAt).getTime() -
+        new Date(primera.evaluacion.createdAt).getTime()
+    )[0]?.evaluacion ?? null;
+
+  const posteriorResuelveCompromiso =
+    ultimaEvaluacionPosterior?.calificacionAdministrativa === 5 &&
+    ultimaEvaluacionPosterior.estadoCumplimiento === "CUMPLIDO";
+
   return (
     <div className="grid gap-4 xl:grid-cols-[1.5fr_1fr]">
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -78,6 +92,75 @@ export default function CompromisoDetalleResumen({
             </div>
           </div>
         </div>
+
+        {ultimaEvaluacionPosterior && (
+          <div
+            className={`mt-3 rounded-xl border p-4 ${
+              posteriorResuelveCompromiso
+                ? "border-emerald-200 bg-emerald-50"
+                : "border-amber-200 bg-amber-50"
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ${
+                  posteriorResuelveCompromiso
+                    ? "text-emerald-700"
+                    : "text-amber-700"
+                }`}
+              >
+                <History size={18} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p
+                  className={`text-xs font-bold uppercase tracking-wide ${
+                    posteriorResuelveCompromiso
+                      ? "text-emerald-800"
+                      : "text-amber-800"
+                  }`}
+                >
+                  Última evaluación posterior
+                </p>
+                <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                  <p className="text-sm text-slate-700">
+                    Nota administrativa:{" "}
+                    <strong className="text-slate-950">
+                      {ultimaEvaluacionPosterior.calificacionAdministrativa}
+                    </strong>
+                  </p>
+                  <p className="text-sm text-slate-700">
+                    Resultado:{" "}
+                    <strong className="text-slate-950">
+                      {formatearEstadoOrigen(
+                        ultimaEvaluacionPosterior.estadoCumplimiento
+                      )}
+                    </strong>
+                  </p>
+                  <p className="text-sm text-slate-700">
+                    Fecha:{" "}
+                    <strong className="text-slate-950">
+                      {formatearFechaCompromiso(
+                        ultimaEvaluacionPosterior.createdAt
+                      )}
+                    </strong>
+                  </p>
+                </div>
+                {ultimaEvaluacionPosterior.observacion && (
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                    Observación:{" "}
+                    {ultimaEvaluacionPosterior.observacion}
+                  </p>
+                )}
+                <p className="mt-2 text-xs leading-5 text-slate-600">
+                  Esta evaluación no reemplaza la calificación de origen del compromiso. {posteriorResuelveCompromiso
+                    ? "La evaluación posterior efectiva en 5 satisface la etapa de recalificación."
+                    : "El compromiso continúa requiriendo una evaluación posterior efectiva en 5."}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {compromiso.recursos && (
           <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
