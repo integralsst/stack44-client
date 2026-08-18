@@ -19,12 +19,14 @@ import RevisionTecnicaEstadoBadge from "./RevisionTecnicaEstadoBadge";
 
 interface Props {
   revision: RevisionTecnicaEvaluacionItem;
+  highlighted?: boolean;
   onResolver: (revision: RevisionTecnicaEvaluacionItem) => void;
   onCorregir: (revision: RevisionTecnicaEvaluacionItem) => void;
 }
 
 export default function RevisionTecnicaCard({
   revision,
+  highlighted = false,
   onResolver,
   onCorregir,
 }: Props) {
@@ -37,12 +39,17 @@ export default function RevisionTecnicaCard({
 
   return (
     <article
-      className={`rounded-2xl border p-4 shadow-sm transition sm:p-5 ${
+      id={`revision-tecnica-${revision.id}`}
+      className={`scroll-mt-6 rounded-2xl border p-4 shadow-sm transition sm:p-5 ${
         urgente
           ? "border-red-200 bg-red-50/70 ring-1 ring-red-100"
           : enCorreccion
             ? "border-cyan-200 bg-cyan-50/70"
             : "border-slate-200 bg-white"
+      } ${
+        highlighted
+          ? "ring-2 ring-cyan-500 ring-offset-2 ring-offset-white"
+          : ""
       }`}
     >
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
