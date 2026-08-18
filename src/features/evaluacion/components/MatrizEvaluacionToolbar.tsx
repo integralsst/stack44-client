@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 import AppButton from "../../../components/ui/AppButton";
-import AppSelect from "../../../components/ui/AppSelect";
+import AppDropdownSelect from "../../../components/ui/AppDropdownSelect";
 
 type OptionItem = [number, string];
 
@@ -90,7 +90,7 @@ export default function MatrizEvaluacionToolbar({
                 size="sm"
                 variant="success"
                 loading={procesando}
-                loadingLabel="Guardando"
+                loadingLabel="Procesando"
                 disabled={cambiosPendientes === 0}
                 leadingIcon={<Save size={14} />}
                 onClick={onGuardar}
@@ -127,7 +127,7 @@ export default function MatrizEvaluacionToolbar({
               value={busqueda}
               onChange={(event) => setBusqueda(event.target.value)}
               placeholder="Buscar aspecto, estándar o proceso"
-              className="min-h-10 w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition-colors [color-scheme:light] placeholder:text-slate-400 hover:border-slate-400 focus:border-cyan-500/70 focus:ring-2 focus:ring-cyan-500/10"
+              className="min-h-10 w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 hover:border-slate-400 focus:border-cyan-500/70 focus:ring-2 focus:ring-cyan-500/10"
             />
           </div>
 
@@ -164,76 +164,77 @@ export default function MatrizEvaluacionToolbar({
 
         {mostrarFiltros && (
           <div className="grid gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2.5 sm:grid-cols-2 xl:grid-cols-5">
-            <AppSelect
-              selectSize="sm"
+            <AppDropdownSelect
               value={procesoId}
-              onChange={(event) => setProcesoId(event.target.value)}
-              aria-label="Filtrar por proceso"
-            >
-              <option value="">Todos los procesos</option>
-              {procesos.map(([id, nombre]) => (
-                <option key={id} value={id}>
-                  {nombre}
-                </option>
-              ))}
-            </AppSelect>
+              onChange={setProcesoId}
+              ariaLabel="Filtrar por proceso"
+              size="sm"
+              options={[
+                { value: "", label: "Todos los procesos" },
+                ...procesos.map(([id, nombre]) => ({
+                  value: String(id),
+                  label: nombre,
+                })),
+              ]}
+            />
 
-            <AppSelect
-              selectSize="sm"
+            <AppDropdownSelect
               value={estandarId}
-              onChange={(event) => setEstandarId(event.target.value)}
-              aria-label="Filtrar por estándar"
-            >
-              <option value="">Todos los estándares</option>
-              {estandares.map(([id, nombre]) => (
-                <option key={id} value={id}>
-                  {nombre}
-                </option>
-              ))}
-            </AppSelect>
+              onChange={setEstandarId}
+              ariaLabel="Filtrar por estándar"
+              size="sm"
+              options={[
+                { value: "", label: "Todos los estándares" },
+                ...estandares.map(([id, nombre]) => ({
+                  value: String(id),
+                  label: nombre,
+                })),
+              ]}
+            />
 
-            <AppSelect
-              selectSize="sm"
+            <AppDropdownSelect
               value={categoriaGestion}
-              onChange={(event) => setCategoriaGestion(event.target.value)}
-              aria-label="Filtrar por categoría de gestión"
-            >
-              <option value="">Toda la gestión</option>
-              <option value="DOCUMENTAL">Documental</option>
-              <option value="INTERVENCION">Intervención</option>
-              <option value="EMERGENCIAS">Emergencias</option>
-            </AppSelect>
+              onChange={setCategoriaGestion}
+              ariaLabel="Filtrar por categoría de gestión"
+              size="sm"
+              options={[
+                { value: "", label: "Toda la gestión" },
+                { value: "DOCUMENTAL", label: "Documental" },
+                { value: "INTERVENCION", label: "Intervención" },
+                { value: "EMERGENCIAS", label: "Emergencias" },
+              ]}
+            />
 
-            <AppSelect
-              selectSize="sm"
+            <AppDropdownSelect
               value={grupoMinisterial}
-              onChange={(event) => setGrupoMinisterial(event.target.value)}
-              aria-label="Filtrar por grupo ministerial"
-            >
-              <option value="">Grupos 7 / 21 / 60</option>
-              <option value="ESTANDARES_7">7 estándares</option>
-              <option value="ESTANDARES_21">21 estándares</option>
-              <option value="ESTANDARES_60">60 estándares</option>
-            </AppSelect>
+              onChange={setGrupoMinisterial}
+              ariaLabel="Filtrar por grupo ministerial"
+              size="sm"
+              options={[
+                { value: "", label: "Grupos 7 / 21 / 60" },
+                { value: "ESTANDARES_7", label: "7 estándares" },
+                { value: "ESTANDARES_21", label: "21 estándares" },
+                { value: "ESTANDARES_60", label: "60 estándares" },
+              ]}
+            />
 
-            <AppSelect
-              selectSize="sm"
+            <AppDropdownSelect
               value={vigencia}
-              onChange={(event) => setVigencia(event.target.value)}
-              aria-label="Filtrar por vigencia"
-            >
-              <option value="">Toda vigencia</option>
-              <option value="SIN_REVISION">Sin revisión</option>
-              <option value="VIGENTE">Vigente</option>
-              <option value="POR_VENCER">Por vencer</option>
-              <option value="VENCIDO">Vencido</option>
-              <option value="VIGENTE_PERMANENTE">Vigente permanente</option>
-              <option value="FALTA_FECHA_DOCUMENTO">Falta fecha</option>
-              <option value="PERIODICIDAD_NO_CONFIGURADA">
-                Periodicidad pendiente
-              </option>
-              <option value="NO_APLICA">No aplica</option>
-            </AppSelect>
+              onChange={setVigencia}
+              ariaLabel="Filtrar por vigencia"
+              size="sm"
+              options={[
+                { value: "", label: "Toda vigencia" },
+                { value: "SIN_REVISION", label: "Sin revisión" },
+                { value: "VIGENTE", label: "Vigente" },
+                { value: "POR_VENCER", label: "Por vencer" },
+                { value: "VENCIDO", label: "Vencido" },
+                { value: "VIGENTE_PERMANENTE", label: "Vigente permanente" },
+                { value: "FALTA_FECHA_DOCUMENTO", label: "Falta fecha" },
+                { value: "PERIODICIDAD_NO_CONFIGURADA", label: "Periodicidad pendiente" },
+                { value: "NO_APLICA", label: "No aplica" },
+              ]}
+            />
           </div>
         )}
 
