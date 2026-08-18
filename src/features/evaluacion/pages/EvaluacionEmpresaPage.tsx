@@ -1,12 +1,6 @@
 import {
-  AlertTriangle,
-  BarChart3,
   ClipboardCheck,
-  FileClock,
-  History,
   Plus,
-  ShieldCheck,
-  Users,
   Wrench,
 } from "lucide-react";
 import {
@@ -21,19 +15,21 @@ import {
 } from "react-router-dom";
 
 import AppModal from "../../../components/ui/AppModal";
+import type { CrearGestionInput } from "../../../types/evaluacion.types";
 import { useAuth } from "../../auth/context/AuthContext";
 import CompromisosFinalizacionModal from "../../compromisos/components/finalizacion/CompromisosFinalizacionModal";
 import { usePreparacionFinalizacion } from "../../compromisos/hooks/usePreparacionFinalizacion";
-import type { CompromisoFinalizacionInput } from "../../compromisos/types/compromiso.types";
 import { notificarCambioCompromisos } from "../../compromisos/lib/alertas-compromisos.events";
+import type { CompromisoFinalizacionInput } from "../../compromisos/types/compromiso.types";
 import DetalleAspectoDrawer from "../components/detalle/DetalleAspectoDrawer";
 import EvaluacionEmpresaHeader from "../components/EvaluacionEmpresaHeader";
 import AppAlert from "../components/feedback/AppAlert";
-import EvaluacionPageSkeleton from "../components/feedback/EvaluacionPageSkeleton";
 import AppSpinner from "../components/feedback/AppSpinner";
+import EvaluacionPageSkeleton from "../components/feedback/EvaluacionPageSkeleton";
+import EvaluacionTransitionOverlay from "../components/feedback/EvaluacionTransitionOverlay";
 import EquipoGestionModal from "../components/gestiones/EquipoGestionModal";
+import GestionWorkspacePanel from "../components/gestiones/GestionWorkspacePanel";
 import HistorialGestionesEmpresa from "../components/gestiones/HistorialGestionesEmpresa";
-import SelectorGestionesBorrador from "../components/gestiones/SelectorGestionesBorrador";
 import InformesPeriodoPanel from "../components/informes/InformesPeriodoPanel";
 import MatrizEvaluacion from "../components/MatrizEvaluacion";
 import NuevaGestionModal from "../components/NuevaGestionModal";
@@ -45,7 +41,6 @@ import { useInformesPeriodo } from "../hooks/useInformesPeriodo";
 import { useResultadosEvaluacion } from "../hooks/useResultadosEvaluacion";
 import { useRevisionesTecnicas } from "../hooks/useRevisionesTecnicas";
 import type { RevisionTecnicaEvaluacionItem } from "../types/revision-tecnica.types";
-import type { CrearGestionInput } from "../../../types/evaluacion.types";
 
 function enfocarAspectoEnMatriz(aspectoNombre: string) {
   const title = `Abrir detalle de ${aspectoNombre}`;
@@ -176,6 +171,21 @@ export default function EvaluacionEmpresaPage() {
 
   const finalizacionCompromisos =
     usePreparacionFinalizacion();
+
+  const cambiandoBorrador = Boolean(
+    contexto &&
+      cargando &&
+      gestionIdSolicitada &&
+      gestionIdSolicitada !== contexto.gestionActiva?.id
+  );
+  const preparandoFinalizacion =
+    finalizacionCompromisos.cargando;
+  const finalizandoGestion =
+    finalizacionCompromisos.finalizando;
+  const transicionFinalizacion =
+    preparandoFinalizacion || finalizandoGestion;
+  const interfazBloqueada =
+    procesando || cambiandoBorrador || transicionFinalizacion;
 
   const puedeEvaluar = hasRole(
     "PROFESSIONAL",
@@ -447,12 +457,6 @@ export default function EvaluacionEmpresaPage() {
   const enCorreccion =
     revisiones.data?.resumen.enCorreccion ?? 0;
 
-  const botonRevisionClass = ajustesActivos > 0
-    ? "border-red-500/40 bg-red-500/15 text-red-100 ring-2 ring-red-500/15 hover:bg-red-500/20"
-    : pendientesRevision > 0
-      ? "border-amber-500/25 bg-amber-500/10 text-amber-200 hover:bg-amber-500/15"
-      : "border-neutral-700 bg-[#08090a] text-neutral-300 hover:border-cyan-500/40 hover:text-cyan-200";
-
   return (
     <div className="flex min-h-full w-full min-w-0 max-w-none flex-col gap-3 pb-6">
       <EvaluacionEmpresaHeader
@@ -576,148 +580,27 @@ export default function EvaluacionEmpresaPage() {
         </section>
       ) : (
         <>
-          <SelectorGestionesBorrador
+          <GestionWorkspacePanel
             gestiones={contexto.gestionesActivas}
-            gestionActivaId={contexto.gestionActiva?.id ?? null}
-            disabled={procesando}
-            onChange={seleccionarGestion}
+            gestionActiva={contexto.gestionActiva}
+            bloqueado={interfazBloqueada}
+            cambiandoBorrador={cambiandoBorrador}
+            puedeEvaluar={puedeEvaluar}
+            puedeVerRevisiones={puedeVerRevisiones}
+            puedeCrearGestionPropia={puedeCrearGestionPropia}
+            ajustesActivos={ajustesActivos}
+            pendientesRevision={pendientesRevision}
+            onSeleccionarGestion={seleccionarGestion}
+            onResultados={() => setResultadosModalOpen(true)}
+            onInformes={() => setInformesModalOpen(true)}
+            onEquipo={() => setEquipoModalOpen(true)}
+            onRevisiones={() => setRevisionesModalOpen(true)}
+            onHistorial={() => setHistorialModalOpen(true)}
+            onNuevaGestion={() => {
+              setRevisionCorreccion(null);
+              setGestionModalOpen(true);
+            }}
           />
-
-          <section className="flex flex-col gap-3 rounded-2xl border border-neutral-800 bg-[#101112] p-3 shadow-xl sm:p-4 lg:flex-row lg:items-center lg:justify-between">
-            {contexto.gestionActiva ? (
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-cyan-500/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-cyan-300 sm:text-[10px]">
-                    Gestión en borrador
-                  </span>
-
-                  {contexto.gestionActiva.participacionActual?.esLider && (
-                    <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-emerald-300 sm:text-[10px]">
-                      Líder
-                    </span>
-                  )}
-
-                  <span className="text-[11px] text-neutral-500 sm:text-xs">
-                    {new Date(
-                      contexto.gestionActiva.fechaGestion
-                    ).toLocaleDateString("es-CO")}
-                  </span>
-                </div>
-
-                <h2
-                  className="mt-1.5 truncate text-sm font-semibold text-white sm:text-base"
-                  title={contexto.gestionActiva.tipoActividad}
-                >
-                  {contexto.gestionActiva.tipoActividad}
-                </h2>
-
-                <p className="mt-1 text-[11px] text-neutral-500 sm:text-xs">
-                  {contexto.gestionActiva.modalidad.replaceAll(
-                    "_",
-                    " "
-                  )}
-                  {contexto.gestionActiva.categoriaGestion
-                    ? ` · ${contexto.gestionActiva.categoriaGestion.nombre}`
-                    : ""}
-                  {contexto.gestionActiva.lider
-                    ? ` · Líder: ${contexto.gestionActiva.lider.nombres} ${contexto.gestionActiva.lider.apellidos}`
-                    : ""}
-                </p>
-              </div>
-            ) : (
-              <div>
-                <h2 className="text-sm font-semibold text-white sm:text-base">
-                  No tienes una gestión en borrador
-                </h2>
-                <p className="mt-1 text-xs text-neutral-500 sm:text-sm">
-                  Crea una visita, asesoría o jornada para registrar nuevas calificaciones.
-                </p>
-              </div>
-            )}
-
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-end">
-              <button
-                type="button"
-                onClick={() => setResultadosModalOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-700 bg-[#08090a] px-4 py-2.5 text-sm font-semibold text-neutral-200 transition hover:border-cyan-500/40 hover:bg-cyan-500/5 hover:text-cyan-200 sm:w-auto"
-              >
-                <BarChart3 size={17} />
-                Resultados
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setInformesModalOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-700 bg-[#08090a] px-4 py-2.5 text-sm font-semibold text-neutral-200 transition hover:border-cyan-500/40 hover:bg-cyan-500/5 hover:text-cyan-200 sm:w-auto"
-              >
-                <FileClock size={17} />
-                Informes
-              </button>
-
-              {contexto.gestionActiva && puedeEvaluar && (
-                <button
-                  type="button"
-                  onClick={() => setEquipoModalOpen(true)}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2.5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-400/50 hover:bg-cyan-500/15 sm:w-auto"
-                >
-                  <Users size={17} />
-                  Equipo de gestión
-                </button>
-              )}
-
-              {puedeVerRevisiones && (
-                <button
-                  type="button"
-                  onClick={() => setRevisionesModalOpen(true)}
-                  className={`flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition sm:w-auto ${botonRevisionClass}`}
-                >
-                  {ajustesActivos > 0 ? (
-                    <AlertTriangle
-                      size={17}
-                      className="animate-pulse"
-                    />
-                  ) : (
-                    <ShieldCheck size={17} />
-                  )}
-                  Revisiones técnicas
-                  {ajustesActivos > 0 ? (
-                    <span className="rounded-full bg-red-300 px-2 py-0.5 text-[10px] font-bold text-red-950">
-                      {ajustesActivos} por corregir
-                    </span>
-                  ) : pendientesRevision > 0 ? (
-                    <span className="rounded-full bg-amber-300 px-2 py-0.5 text-[10px] font-bold text-black">
-                      {pendientesRevision}
-                    </span>
-                  ) : null}
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={() => setHistorialModalOpen(true)}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-700 bg-[#08090a] px-4 py-2.5 text-sm font-semibold text-neutral-200 transition hover:border-cyan-500/40 hover:bg-cyan-500/5 hover:text-cyan-200 sm:w-auto"
-              >
-                <History size={17} />
-                Historial de gestiones
-              </button>
-
-              {puedeCrearGestionPropia && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRevisionCorreccion(null);
-                    setGestionModalOpen(true);
-                  }}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black transition hover:bg-neutral-200 sm:w-auto"
-                >
-                  <Plus size={17} />
-                  {contexto.gestionActiva
-                    ? "Nueva gestión propia"
-                    : "Nueva gestión"}
-                </button>
-              )}
-            </div>
-          </section>
 
           {contexto.gestionActiva &&
             puedeEvaluar &&
@@ -742,7 +625,7 @@ export default function EvaluacionEmpresaPage() {
           {ajustesActivos > 0 && (
             <div className="flex flex-col gap-3 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 ring-1 ring-red-500/20 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex gap-3">
-                <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 animate-pulse text-red-300" />
+                <div className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-red-300/20" />
                 <div>
                   <p className="text-sm font-bold text-red-100">
                     Hay {ajustesActivos} evaluación(es) que requieren corrección
@@ -755,7 +638,8 @@ export default function EvaluacionEmpresaPage() {
               <button
                 type="button"
                 onClick={() => setRevisionesModalOpen(true)}
-                className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-red-400"
+                disabled={interfazBloqueada}
+                className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Wrench size={16} />
                 Ver y corregir
@@ -774,11 +658,7 @@ export default function EvaluacionEmpresaPage() {
           <MatrizEvaluacion
             filas={contexto.filas}
             gestionActiva={puedeEditarGestionActiva}
-            procesando={
-              procesando ||
-              finalizacionCompromisos.cargando ||
-              finalizacionCompromisos.finalizando
-            }
+            procesando={interfazBloqueada}
             onGuardar={guardar}
             onFinalizar={prepararFinalizacion}
             onAbrirDetalle={(fila) =>
@@ -965,6 +845,26 @@ export default function EvaluacionEmpresaPage() {
             });
           }
         }}
+      />
+
+      <EvaluacionTransitionOverlay
+        open={cambiandoBorrador}
+        title="Cambiando de borrador"
+        description="Estamos cargando la gestión seleccionada y sus evaluaciones. Tus borradores permanecen separados."
+      />
+
+      <EvaluacionTransitionOverlay
+        open={!cambiandoBorrador && transicionFinalizacion}
+        title={
+          finalizandoGestion
+            ? "Finalizando gestión"
+            : "Preparando finalización"
+        }
+        description={
+          finalizandoGestion
+            ? "Estamos consolidando evaluaciones, compromisos y trazabilidad. No cierres esta ventana hasta terminar."
+            : "Estamos verificando si esta gestión requiere compromisos antes de completar el cierre."
+        }
       />
     </div>
   );

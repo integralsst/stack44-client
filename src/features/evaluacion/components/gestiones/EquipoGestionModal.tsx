@@ -15,6 +15,7 @@ import {
 } from "react";
 
 import AppButton from "../../../../components/ui/AppButton";
+import AppDropdownSelect from "../../../../components/ui/AppDropdownSelect";
 import AppModal from "../../../../components/ui/AppModal";
 import { useAuth } from "../../../auth/context/AuthContext";
 import {
@@ -469,32 +470,36 @@ export default function EquipoGestionModal({
                     <label className="text-xs font-semibold text-slate-600">
                       Profesional
                     </label>
-                    <select
+                    <AppDropdownSelect
                       value={profesionalSeleccionado}
-                      onChange={(event) =>
-                        setProfesionalSeleccionado(event.target.value)
-                      }
+                      onChange={setProfesionalSeleccionado}
                       disabled={procesando}
-                      className="mt-1.5 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-800 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/10"
-                    >
-                      <option value="">Seleccionar profesional</option>
-                      {disponibles.map((item) => (
-                        <option
-                          key={item.profesional.id}
-                          value={item.profesional.id}
-                          disabled={!item.disponibleParaAgregar}
-                        >
-                          {item.profesional.nombres} {item.profesional.apellidos}
-                          {item.yaParticipa
-                            ? " · ya participa"
-                            : item.conflictoBorrador
-                              ? " · tiene otro borrador"
-                              : !item.categoriaCompatible
-                                ? " · categoría no habilitada"
-                                : ""}
-                        </option>
-                      ))}
-                    </select>
+                      ariaLabel="Seleccionar profesional para agregar"
+                      className="mt-1.5"
+                      options={[
+                        {
+                          value: "",
+                          label: "Seleccionar profesional",
+                          description: "Elige un profesional vinculado a la empresa.",
+                        },
+                        ...disponibles.map((item) => {
+                          const estado = item.yaParticipa
+                            ? "Ya participa en esta gestión"
+                            : !item.categoriaCompatible
+                              ? "Categoría no habilitada"
+                              : item.categoriasConfiguradas
+                                ? `Categorías: ${item.categorias.map((categoria) => categoria.nombre).join(", ") || "ninguna"}`
+                                : "Compatible con esquema histórico";
+
+                          return {
+                            value: item.profesional.id,
+                            label: `${item.profesional.nombres} ${item.profesional.apellidos}`.trim(),
+                            description: `${item.profesional.correo} · ${estado}`,
+                            disabled: !item.disponibleParaAgregar,
+                          };
+                        }),
+                      ]}
+                    />
                     {seleccionado && (
                       <p className="mt-2 text-xs text-slate-500">
                         {seleccionado.categoriasConfiguradas

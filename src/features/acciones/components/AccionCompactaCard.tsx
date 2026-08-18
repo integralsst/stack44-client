@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ClipboardCheck,
   Clock3,
+  Layers3,
   Target,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -42,6 +43,7 @@ const NIVELES = {
 
 const CATEGORIAS = {
   COMPROMISOS: "Compromiso",
+  GESTIONES: "Gestión",
   EVIDENCIAS: "Evidencia",
   REVISION_TECNICA: "Revisión técnica",
   NO_APLICA: "No aplica",
@@ -72,6 +74,7 @@ export default function AccionCompactaCard({
 }) {
   const nivel = NIVELES[accion.nivel];
   const Icon = nivel.icon;
+  const esGestion = accion.categoria === "GESTIONES";
 
   return (
     <article
@@ -88,7 +91,7 @@ export default function AccionCompactaCard({
         <div
           className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${nivel.iconBox}`}
         >
-          <Icon size={16} />
+          {esGestion ? <Layers3 size={16} /> : <Icon size={16} />}
         </div>
 
         <div className="min-w-0 flex-1">
@@ -124,11 +127,15 @@ export default function AccionCompactaCard({
           <div className={`rounded-2xl border p-4 ${nivel.callout}`}>
             <div className="flex items-start gap-3">
               <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/80">
-                <ClipboardCheck size={17} />
+                {esGestion ? (
+                  <Layers3 size={17} />
+                ) : (
+                  <ClipboardCheck size={17} />
+                )}
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] opacity-70">
-                  Acción requerida
+                  {esGestion ? "Nueva asignación" : "Acción requerida"}
                 </p>
                 <p className="mt-1 text-sm font-extrabold leading-5">
                   {accion.titulo}
@@ -153,8 +160,10 @@ export default function AccionCompactaCard({
 
             <div className="rounded-xl border border-slate-200 bg-white px-3 py-3">
               <div className="flex items-center gap-2 text-slate-500">
-                <Target size={14} />
-                <span className="font-bold">Aspecto</span>
+                {esGestion ? <Layers3 size={14} /> : <Target size={14} />}
+                <span className="font-bold">
+                  {esGestion ? "Gestión" : "Aspecto"}
+                </span>
               </div>
               <p className="mt-1 line-clamp-2 font-extrabold text-slate-950">
                 {accion.aspecto.nombre}
@@ -164,7 +173,9 @@ export default function AccionCompactaCard({
             <div className="rounded-xl border border-slate-200 bg-white px-3 py-3">
               <div className="flex items-center gap-2 text-slate-500">
                 <CalendarClock size={14} />
-                <span className="font-bold">Referencia</span>
+                <span className="font-bold">
+                  {esGestion ? "Asignada" : "Referencia"}
+                </span>
               </div>
               <p className="mt-1 font-extrabold text-slate-950">
                 {formatDate(accion.fechaReferencia)}
@@ -175,10 +186,12 @@ export default function AccionCompactaCard({
           <div className="mt-4 rounded-2xl border border-cyan-200 bg-white p-3">
             <div className="min-w-0">
               <p className="text-xs font-extrabold text-slate-950">
-                Resolver esta acción
+                {esGestion ? "Abrir espacio de trabajo" : "Resolver esta acción"}
               </p>
               <p className="mt-1 text-[11px] leading-5 text-slate-500">
-                Te llevaremos directamente a la pantalla de {accion.empresa.nombre} donde corresponde gestionar este pendiente.
+                {esGestion
+                  ? "Abriremos directamente el borrador que te fue asignado, conservando la gestión seleccionada."
+                  : `Te llevaremos directamente a la pantalla de ${accion.empresa.nombre} donde corresponde gestionar este pendiente.`}
               </p>
             </div>
 

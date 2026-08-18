@@ -46,6 +46,12 @@ export default function FiltrosCentroAcciones({
       conteo: resumen?.categorias.COMPROMISOS,
     },
     {
+      label: "Gestiones",
+      categoria: "GESTIONES" as const,
+      prioridad: "TODAS" as const,
+      conteo: resumen?.categorias.GESTIONES,
+    },
+    {
       label: "Evidencias",
       categoria: "EVIDENCIAS" as const,
       prioridad: "TODAS" as const,
