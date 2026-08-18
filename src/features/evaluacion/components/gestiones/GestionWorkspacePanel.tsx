@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   AlertTriangle,
   BarChart3,
@@ -38,7 +39,7 @@ function ActionButton({
   badge,
   disabled = false,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   label: string;
   onClick: () => void;
   emphasis?: "neutral" | "cyan" | "danger" | "primary";
