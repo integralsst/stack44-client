@@ -2,12 +2,18 @@ import type { ReactNode } from "react";
 import {
   AlertTriangle,
   BarChart3,
+  ClipboardCheck,
   FileClock,
   History,
   Plus,
   ShieldCheck,
   Users,
 } from "lucide-react";
+import {
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 
 import type { GestionActivaEvaluacion } from "../../../../types/evaluacion.types";
 import SelectorGestionesBorrador from "./SelectorGestionesBorrador";
@@ -38,6 +44,7 @@ function ActionButton({
   emphasis = "neutral",
   badge,
   disabled = false,
+  className = "",
 }: {
   icon: ReactNode;
   label: string;
@@ -45,27 +52,28 @@ function ActionButton({
   emphasis?: "neutral" | "cyan" | "danger" | "primary";
   badge?: string | null;
   disabled?: boolean;
+  className?: string;
 }) {
-  const className =
+  const emphasisClass =
     emphasis === "primary"
-      ? "border-white bg-white text-slate-950 hover:bg-slate-100"
+      ? "border-cyan-600 bg-cyan-600 text-white shadow-sm hover:bg-cyan-700"
       : emphasis === "cyan"
-        ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-100 hover:border-cyan-400/50 hover:bg-cyan-500/15"
+        ? "border-cyan-200 bg-cyan-50 text-cyan-800 hover:border-cyan-300 hover:bg-cyan-100"
         : emphasis === "danger"
-          ? "border-red-500/35 bg-red-500/10 text-red-100 hover:bg-red-500/15"
-          : "border-neutral-700 bg-[#08090a] text-neutral-200 hover:border-cyan-500/35 hover:bg-cyan-500/[0.06] hover:text-cyan-100";
+          ? "border-red-200 bg-red-50 text-red-800 hover:border-red-300 hover:bg-red-100"
+          : "border-slate-200 bg-white text-slate-700 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800";
 
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex min-h-10 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-45 ${className}`}
+      className={`flex min-h-10 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-45 ${emphasisClass} ${className}`}
     >
       {icon}
       <span>{label}</span>
       {badge && (
-        <span className="rounded-full bg-white/90 px-1.5 py-0.5 text-[9px] font-black text-slate-900">
+        <span className="rounded-full bg-white px-1.5 py-0.5 text-[9px] font-black text-slate-900 shadow-sm">
           {badge}
         </span>
       )}
@@ -91,10 +99,16 @@ export default function GestionWorkspacePanel({
   onHistorial,
   onNuevaGestion,
 }: Props) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const anio = searchParams.get("anio") ?? String(new Date().getFullYear());
+  const rutaControles = `${location.pathname}/controles?anio=${encodeURIComponent(anio)}`;
+
   return (
-    <section className="overflow-visible rounded-3xl border border-neutral-800 bg-[#101112] shadow-xl">
+    <section className="overflow-visible rounded-3xl border border-slate-200 bg-white shadow-sm">
       {gestiones.length > 1 && (
-        <div className="border-b border-neutral-800 p-3 sm:p-4">
+        <div className="border-b border-slate-200 p-3 sm:p-4">
           <SelectorGestionesBorrador
             gestiones={gestiones}
             gestionActivaId={gestionActiva?.id ?? null}
@@ -106,19 +120,19 @@ export default function GestionWorkspacePanel({
       )}
 
       <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_minmax(360px,520px)] lg:items-start">
-        <div className="min-w-0 rounded-2xl border border-neutral-800 bg-gradient-to-br from-[#151719] to-[#0b0c0d] p-4">
+        <div className="min-w-0 rounded-2xl border border-slate-200 bg-gradient-to-br from-cyan-50/70 via-white to-slate-50 p-4">
           {gestionActiva ? (
             <>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.14em] text-cyan-300">
+                <span className="rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.14em] text-cyan-800">
                   Gestión en borrador
                 </span>
                 {gestionActiva.participacionActual?.esLider && (
-                  <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.14em] text-emerald-300">
+                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.14em] text-emerald-700">
                     Líder
                   </span>
                 )}
-                <span className="text-[11px] font-semibold text-neutral-500">
+                <span className="text-[11px] font-semibold text-slate-500">
                   {new Date(gestionActiva.fechaGestion).toLocaleDateString(
                     "es-CO"
                   )}
@@ -126,13 +140,13 @@ export default function GestionWorkspacePanel({
               </div>
 
               <h2
-                className="mt-3 truncate text-base font-extrabold text-white sm:text-lg"
+                className="mt-3 truncate text-base font-extrabold text-slate-950 sm:text-lg"
                 title={gestionActiva.tipoActividad}
               >
                 {gestionActiva.tipoActividad}
               </h2>
 
-              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-medium text-neutral-400">
+              <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-medium text-slate-600">
                 <span>{gestionActiva.modalidad.replaceAll("_", " ")}</span>
                 {gestionActiva.categoriaGestion && (
                   <span>{gestionActiva.categoriaGestion.nombre}</span>
@@ -147,13 +161,13 @@ export default function GestionWorkspacePanel({
             </>
           ) : (
             <>
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-neutral-500">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-slate-500">
                 Espacio de trabajo
               </p>
-              <h2 className="mt-2 text-base font-extrabold text-white">
+              <h2 className="mt-2 text-base font-extrabold text-slate-950">
                 No tienes una gestión en borrador
               </h2>
-              <p className="mt-1 text-xs leading-5 text-neutral-500">
+              <p className="mt-1 text-xs leading-5 text-slate-600">
                 Crea una visita, asesoría o jornada para registrar nuevas calificaciones.
               </p>
             </>
@@ -161,8 +175,8 @@ export default function GestionWorkspacePanel({
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-          <div className="rounded-2xl border border-neutral-800 bg-[#0b0c0d] p-3">
-            <p className="mb-2 text-[9px] font-extrabold uppercase tracking-[0.16em] text-neutral-500">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+            <p className="mb-2 text-[9px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
               Gestión
             </p>
             <div className="grid gap-2">
@@ -192,8 +206,8 @@ export default function GestionWorkspacePanel({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-neutral-800 bg-[#0b0c0d] p-3">
-            <p className="mb-2 text-[9px] font-extrabold uppercase tracking-[0.16em] text-neutral-500">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+            <p className="mb-2 text-[9px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
               Consulta y control
             </p>
             <div className="grid grid-cols-2 gap-2">
@@ -236,6 +250,13 @@ export default function GestionWorkspacePanel({
                 label="Historial"
                 onClick={onHistorial}
                 disabled={bloqueado}
+              />
+              <ActionButton
+                icon={<ClipboardCheck size={15} />}
+                label="No aplica / aprobaciones"
+                onClick={() => navigate(rutaControles)}
+                disabled={bloqueado}
+                className="col-span-2"
               />
             </div>
           </div>
