@@ -3,6 +3,11 @@ import type {
   ModalidadGestion,
 } from "../../../types/evaluacion.types";
 
+interface ActorGestionHistorial {
+  id: string | null;
+  nombre: string;
+}
+
 export interface GestionHistorialEvaluacion {
   id: string;
   fechaGestion: string;
@@ -15,6 +20,9 @@ export interface GestionHistorialEvaluacion {
   invalidadaEn: string | null;
   motivoInvalidacion: string | null;
   responsable: string;
+  creadaPor: ActorGestionHistorial;
+  liderAlCierre: ActorGestionHistorial;
+  finalizadaPor: ActorGestionHistorial | null;
   categoriaGestion: {
     id: number;
     codigo: string;

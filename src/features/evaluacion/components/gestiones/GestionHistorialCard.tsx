@@ -1,7 +1,9 @@
 import {
   Ban,
   CalendarDays,
+  CheckCircle2,
   ClipboardCheck,
+  Crown,
   Layers3,
   UserRound,
 } from "lucide-react";
@@ -88,11 +90,21 @@ export default function GestionHistorialCard({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <Fact
           icon={UserRound}
-          label="Responsable"
-          value={gestion.responsable}
+          label="Creada por"
+          value={gestion.creadaPor.nombre}
+        />
+        <Fact
+          icon={Crown}
+          label="Líder al cierre"
+          value={gestion.liderAlCierre.nombre}
+        />
+        <Fact
+          icon={CheckCircle2}
+          label="Finalizada por"
+          value={gestion.finalizadaPor?.nombre ?? "No disponible"}
         />
         <Fact
           icon={CalendarDays}
