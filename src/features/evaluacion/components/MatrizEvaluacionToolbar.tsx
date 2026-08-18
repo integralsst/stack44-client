@@ -101,6 +101,7 @@ export default function MatrizEvaluacionToolbar({
               </AppButton>
 
               <AppButton
+                data-action="finalizar"
                 size="sm"
                 variant="primary"
                 disabled={procesando}

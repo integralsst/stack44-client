@@ -42,12 +42,17 @@ import { useResultadosEvaluacion } from "../hooks/useResultadosEvaluacion";
 import { useRevisionesTecnicas } from "../hooks/useRevisionesTecnicas";
 import type { RevisionTecnicaEvaluacionItem } from "../types/revision-tecnica.types";
 
+type EtapaFinalizacion =
+  | "PREPARANDO"
+  | "FINALIZANDO"
+  | "ACTUALIZANDO"
+  | null;
+
 function enfocarAspectoEnMatriz(aspectoNombre: string) {
   const title = `Abrir detalle de ${aspectoNombre}`;
   const button = Array.from(
     document.querySelectorAll<HTMLButtonElement>("button[title]")
   ).find((item) => item.title === title);
-
   const row = button?.closest("tr");
 
   if (!row) return;
@@ -76,15 +81,22 @@ function enfocarAspectoEnMatriz(aspectoNombre: string) {
   }, 6000);
 }
 
+async function esperarPintadoInterfaz(): Promise<void> {
+  if (typeof window === "undefined") return;
+
+  await new Promise<void>((resolve) => {
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => resolve());
+    });
+  });
+}
+
 export default function EvaluacionEmpresaPage() {
   const { empresaId } = useParams<{ empresaId: string }>();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] =
-    useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { hasRole, user } = useAuth();
-  const anioSolicitado = Number(
-    searchParams.get("anio")
-  );
+  const anioSolicitado = Number(searchParams.get("anio"));
   const gestionIdSolicitada =
     searchParams.get("gestionId")?.trim() || null;
   const aspectoSolicitado =
@@ -97,8 +109,7 @@ export default function EvaluacionEmpresaPage() {
     searchParams.get("tareaId")
   );
   const detalleInicial =
-    searchParams.get("detalle")?.toUpperCase() ===
-    "EVIDENCIAS"
+    searchParams.get("detalle")?.toUpperCase() === "EVIDENCIAS"
       ? ("EVIDENCIAS" as const)
       : ("RESUMEN" as const);
   const anio =
@@ -109,12 +120,8 @@ export default function EvaluacionEmpresaPage() {
       : new Date().getFullYear();
 
   const cambiarAnio = (siguienteAnio: number) => {
-    const siguientesParametros =
-      new URLSearchParams(searchParams);
-    siguientesParametros.set(
-      "anio",
-      String(siguienteAnio)
-    );
+    const siguientesParametros = new URLSearchParams(searchParams);
+    siguientesParametros.set("anio", String(siguienteAnio));
     siguientesParametros.delete("gestionId");
     setSearchParams(siguientesParametros);
   };
@@ -122,8 +129,7 @@ export default function EvaluacionEmpresaPage() {
   const seleccionarGestion = (gestionId: string) => {
     if (!gestionId) return;
 
-    const siguientesParametros =
-      new URLSearchParams(searchParams);
+    const siguientesParametros = new URLSearchParams(searchParams);
     siguientesParametros.set("gestionId", gestionId);
     siguientesParametros.delete("aspecto");
     siguientesParametros.delete("compromiso");
@@ -132,27 +138,23 @@ export default function EvaluacionEmpresaPage() {
     setSearchParams(siguientesParametros);
   };
 
-  const [gestionModalOpen, setGestionModalOpen] =
-    useState(false);
-  const [equipoModalOpen, setEquipoModalOpen] =
-    useState(false);
-  const [historialModalOpen, setHistorialModalOpen] =
-    useState(false);
-  const [revisionesModalOpen, setRevisionesModalOpen] =
-    useState(false);
-  const [resultadosModalOpen, setResultadosModalOpen] =
-    useState(false);
-  const [informesModalOpen, setInformesModalOpen] =
-    useState(false);
-  const [tareaDetalleId, setTareaDetalleId] =
-    useState<number | null>(() =>
+  const [gestionModalOpen, setGestionModalOpen] = useState(false);
+  const [equipoModalOpen, setEquipoModalOpen] = useState(false);
+  const [historialModalOpen, setHistorialModalOpen] = useState(false);
+  const [revisionesModalOpen, setRevisionesModalOpen] = useState(false);
+  const [resultadosModalOpen, setResultadosModalOpen] = useState(false);
+  const [informesModalOpen, setInformesModalOpen] = useState(false);
+  const [tareaDetalleId, setTareaDetalleId] = useState<number | null>(
+    () =>
       Number.isInteger(tareaDetalleSolicitada) &&
       tareaDetalleSolicitada > 0
         ? tareaDetalleSolicitada
         : null
-    );
+  );
   const [revisionCorreccion, setRevisionCorreccion] =
     useState<RevisionTecnicaEvaluacionItem | null>(null);
+  const [etapaFinalizacion, setEtapaFinalizacion] =
+    useState<EtapaFinalizacion>(null);
 
   const {
     contexto,
@@ -169,8 +171,7 @@ export default function EvaluacionEmpresaPage() {
     gestionIdSolicitada
   );
 
-  const finalizacionCompromisos =
-    usePreparacionFinalizacion();
+  const finalizacionCompromisos = usePreparacionFinalizacion();
 
   const cambiandoBorrador = Boolean(
     contexto &&
@@ -178,12 +179,7 @@ export default function EvaluacionEmpresaPage() {
       gestionIdSolicitada &&
       gestionIdSolicitada !== contexto.gestionActiva?.id
   );
-  const preparandoFinalizacion =
-    finalizacionCompromisos.cargando;
-  const finalizandoGestion =
-    finalizacionCompromisos.finalizando;
-  const transicionFinalizacion =
-    preparandoFinalizacion || finalizandoGestion;
+  const transicionFinalizacion = etapaFinalizacion !== null;
   const interfazBloqueada =
     procesando || cambiandoBorrador || transicionFinalizacion;
 
@@ -194,7 +190,6 @@ export default function EvaluacionEmpresaPage() {
     "OWNER",
     "SUPERADMIN"
   );
-
   const esAdministradorEvaluacion = hasRole(
     "ADMIN",
     "OWNER",
@@ -215,7 +210,6 @@ export default function EvaluacionEmpresaPage() {
       (esAdministradorEvaluacion ||
         contexto.gestionActiva.participacionActual?.puedeEvaluar)
   );
-
   const puedeFinalizarGestionActiva = Boolean(
     contexto?.gestionActiva &&
       (esAdministradorEvaluacion ||
@@ -233,13 +227,11 @@ export default function EvaluacionEmpresaPage() {
   const revisiones = useRevisionesTecnicas(
     puedeVerRevisiones ? contexto?.periodo?.id : null
   );
-
   const resultados = useResultadosEvaluacion(
     empresaId,
     anio,
     resultadosModalOpen && Boolean(contexto?.periodo)
   );
-
   const informes = useInformesPeriodo(
     empresaId,
     anio,
@@ -248,7 +240,10 @@ export default function EvaluacionEmpresaPage() {
 
   const recargarDespuesDeFinalizar = async () => {
     await Promise.all([
-      recargar({ gestionId: null }),
+      recargar({
+        gestionId: null,
+        mostrarCarga: false,
+      }),
       revisiones.recargar(),
       resultados.recargar(),
     ]);
@@ -265,26 +260,33 @@ export default function EvaluacionEmpresaPage() {
       );
     }
 
-    await finalizacionCompromisos.finalizar(
-      gestionId,
-      {
-        compromisos,
-      }
-    );
+    setEtapaFinalizacion("FINALIZANDO");
 
-    const siguientesParametros =
-      new URLSearchParams(searchParams);
-    siguientesParametros.delete("gestionId");
-    siguientesParametros.delete("compromiso");
-    siguientesParametros.delete("aspecto");
-    siguientesParametros.delete("tareaId");
-    siguientesParametros.delete("detalle");
-    setSearchParams(siguientesParametros, {
-      replace: true,
-    });
+    try {
+      await finalizacionCompromisos.finalizar(
+        gestionId,
+        { compromisos }
+      );
 
-    await recargarDespuesDeFinalizar();
-    notificarCambioCompromisos();
+      setEtapaFinalizacion("ACTUALIZANDO");
+      await recargarDespuesDeFinalizar();
+
+      const siguientesParametros =
+        new URLSearchParams(searchParams);
+      siguientesParametros.delete("gestionId");
+      siguientesParametros.delete("compromiso");
+      siguientesParametros.delete("aspecto");
+      siguientesParametros.delete("tareaId");
+      siguientesParametros.delete("detalle");
+      setSearchParams(siguientesParametros, {
+        replace: true,
+      });
+
+      notificarCambioCompromisos();
+      await esperarPintadoInterfaz();
+    } finally {
+      setEtapaFinalizacion(null);
+    }
   };
 
   const prepararFinalizacion = async () => {
@@ -302,23 +304,32 @@ export default function EvaluacionEmpresaPage() {
       );
     }
 
-    const preparacion =
-      await finalizacionCompromisos.cargar(gestionId);
+    setEtapaFinalizacion("PREPARANDO");
 
-    if (!preparacion) {
-      throw new Error(
-        "No fue posible preparar la finalización."
-      );
-    }
+    try {
+      const preparacion =
+        await finalizacionCompromisos.cargar(gestionId);
 
-    if (preparacion.totalNuevos === 0) {
-      await completarFinalizacion([]);
+      if (!preparacion) {
+        throw new Error(
+          "No fue posible preparar la finalización."
+        );
+      }
+
+      if (preparacion.totalNuevos === 0) {
+        await completarFinalizacion([]);
+        return;
+      }
+
+      setEtapaFinalizacion(null);
+    } catch (currentError) {
+      setEtapaFinalizacion(null);
+      throw currentError;
     }
   };
 
   const recargarDespuesDeInvalidar = async () => {
-    const siguientesParametros =
-      new URLSearchParams(searchParams);
+    const siguientesParametros = new URLSearchParams(searchParams);
     siguientesParametros.delete("gestionId");
     setSearchParams(siguientesParametros, {
       replace: true,
@@ -336,11 +347,9 @@ export default function EvaluacionEmpresaPage() {
     data: CrearGestionInput
   ): Promise<void> => {
     const creada = await crearGestion(data);
-
     if (!creada?.id) return;
 
-    const siguientesParametros =
-      new URLSearchParams(searchParams);
+    const siguientesParametros = new URLSearchParams(searchParams);
     siguientesParametros.set("gestionId", creada.id);
     siguientesParametros.delete("aspecto");
     siguientesParametros.delete("compromiso");
@@ -371,15 +380,11 @@ export default function EvaluacionEmpresaPage() {
   );
 
   useEffect(() => {
-    if (
-      !contexto?.gestionActiva ||
-      gestionIdSolicitada
-    ) {
+    if (!contexto?.gestionActiva || gestionIdSolicitada) {
       return;
     }
 
-    const siguientesParametros =
-      new URLSearchParams(searchParams);
+    const siguientesParametros = new URLSearchParams(searchParams);
     siguientesParametros.set(
       "gestionId",
       contexto.gestionActiva.id
@@ -395,9 +400,7 @@ export default function EvaluacionEmpresaPage() {
   ]);
 
   useEffect(() => {
-    if (!contexto?.periodo || !aspectoSolicitado) {
-      return;
-    }
+    if (!contexto?.periodo || !aspectoSolicitado) return;
 
     const timer = window.setTimeout(() => {
       enfocarAspectoEnMatriz(aspectoSolicitado);
@@ -411,9 +414,7 @@ export default function EvaluacionEmpresaPage() {
   ]);
 
   useEffect(() => {
-    if (!contexto?.gestionActiva || !revisionCorreccion) {
-      return;
-    }
+    if (!contexto?.gestionActiva || !revisionCorreccion) return;
 
     const timer = window.setTimeout(() => {
       enfocarAspectoEnMatriz(
@@ -434,9 +435,7 @@ export default function EvaluacionEmpresaPage() {
         <AppAlert
           tone="error"
           title="No fue posible abrir la evaluación"
-          description={
-            error ?? "La empresa no está disponible."
-          }
+          description={error ?? "La empresa no está disponible."}
         >
           <button
             type="button"
@@ -456,6 +455,19 @@ export default function EvaluacionEmpresaPage() {
     revisiones.data?.resumen.pendientes ?? 0;
   const enCorreccion =
     revisiones.data?.resumen.enCorreccion ?? 0;
+
+  const tituloTransicion =
+    etapaFinalizacion === "FINALIZANDO"
+      ? "Finalizando gestión"
+      : etapaFinalizacion === "ACTUALIZANDO"
+        ? "Actualizando evaluación"
+        : "Preparando finalización";
+  const descripcionTransicion =
+    etapaFinalizacion === "FINALIZANDO"
+      ? "Estamos consolidando evaluaciones, compromisos y trazabilidad. No cierres esta ventana hasta terminar."
+      : etapaFinalizacion === "ACTUALIZANDO"
+        ? "El cierre ya fue registrado. Estamos actualizando el borrador activo, resultados y acciones para mostrarte el estado final correcto."
+        : "Estamos verificando si esta gestión requiere compromisos antes de completar el cierre.";
 
   return (
     <div className="flex min-h-full w-full min-w-0 max-w-none flex-col gap-3 pb-6">
@@ -535,11 +547,9 @@ export default function EvaluacionEmpresaPage() {
           <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-300">
             <ClipboardCheck size={21} />
           </div>
-
           <h2 className="mt-4 text-lg font-bold text-white">
             El periodo {anio} todavía no está abierto
           </h2>
-
           <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-neutral-400">
             Al abrirlo se fijará la versión de la Supermatriz que se utilizará para todas las evaluaciones históricas de este año.
           </p>
@@ -552,7 +562,6 @@ export default function EvaluacionEmpresaPage() {
                   {contexto.versionDisponible.nombre}
                 </strong>
               </p>
-
               {puedeEvaluar && (
                 <button
                   type="button"
@@ -561,10 +570,7 @@ export default function EvaluacionEmpresaPage() {
                   className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-black transition hover:bg-neutral-200 disabled:opacity-50"
                 >
                   {procesando ? (
-                    <AppSpinner
-                      size="sm"
-                      className="text-black"
-                    />
+                    <AppSpinner size="sm" className="text-black" />
                   ) : (
                     <Plus size={17} />
                   )}
@@ -655,25 +661,32 @@ export default function EvaluacionEmpresaPage() {
             />
           )}
 
-          <MatrizEvaluacion
-            filas={contexto.filas}
-            gestionActiva={puedeEditarGestionActiva}
-            procesando={interfazBloqueada}
-            onGuardar={guardar}
-            onFinalizar={prepararFinalizacion}
-            onAbrirDetalle={(fila) =>
-              setTareaDetalleId(fila.tareaId)
+          <div
+            className={
+              puedeFinalizarGestionActiva
+                ? undefined
+                : "matriz-sin-finalizacion"
             }
-          />
+          >
+            <MatrizEvaluacion
+              filas={contexto.filas}
+              gestionActiva={puedeEditarGestionActiva}
+              procesando={interfazBloqueada}
+              onGuardar={guardar}
+              onFinalizar={prepararFinalizacion}
+              onAbrirDetalle={(fila) =>
+                setTareaDetalleId(fila.tareaId)
+              }
+            />
+          </div>
+          <style>{`.matriz-sin-finalizacion [data-action="finalizar"] { display: none !important; }`}</style>
         </>
       )}
 
       {finalizacionCompromisos.preparacion &&
         finalizacionCompromisos.preparacion.totalNuevos > 0 && (
           <CompromisosFinalizacionModal
-            preparacion={
-              finalizacionCompromisos.preparacion
-            }
+            preparacion={finalizacionCompromisos.preparacion}
             busy={finalizacionCompromisos.finalizando}
             error={finalizacionCompromisos.error}
             onClose={finalizacionCompromisos.limpiar}
@@ -823,7 +836,7 @@ export default function EvaluacionEmpresaPage() {
       )}
 
       <DetalleAspectoDrawer
-        key={`${tareaDetalleId ?? "closed"}:${detalleInicial}`}
+        key={`${contexto.gestionActiva?.id ?? "sin-gestion"}:${tareaDetalleId ?? "closed"}:${detalleInicial}`}
         open={tareaDetalleId !== null}
         empresaId={empresaId}
         tareaId={tareaDetalleId}
@@ -855,16 +868,8 @@ export default function EvaluacionEmpresaPage() {
 
       <EvaluacionTransitionOverlay
         open={!cambiandoBorrador && transicionFinalizacion}
-        title={
-          finalizandoGestion
-            ? "Finalizando gestión"
-            : "Preparando finalización"
-        }
-        description={
-          finalizandoGestion
-            ? "Estamos consolidando evaluaciones, compromisos y trazabilidad. No cierres esta ventana hasta terminar."
-            : "Estamos verificando si esta gestión requiere compromisos antes de completar el cierre."
-        }
+        title={tituloTransicion}
+        description={descripcionTransicion}
       />
     </div>
   );
