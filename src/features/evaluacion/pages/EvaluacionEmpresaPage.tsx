@@ -40,13 +40,25 @@ import { useEvaluacionEmpresa } from "../hooks/useEvaluacionEmpresa";
 import { useInformesPeriodo } from "../hooks/useInformesPeriodo";
 import { useResultadosEvaluacion } from "../hooks/useResultadosEvaluacion";
 import { useRevisionesTecnicas } from "../hooks/useRevisionesTecnicas";
-import type { RevisionTecnicaEvaluacionItem } from "../types/revision-tecnica.types";
+import type {
+  EstadoFlujoRevisionTecnica,
+  RevisionTecnicaEvaluacionItem,
+} from "../types/revision-tecnica.types";
 
 type EtapaFinalizacion =
   | "PREPARANDO"
   | "FINALIZANDO"
   | "ACTUALIZANDO"
   | null;
+
+const ESTADOS_FLUJO_REVISION = new Set<EstadoFlujoRevisionTecnica>([
+  "PENDIENTE",
+  "APROBADA",
+  "REQUIERE_AJUSTES",
+  "ANULADA",
+  "EN_CORRECCION",
+  "SUBSANADA",
+]);
 
 function enfocarAspectoEnMatriz(aspectoNombre: string) {
   const title = `Abrir detalle de ${aspectoNombre}`;
@@ -105,6 +117,19 @@ export default function EvaluacionEmpresaPage() {
     searchParams.get("compromiso")?.trim() || null;
   const aspectoParaRecalificar =
     compromisoParaRecalificar ? aspectoSolicitado : null;
+  const revisionesSolicitadas =
+    searchParams.get("revisiones") === "1";
+  const revisionIdSolicitada =
+    searchParams.get("revisionId")?.trim() || null;
+  const revisionEstadoCrudo =
+    searchParams.get("revisionEstado")?.trim() || null;
+  const revisionEstadoSolicitado =
+    revisionEstadoCrudo &&
+    ESTADOS_FLUJO_REVISION.has(
+      revisionEstadoCrudo as EstadoFlujoRevisionTecnica
+    )
+      ? (revisionEstadoCrudo as EstadoFlujoRevisionTecnica)
+      : undefined;
   const tareaDetalleSolicitada = Number(
     searchParams.get("tareaId")
   );
@@ -343,6 +368,26 @@ export default function EvaluacionEmpresaPage() {
     notificarCambioCompromisos();
   };
 
+  const cerrarRevisiones = useCallback(() => {
+    setRevisionesModalOpen(false);
+
+    if (
+      !searchParams.has("revisiones") &&
+      !searchParams.has("revisionEstado") &&
+      !searchParams.has("revisionId")
+    ) {
+      return;
+    }
+
+    const siguientesParametros = new URLSearchParams(searchParams);
+    siguientesParametros.delete("revisiones");
+    siguientesParametros.delete("revisionEstado");
+    siguientesParametros.delete("revisionId");
+    setSearchParams(siguientesParametros, {
+      replace: true,
+    });
+  }, [searchParams, setSearchParams]);
+
   const crearGestionYSeleccionar = async (
     data: CrearGestionInput
   ): Promise<void> => {
@@ -351,10 +396,22 @@ export default function EvaluacionEmpresaPage() {
 
     const siguientesParametros = new URLSearchParams(searchParams);
     siguientesParametros.set("gestionId", creada.id);
-    siguientesParametros.delete("aspecto");
     siguientesParametros.delete("compromiso");
     siguientesParametros.delete("tareaId");
     siguientesParametros.delete("detalle");
+    siguientesParametros.delete("revisiones");
+    siguientesParametros.delete("revisionEstado");
+    siguientesParametros.delete("revisionId");
+
+    if (revisionCorreccion) {
+      siguientesParametros.set(
+        "aspecto",
+        revisionCorreccion.evaluacion.aspecto.nombre
+      );
+    } else {
+      siguientesParametros.delete("aspecto");
+    }
+
     setSearchParams(siguientesParametros, {
       replace: true,
     });
@@ -365,19 +422,61 @@ export default function EvaluacionEmpresaPage() {
       setRevisionCorreccion(revision);
       setRevisionesModalOpen(false);
 
-      if (!contexto?.gestionActiva) {
-        setGestionModalOpen(true);
+      const siguientesParametros = new URLSearchParams(searchParams);
+      siguientesParametros.delete("revisiones");
+      siguientesParametros.delete("revisionEstado");
+      siguientesParametros.delete("revisionId");
+
+      if (
+        revision.gestionCorreccion?.estado === "BORRADOR"
+      ) {
+        siguientesParametros.set(
+          "gestionId",
+          revision.gestionCorreccion.id
+        );
+        siguientesParametros.set(
+          "aspecto",
+          revision.evaluacion.aspecto.nombre
+        );
+        siguientesParametros.delete("compromiso");
+        siguientesParametros.delete("tareaId");
+        siguientesParametros.delete("detalle");
+        setSearchParams(siguientesParametros, {
+          replace: true,
+        });
         return;
       }
 
-      window.setTimeout(() => {
-        enfocarAspectoEnMatriz(
-          revision.evaluacion.aspecto.nombre
-        );
-      }, 200);
+      if (
+        searchParams.has("revisiones") ||
+        searchParams.has("revisionEstado") ||
+        searchParams.has("revisionId")
+      ) {
+        setSearchParams(siguientesParametros, {
+          replace: true,
+        });
+      }
+
+      setGestionModalOpen(true);
     },
-    [contexto?.gestionActiva]
+    [searchParams, setSearchParams]
   );
+
+  useEffect(() => {
+    if (
+      !contexto?.periodo ||
+      !puedeVerRevisiones ||
+      !revisionesSolicitadas
+    ) {
+      return;
+    }
+
+    setRevisionesModalOpen(true);
+  }, [
+    contexto?.periodo,
+    puedeVerRevisiones,
+    revisionesSolicitadas,
+  ]);
 
   useEffect(() => {
     if (!contexto?.gestionActiva || gestionIdSolicitada) {
@@ -721,6 +820,7 @@ export default function EvaluacionEmpresaPage() {
         correctionContext={
           revisionCorreccion
             ? {
+                revisionId: revisionCorreccion.id,
                 aspectoNombre:
                   revisionCorreccion.evaluacion.aspecto.nombre,
                 conceptoTecnico:
@@ -816,7 +916,7 @@ export default function EvaluacionEmpresaPage() {
           description={`Consulta, resuelve y corrige las evaluaciones de ${contexto.empresa.nombre} que requieren validación técnica.`}
           onClose={() => {
             if (!revisiones.procesando) {
-              setRevisionesModalOpen(false);
+              cerrarRevisiones();
             }
           }}
           busy={revisiones.procesando}
@@ -827,6 +927,8 @@ export default function EvaluacionEmpresaPage() {
             cargando={revisiones.cargando}
             procesando={revisiones.procesando}
             error={revisiones.error}
+            initialFilter={revisionEstadoSolicitado}
+            initialRevisionId={revisionIdSolicitada}
             onReload={revisiones.recargar}
             onResolve={revisiones.resolver}
             onCorregir={enfocarRevision}
