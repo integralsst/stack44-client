@@ -2,14 +2,12 @@ import {
   ArrowLeft,
   Building2,
   CalendarDays,
-  ClipboardCheck,
   MapPin,
   ShieldCheck,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 
+import AppDropdownSelect from "../../../components/ui/AppDropdownSelect";
 import AppIconButton from "../../../components/ui/AppIconButton";
-import AppSelect from "../../../components/ui/AppSelect";
 import type {
   EmpresaEvaluacion,
   PeriodoEvaluacion,
@@ -35,8 +33,13 @@ export default function EvaluacionEmpresaHeader({
     { length: 8 },
     (_, index) => currentYear - 4 + index
   );
-
   const periodoAbierto = periodo?.estado === "ABIERTO";
+  const opcionesPeriodo = years.map((year) => ({
+    value: String(year),
+    label: String(year),
+    description:
+      year === currentYear ? "Periodo actual" : "Periodo de evaluación",
+  }));
 
   return (
     <header className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
@@ -80,71 +83,47 @@ export default function EvaluacionEmpresaHeader({
           </div>
         </div>
 
-        <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 xl:w-auto xl:min-w-[430px]">
-          <label className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+        <div className="w-full rounded-2xl border border-slate-200 bg-slate-50/80 p-3 xl:w-[360px]">
+          <div className="flex items-center justify-between gap-3">
             <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600">
               <CalendarDays size={12} />
-              Periodo
+              Periodo de evaluación
             </span>
 
-            <AppSelect
-              value={anio}
-              onChange={(event) =>
-                onAnioChange(Number(event.target.value))
-              }
-              selectSize="sm"
-              containerClassName="mt-1"
-              className="border-transparent bg-white px-2 pr-8 font-semibold text-slate-900 hover:border-slate-300 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/10"
-              aria-label="Seleccionar periodo"
+            <span
+              className={`shrink-0 rounded-full border px-2 py-1 text-[9px] font-extrabold uppercase tracking-wide ${
+                periodoAbierto
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : periodo
+                    ? "border-slate-200 bg-white text-slate-600"
+                    : "border-amber-200 bg-amber-50 text-amber-700"
+              }`}
+              title="Estado del periodo"
             >
-              {years.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </AppSelect>
-          </label>
-
-          <div className="min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
-              Estado del periodo
-            </p>
-
-            <div className="mt-1 flex min-w-0 items-center gap-2">
-              <span
-                className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-bold ${
-                  periodoAbierto
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                    : periodo
-                      ? "border-slate-200 bg-white text-slate-700"
-                      : "border-amber-200 bg-amber-50 text-amber-800"
-                }`}
-              >
-                {periodo?.estado ?? "SIN ABRIR"}
-              </span>
-
-              <span
-                className="min-w-0 truncate text-[11px] text-slate-600"
-                title={
-                  periodo?.versionSupermatriz.nombre ??
-                  "Sin versión asignada"
-                }
-              >
-                {periodo?.versionSupermatriz.nombre ??
-                  "Sin versión asignada"}
-              </span>
-            </div>
+              {periodo?.estado ?? "Sin abrir"}
+            </span>
           </div>
 
-          {periodo && (
-            <Link
-              to={`/dashboard/empresas/${empresa.id}/evaluacion/controles?anio=${anio}`}
-              className="flex items-center justify-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2.5 text-sm font-bold text-cyan-800 transition hover:border-cyan-300 hover:bg-cyan-100 sm:col-span-2"
-            >
-              <ClipboardCheck size={16} />
-              No aplica y aprobaciones de gestión
-            </Link>
-          )}
+          <AppDropdownSelect
+            value={String(anio)}
+            options={opcionesPeriodo}
+            onChange={(value) => onAnioChange(Number(value))}
+            ariaLabel="Seleccionar periodo"
+            size="sm"
+            theme="light"
+            className="mt-2"
+          />
+
+          <p
+            className="mt-2 truncate text-[10px] font-medium text-slate-500"
+            title={
+              periodo?.versionSupermatriz.nombre ??
+              "Sin versión asignada"
+            }
+          >
+            {periodo?.versionSupermatriz.nombre ??
+              "Sin versión de Supermatriz asignada"}
+          </p>
         </div>
       </div>
     </header>

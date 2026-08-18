@@ -42,24 +42,24 @@ export default function SelectorGestionesBorrador({
         : ""
     }`,
     leadingIcon: gestion.participacionActual?.esLider ? (
-      <ShieldCheck size={15} className="text-emerald-400" />
+      <ShieldCheck size={15} className="text-emerald-600" />
     ) : (
-      <UserRound size={15} className="text-cyan-400" />
+      <UserRound size={15} className="text-cyan-700" />
     ),
   }));
 
   return (
-    <div className="rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/[0.08] via-[#101112] to-[#101112] p-3 shadow-lg shadow-black/10 sm:p-4">
+    <div className="rounded-2xl border border-cyan-200 bg-cyan-50/60 p-3 sm:p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
         <div className="flex min-w-0 flex-1 items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-500/20 bg-[#08090a] text-cyan-300 shadow-inner">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-200 bg-white text-cyan-700 shadow-sm">
             <Layers3 size={18} />
           </div>
           <div className="min-w-0">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-cyan-300">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-cyan-800">
               Borrador de trabajo
             </p>
-            <p className="mt-1 text-[11px] leading-5 text-neutral-400">
+            <p className="mt-1 text-[11px] leading-5 text-slate-600">
               {gestiones.length} gestiones disponibles. Cada borrador conserva sus evaluaciones y equipo de forma independiente.
             </p>
           </div>
@@ -73,7 +73,7 @@ export default function SelectorGestionesBorrador({
           disabled={disabled}
           loading={loading}
           loadingLabel="Cambiando de borrador…"
-          theme="dark"
+          theme="light"
           className="w-full lg:w-[420px]"
         />
       </div>
