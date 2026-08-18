@@ -347,6 +347,9 @@ export interface CrearGestionInput {
   categoriaGestionId?:
     | number
     | null;
+  revisionTecnicaOrigenId?:
+    | string
+    | null;
 }
 
 export interface BorradorEvaluacionAspecto {

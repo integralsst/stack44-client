@@ -8,6 +8,7 @@ import {
   Wrench,
 } from "lucide-react";
 import {
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -31,6 +32,7 @@ interface Props {
   procesando: boolean;
   error: string | null;
   initialFilter?: EstadoFlujoRevisionTecnica;
+  initialRevisionId?: string | null;
   onReload: () => Promise<void> | void;
   onResolve: (
     revisionId: string,
@@ -54,6 +56,7 @@ export default function RevisionesTecnicasPeriodo({
   procesando,
   error,
   initialFilter,
+  initialRevisionId = null,
   onReload,
   onResolve,
   onCorregir,
@@ -68,6 +71,34 @@ export default function RevisionesTecnicasPeriodo({
     title: string;
     description: string;
   } | null>(null);
+
+  useEffect(() => {
+    if (initialFilter) {
+      setFiltro(initialFilter);
+    }
+  }, [initialFilter]);
+
+  useEffect(() => {
+    if (!initialRevisionId || cargando || !data) return;
+
+    const revision = data.revisiones.find(
+      (item) => item.id === initialRevisionId
+    );
+    if (!revision) return;
+
+    setFiltro(revision.estadoFlujo);
+
+    const timer = window.setTimeout(() => {
+      document
+        .getElementById(`revision-tecnica-${initialRevisionId}`)
+        ?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [cargando, data, initialRevisionId]);
 
   const revisiones = useMemo(() => {
     const items = data?.revisiones ?? [];
@@ -213,6 +244,7 @@ export default function RevisionesTecnicasPeriodo({
               <RevisionTecnicaCard
                 key={revision.id}
                 revision={revision}
+                highlighted={revision.id === initialRevisionId}
                 onResolver={setSeleccionada}
                 onCorregir={onCorregir}
               />

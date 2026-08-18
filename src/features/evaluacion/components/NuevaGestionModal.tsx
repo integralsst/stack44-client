@@ -19,6 +19,7 @@ interface Props {
   categorias: CategoriaGestionEvaluacion[];
   initialValues?: Partial<CrearGestionInput> | null;
   correctionContext?: {
+    revisionId: string;
     aspectoNombre: string;
     conceptoTecnico: string | null;
   } | null;
@@ -105,6 +106,8 @@ export default function NuevaGestionModal({
           : null,
         observacionGeneral:
           observacionGeneral.trim() || null,
+        revisionTecnicaOrigenId:
+          correctionContext?.revisionId ?? null,
       });
       onClose();
     } catch (currentError) {
@@ -180,6 +183,9 @@ export default function NuevaGestionModal({
             <p className="mt-2 text-sm leading-6 text-slate-700">
               {correctionContext.conceptoTecnico ||
                 "El revisor solicitó una nueva evaluación del aspecto."}
+            </p>
+            <p className="mt-3 text-xs leading-5 text-red-700/80">
+              Esta gestión quedará vinculada exclusivamente a esta revisión técnica. Otro borrador abierto no se utilizará como corrección.
             </p>
           </div>
         )}
