@@ -136,6 +136,9 @@ function DetalleEvaluacion({
   const esSolicitudNoAplica =
     tipo === "NO_APLICA" &&
     evento.id.startsWith("NO_APLICA_SOLICITUD:");
+  const esEvaluacionNoAplica =
+    tipo === "EVALUACION" &&
+    evaluacion.estadoCumplimiento === "NO_APLICA";
   const efectiva = esSolicitudNoAplica
     ? 3
     : item.calificacionEfectiva ??
@@ -155,10 +158,17 @@ function DetalleEvaluacion({
           value={evaluacion.gestion.profesional}
           icon={<UserRound size={12} />}
         />
-        <MiniDato
-          label="Nota efectiva"
-          value={String(efectiva)}
-        />
+        {esEvaluacionNoAplica ? (
+          <MiniDato
+            label="Estado registrado"
+            value="No aplica"
+          />
+        ) : (
+          <MiniDato
+            label="Nota efectiva"
+            value={String(efectiva)}
+          />
+        )}
         <MiniDato
           label="Nota registrada"
           value={String(registrada)}
@@ -227,7 +237,9 @@ function DetalleEvaluacion({
         tipo === "EVALUACION" && (
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
             <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
-              Observación
+              {esEvaluacionNoAplica
+                ? "Justificación No aplica"
+                : "Observación"}
             </p>
             <p className="mt-1 whitespace-pre-wrap text-xs leading-5 text-slate-700">
               {evaluacion.observacion ??
