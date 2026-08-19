@@ -69,6 +69,7 @@ export default function DetalleEventoTrazabilidad({
       <DetalleEvaluacion
         evaluacion={evaluacion}
         tipo={evento.tipo}
+        evento={evento}
       />
     );
   }
@@ -122,17 +123,23 @@ function DetalleAuditoria({
 function DetalleEvaluacion({
   evaluacion,
   tipo,
+  evento,
 }: {
   evaluacion: HistorialAspectoItem;
   tipo: EventoTrazabilidadAspecto["tipo"];
+  evento: EventoTrazabilidadAspecto;
 }) {
   const item = evaluacion as HistorialConResultadoEfectivo;
   const registrada =
     item.calificacionRegistrada ??
     evaluacion.calificacionAdministrativa;
-  const efectiva =
-    item.calificacionEfectiva ??
-    evaluacion.calificacionAdministrativa;
+  const esSolicitudNoAplica =
+    tipo === "NO_APLICA" &&
+    evento.id.startsWith("NO_APLICA_SOLICITUD:");
+  const efectiva = esSolicitudNoAplica
+    ? 3
+    : item.calificacionEfectiva ??
+      evaluacion.calificacionAdministrativa;
   const decisionNoAplica = item.decisionNoAplica ?? null;
   const aprobacion = item.aprobacionGestion ?? null;
 
@@ -158,26 +165,47 @@ function DetalleEvaluacion({
         />
       </div>
 
-      {tipo === "NO_APLICA" && decisionNoAplica && (
+      {tipo === "NO_APLICA" && esSolicitudNoAplica && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
           <p className="text-[9px] font-bold uppercase tracking-wider text-amber-800">
-            Decisión de No aplica
+            Solicitud de No aplica
           </p>
           <p className="mt-1 text-xs font-semibold text-amber-950">
-            {decisionNoAplicaLabel(decisionNoAplica.estado)} · efectivo {decisionNoAplica.resultadoEfectivo}
+            Pendiente · efectivo 3
           </p>
           {evaluacion.justificacionNoAplica && (
             <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-amber-950/80">
               Justificación: {evaluacion.justificacionNoAplica}
             </p>
           )}
-          {decisionNoAplica.observacionDecision && (
-            <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-amber-950/80">
-              Decisión: {decisionNoAplica.observacionDecision}
-            </p>
-          )}
+          <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-amber-950/80">
+            En este momento todavía no existía una decisión de Coordinación.
+          </p>
         </div>
       )}
+
+      {tipo === "NO_APLICA" &&
+        !esSolicitudNoAplica &&
+        decisionNoAplica && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+            <p className="text-[9px] font-bold uppercase tracking-wider text-amber-800">
+              Decisión de No aplica
+            </p>
+            <p className="mt-1 text-xs font-semibold text-amber-950">
+              {decisionNoAplicaLabel(decisionNoAplica.estado)} · efectivo {decisionNoAplica.resultadoEfectivo}
+            </p>
+            {evaluacion.justificacionNoAplica && (
+              <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-amber-950/80">
+                Justificación: {evaluacion.justificacionNoAplica}
+              </p>
+            )}
+            {decisionNoAplica.observacionDecision && (
+              <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-amber-950/80">
+                Decisión: {decisionNoAplica.observacionDecision}
+              </p>
+            )}
+          </div>
+        )}
 
       {tipo === "APROBACION_GESTION" && aprobacion && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
