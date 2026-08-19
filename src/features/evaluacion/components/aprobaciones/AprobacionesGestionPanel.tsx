@@ -46,7 +46,9 @@ function Estado({ item }: { item: AprobacionGestionItem }) {
   }[item.estado];
 
   return (
-    <span className={`rounded-full border px-2 py-1 text-[10px] font-bold ${classes}`}>
+    <span
+      className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-2 py-1 text-[10px] font-bold leading-none ${classes}`}
+    >
       {item.estado}
     </span>
   );
@@ -112,7 +114,7 @@ export default function AprobacionesGestionPanel({
             </div>
 
             {item.gestion.observacionGeneral && (
-              <p className="mt-3 rounded-xl border border-neutral-800 bg-[#0b0c0d] p-3 text-xs leading-5 text-neutral-300">
+              <p className="mt-3 rounded-xl border border-neutral-800 bg-[#0b0c00d] p-3 text-xs leading-5 text-neutral-300">
                 {item.gestion.observacionGeneral}
               </p>
             )}
