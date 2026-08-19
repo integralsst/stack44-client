@@ -123,6 +123,28 @@ function configTipo(tipo: TipoEventoTrazabilidadAspecto) {
   };
 }
 
+function descripcionHistoricaEvento(
+  evento: EventoTrazabilidadAspecto,
+  data: DetalleAspectoConTrazabilidad
+): string {
+  if (
+    evento.tipo !== "EVALUACION" ||
+    !evento.referencia.evaluacionId
+  ) {
+    return evento.descripcion;
+  }
+
+  const evaluacion = data.historial.find(
+    (item) => item.id === evento.referencia.evaluacionId
+  );
+
+  if (evaluacion?.estadoCumplimiento !== "NO_APLICA") {
+    return evento.descripcion;
+  }
+
+  return `No aplica · Nota registrada ${evaluacion.calificacionAdministrativa}.`;
+}
+
 export default function TrazabilidadAspectoTimeline({
   data,
   onOpenRevisionTecnica,
@@ -223,6 +245,10 @@ export default function TrazabilidadAspectoTimeline({
             const config = configTipo(evento.tipo);
             const Icon = config.icon;
             const abierto = eventoAbiertoId === evento.id;
+            const descripcion = descripcionHistoricaEvento(
+              evento,
+              data
+            );
 
             const summary = (
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -244,7 +270,7 @@ export default function TrazabilidadAspectoTimeline({
                     {evento.titulo}
                   </h4>
                   <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-xs leading-5 text-slate-600">
-                    {evento.descripcion}
+                    {descripcion}
                   </p>
                 </div>
 
