@@ -554,6 +554,14 @@ export default function EvaluacionEmpresaPage() {
     revisiones.data?.resumen.pendientes ?? 0;
   const enCorreccion =
     revisiones.data?.resumen.enCorreccion ?? 0;
+  const correccionesTecnicasGestionActiva = contexto.gestionActiva
+    ? (revisiones.data?.revisiones ?? []).filter(
+        (revision) =>
+          revision.estadoFlujo === "EN_CORRECCION" &&
+          revision.gestionCorreccion?.estado === "BORRADOR" &&
+          revision.gestionCorreccion.id === contexto.gestionActiva?.id
+      )
+    : [];
 
   const tituloTransicion =
     etapaFinalizacion === "FINALIZANDO"
@@ -754,13 +762,122 @@ export default function EvaluacionEmpresaPage() {
             </div>
           )}
 
-          {enCorreccion > 0 && ajustesActivos === 0 && (
-            <AppAlert
-              tone="info"
-              title={`${enCorreccion} revisión(es) están en corrección`}
-              description="Finaliza la nueva evaluación para que dejen de aparecer como una acción activa y queden registradas como subsanadas."
-            />
+          {correccionesTecnicasGestionActiva.length > 0 && (
+            <section className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4 shadow-sm">
+              <div className="flex min-w-0 gap-3">
+                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-100 text-cyan-800">
+                  <Wrench size={18} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-cyan-950">
+                    {correccionesTecnicasGestionActiva.length === 1
+                      ? "Corrección técnica activa"
+                      : `${correccionesTecnicasGestionActiva.length} correcciones técnicas activas`}
+                  </p>
+                  <p className="mt-1 text-sm leading-5 text-slate-700">
+                    Esta gestión está vinculada a la revisión técnica que originó la corrección. Trabaja sobre el aspecto indicado y conserva el concepto como guía.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 space-y-3">
+                {correccionesTecnicasGestionActiva.map(
+                  (revision, index) => (
+                    <article
+                      key={revision.id}
+                      className="rounded-xl border border-cyan-200 bg-white p-4"
+                    >
+                      {correccionesTecnicasGestionActiva.length > 1 && (
+                        <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-cyan-800">
+                          Corrección {index + 1}
+                        </p>
+                      )}
+
+                      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
+                        Aspecto a corregir
+                      </p>
+                      <p className="mt-1 text-sm font-bold leading-5 text-slate-950">
+                        {revision.evaluacion.aspecto.nombre}
+                      </p>
+
+                      <div className="mt-3 rounded-xl bg-slate-50 px-3.5 py-3">
+                        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
+                          Concepto técnico
+                        </p>
+                        <p className="mt-1 text-sm leading-5 text-slate-700">
+                          {revision.conceptoTecnico ??
+                            "La revisión requiere registrar una nueva evaluación del aspecto indicado."}
+                        </p>
+                      </div>
+
+                      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-xs font-bold text-cyan-900">
+                          <Wrench size={13} />
+                          En corrección
+                        </span>
+
+                        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              enfocarAspectoEnMatriz(
+                                revision.evaluacion.aspecto.nombre
+                              )
+                            }
+                            disabled={interfazBloqueada}
+                            className="rounded-xl bg-cyan-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-cyan-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Ir al aspecto
+                          </button>
+
+                          {puedeVerRevisiones && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const siguientesParametros =
+                                  new URLSearchParams(searchParams);
+                                siguientesParametros.set(
+                                  "revisiones",
+                                  "1"
+                                );
+                                siguientesParametros.set(
+                                  "revisionEstado",
+                                  revision.estadoFlujo
+                                );
+                                siguientesParametros.set(
+                                  "revisionId",
+                                  revision.id
+                                );
+                                setSearchParams(
+                                  siguientesParametros,
+                                  { replace: true }
+                                );
+                                setRevisionesModalOpen(true);
+                              }}
+                              disabled={interfazBloqueada}
+                              className="rounded-xl border border-cyan-300 bg-white px-4 py-2 text-sm font-bold text-cyan-950 transition hover:bg-cyan-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Ver revisión
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </article>
+                  )
+                )}
+              </div>
+            </section>
           )}
+
+          {enCorreccion > 0 &&
+            ajustesActivos === 0 &&
+            correccionesTecnicasGestionActiva.length === 0 && (
+              <AppAlert
+                tone="info"
+                title={`${enCorreccion} revisión(es) están en corrección`}
+                description="Finaliza la nueva evaluación para que dejen de aparecer como una acción activa y queden registradas como subsanadas."
+              />
+            )}
 
           <div
             className={
