@@ -46,7 +46,9 @@ function Estado({ item }: { item: AprobacionGestionItem }) {
   }[item.estado];
 
   return (
-    <span className={`rounded-full border px-2 py-1 text-[10px] font-bold ${classes}`}>
+    <span
+      className={`inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full border px-2 py-1 text-[10px] font-bold leading-none ${classes}`}
+    >
       {item.estado}
     </span>
   );
