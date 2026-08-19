@@ -19,6 +19,7 @@ import type {
   GuardarEvaluacionInput,
 } from "../../../types/evaluacion.types";
 
+import { useAuth } from "../../auth/context/AuthContext";
 import { useEliminarEvaluacionBorrador } from "../hooks/useEliminarEvaluacionBorrador";
 import {
   existeCambioFechaDocumento,
@@ -171,6 +172,8 @@ export default function MatrizEvaluacion({
   onFinalizar,
   onAbrirDetalle,
 }: Props) {
+  const { hasRole } = useAuth();
+  const puedeProponerNoAplica = hasRole("PROFESSIONAL");
   const [busqueda, setBusqueda] = useState("");
   const [procesoId, setProcesoId] = useState("");
   const [estandarId, setEstandarId] = useState("");
@@ -868,12 +871,14 @@ export default function MatrizEvaluacion({
                         <option value="NO_CUMPLIDO">
                           No cumplido
                         </option>
-                        {fila.aspecto.configuracion
-                          ?.permiteNoAplica !== false && (
-                          <option value="NO_APLICA">
-                            No aplica
-                          </option>
-                        )}
+                        {(puedeProponerNoAplica ||
+                          draft.estadoCumplimiento === "NO_APLICA") &&
+                          fila.aspecto.configuracion
+                            ?.permiteNoAplica !== false && (
+                            <option value="NO_APLICA">
+                              No aplica
+                            </option>
+                          )}
                       </select>
                     </BodyCell>
 
