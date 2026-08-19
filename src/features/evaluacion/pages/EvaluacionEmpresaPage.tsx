@@ -728,14 +728,16 @@ export default function EvaluacionEmpresaPage() {
             )}
 
           {ajustesActivos > 0 && (
-            <div className="flex flex-col gap-3 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 ring-1 ring-red-500/20 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex gap-3">
-                <div className="mt-0.5 h-5 w-5 shrink-0 rounded-full bg-red-300/20" />
-                <div>
-                  <p className="text-sm font-bold text-red-100">
+            <div className="flex flex-col gap-4 rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 gap-3">
+                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-700">
+                  <Wrench size={18} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-red-900">
                     Hay {ajustesActivos} evaluación(es) que requieren corrección
                   </p>
-                  <p className="mt-1 text-xs leading-5 text-red-200/75">
+                  <p className="mt-1 text-sm leading-5 text-slate-700">
                     Revisa el concepto técnico y registra una nueva evaluación. La gestión original permanecerá intacta.
                   </p>
                 </div>
@@ -744,7 +746,7 @@ export default function EvaluacionEmpresaPage() {
                 type="button"
                 onClick={() => setRevisionesModalOpen(true)}
                 disabled={interfazBloqueada}
-                className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Wrench size={16} />
                 Ver y corregir
