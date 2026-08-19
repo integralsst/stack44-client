@@ -126,6 +126,27 @@ function crearBorrador(
   };
 }
 
+function borradoresSonIguales(
+  actual: BorradorEvaluacionAspecto,
+  original: BorradorEvaluacionAspecto
+): boolean {
+  return (
+    actual.aspectoId === original.aspectoId &&
+    actual.supermatrizTareaId === original.supermatrizTareaId &&
+    actual.estadoCumplimiento === original.estadoCumplimiento &&
+    actual.calificacionAdministrativa ===
+      original.calificacionAdministrativa &&
+    actual.observacion === original.observacion &&
+    actual.fechaDocumento === original.fechaDocumento &&
+    actual.justificacionNoAplica ===
+      original.justificacionNoAplica &&
+    actual.marcadaRevisionTecnica ===
+      original.marcadaRevisionTecnica &&
+    actual.motivoRevisionTecnica ===
+      original.motivoRevisionTecnica
+  );
+}
+
 function estadoCumplimientoLabel(
   estado: EstadoCumplimientoAspecto
 ): string {
@@ -225,6 +246,28 @@ export default function MatrizEvaluacion({
     setBorradores(next);
     setModificados(new Set());
   }, [filas]);
+
+  const modificadosEfectivos = useMemo(() => {
+    const filasPorAspecto = new Map(
+      filas.map((fila) => [fila.aspecto.id, fila])
+    );
+    const next = new Set<number>();
+
+    for (const aspectoId of modificados) {
+      const fila = filasPorAspecto.get(aspectoId);
+      const draft = borradores[aspectoId];
+
+      if (
+        fila &&
+        draft &&
+        !borradoresSonIguales(draft, crearBorrador(fila))
+      ) {
+        next.add(aspectoId);
+      }
+    }
+
+    return next;
+  }, [borradores, filas, modificados]);
 
   const procesos = useMemo(() => {
     const map = new Map<number, string>();
@@ -382,7 +425,7 @@ export default function MatrizEvaluacion({
       }
 
       if (
-        patch.estadoCumplimiento &&
+        "estadoCumplimiento" in patch &&
         patch.estadoCumplimiento !== "NO_APLICA"
       ) {
         next.justificacionNoAplica = "";
@@ -405,7 +448,7 @@ export default function MatrizEvaluacion({
     (): GuardarEvaluacionInput[] => {
       const payload: GuardarEvaluacionInput[] = [];
 
-      for (const aspectoId of modificados) {
+      for (const aspectoId of modificadosEfectivos) {
         const draft = borradores[aspectoId];
 
         if (!draft?.estadoCumplimiento) {
@@ -590,7 +633,7 @@ export default function MatrizEvaluacion({
         filtrosActivos={filtrosActivos}
         gestionActiva={gestionActiva}
         procesando={procesando || eliminandoAspectoId !== null}
-        cambiosPendientes={modificados.size}
+        cambiosPendientes={modificadosEfectivos.size}
         visibles={visibles}
         totalFiltradas={filasFiltradas.length}
         onLimpiar={limpiarFiltros}
@@ -662,7 +705,7 @@ export default function MatrizEvaluacion({
                   borradores[fila.aspecto.id] ??
                   crearBorrador(fila);
 
-                const isChanged = modificados.has(
+                const isChanged = modificadosEfectivos.has(
                   fila.aspecto.id
                 );
 
@@ -1124,8 +1167,8 @@ export default function MatrizEvaluacion({
         open={confirmFinalizarOpen}
         title="Finalizar gestión"
         description={`Se consolidarán las evaluaciones de esta jornada. ${
-          modificados.size > 0
-            ? `También se guardarán ${modificados.size} cambio(s) pendiente(s). `
+          modificadosEfectivos.size > 0
+            ? `También se guardarán ${modificadosEfectivos.size} cambio(s) pendiente(s). `
             : ""
         }Después de finalizar, la gestión ya no podrá editarse directamente.`}
         confirmLabel="Finalizar gestión"
@@ -1140,7 +1183,7 @@ export default function MatrizEvaluacion({
         description={`Se retirará la evaluación guardada de “${
           filaEliminarSeleccionada?.aspecto.nombre ?? "este aspecto"
         }”. La acción quedará auditada y no afecta evaluaciones históricas finalizadas.${
-          modificados.size > 0
+          modificadosEfectivos.size > 0
             ? " Al actualizar la matriz se descartarán también los cambios locales que aún no hayas guardado."
             : ""
         }`}
