@@ -18,6 +18,7 @@ import type {
 import DetalleColapsableCard from "./DetalleColapsableCard";
 import DetalleEventoTrazabilidad from "./DetalleEventoTrazabilidad";
 import { formatDate } from "./DetalleAspectoUi";
+import type { HistorialConResultadoEfectivo } from "./HistorialEvaluacionCard";
 
 type FiltroTrazabilidad =
   | "TODOS"
@@ -137,12 +138,19 @@ function descripcionHistoricaEvento(
   const evaluacion = data.historial.find(
     (item) => item.id === evento.referencia.evaluacionId
   );
+  const evaluacionEfectiva = evaluacion as
+    | HistorialConResultadoEfectivo
+    | undefined;
 
-  if (evaluacion?.estadoCumplimiento !== "NO_APLICA") {
+  if (evaluacionEfectiva?.estadoCumplimiento !== "NO_APLICA") {
     return evento.descripcion;
   }
 
-  return `No aplica · Nota registrada ${evaluacion.calificacionAdministrativa}.`;
+  const registrada =
+    evaluacionEfectiva.calificacionRegistrada ??
+    evaluacionEfectiva.calificacionAdministrativa;
+
+  return `No aplica · Nota registrada ${registrada}.`;
 }
 
 export default function TrazabilidadAspectoTimeline({
