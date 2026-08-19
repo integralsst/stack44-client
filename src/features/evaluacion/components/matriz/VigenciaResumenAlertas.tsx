@@ -7,6 +7,7 @@ import {
   FolderOpen,
 } from "lucide-react";
 import {
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -18,9 +19,38 @@ import type {
 } from "../../../../types/evaluacion.types";
 import AppAlert from "../feedback/AppAlert";
 
+function tieneEvidenciaPendienteGestionActiva(
+  fila: FilaEvaluacion
+): boolean {
+  const evaluacionActiva = fila.evaluacionGestionActiva;
+
+  return Boolean(
+    evaluacionActiva &&
+      evaluacionActiva.gestion.estado === "BORRADOR" &&
+      evaluacionActiva.estadoCumplimiento === "CUMPLIDO" &&
+      fila.aspecto.configuracionEvidencia
+        ?.requiereEvidencia === true &&
+      !fila.detalleEvidencia.tieneEvidenciaEvaluacion
+  );
+}
+
+function requiereAccionEvidencia(
+  fila: FilaEvaluacion
+): boolean {
+  return (
+    fila.evidenciaPendiente ||
+    tieneEvidenciaPendienteGestionActiva(fila)
+  );
+}
+
 function estadoDocumentalLabel(
-  estado: EstadoEvidenciaAspecto
+  estado: EstadoEvidenciaAspecto,
+  pendienteGestionActiva: boolean
 ): string {
+  if (pendienteGestionActiva) {
+    return "Evidencia pendiente en borrador";
+  }
+
   if (estado === "PENDIENTE") {
     return "Evidencia pendiente";
   }
@@ -33,9 +63,10 @@ function estadoDocumentalLabel(
 }
 
 function estadoDocumentalClass(
-  estado: EstadoEvidenciaAspecto
+  estado: EstadoEvidenciaAspecto,
+  pendienteGestionActiva: boolean
 ): string {
-  if (estado === "PENDIENTE") {
+  if (pendienteGestionActiva || estado === "PENDIENTE") {
     return "border-amber-300 bg-amber-100 text-amber-950";
   }
 
@@ -49,7 +80,7 @@ function estadoDocumentalClass(
 function filaDocumentalClass(
   fila: FilaEvaluacion
 ): string {
-  if (fila.evidenciaPendiente) {
+  if (requiereAccionEvidencia(fila)) {
     return "bg-amber-50/70";
   }
 
@@ -86,15 +117,19 @@ export default function VigenciaResumenAlertas({
             ?.requiereEvidencia === true
       )
       .sort((a, b) => {
-        if (
-          a.evidenciaPendiente !==
-          b.evidenciaPendiente
-        ) {
-          return a.evidenciaPendiente ? -1 : 1;
+        const aRequiereAccion = requiereAccionEvidencia(a);
+        const bRequiereAccion = requiereAccionEvidencia(b);
+
+        if (aRequiereAccion !== bRequiereAccion) {
+          return aRequiereAccion ? -1 : 1;
         }
 
         return a.orden - b.orden;
       });
+    const evidenciasPendientesGestionActiva =
+      requierenEvidencia.filter(
+        tieneEvidenciaPendienteGestionActiva
+      ).length;
 
     return {
       faltaFecha: unicas.filter(
@@ -109,13 +144,22 @@ export default function VigenciaResumenAlertas({
       ).length,
       requierenEvidencia,
       evidenciasPendientes: requierenEvidencia.filter(
-        (fila) => fila.evidenciaPendiente
+        requiereAccionEvidencia
       ).length,
+      evidenciasPendientesGestionActiva,
       evidenciasCompletas: requierenEvidencia.filter(
-        (fila) => fila.estadoEvidencia === "COMPLETA"
+        (fila) =>
+          !tieneEvidenciaPendienteGestionActiva(fila) &&
+          fila.estadoEvidencia === "COMPLETA"
       ).length,
     };
   }, [filas]);
+
+  useEffect(() => {
+    if (resumen.evidenciasPendientesGestionActiva > 0) {
+      setPanelEvidenciasAbierto(true);
+    }
+  }, [resumen.evidenciasPendientesGestionActiva]);
 
   const totalVigencia =
     resumen.faltaFecha + resumen.periodicidad;
@@ -219,6 +263,10 @@ export default function VigenciaResumenAlertas({
                   fila.aspecto.configuracionEvidencia
                     ?.descripcionEvidencia?.trim() ||
                   "El aspecto exige un soporte documental válido.";
+                const pendienteGestionActiva =
+                  tieneEvidenciaPendienteGestionActiva(fila);
+                const requiereAccion =
+                  requiereAccionEvidencia(fila);
 
                 return (
                   <article
@@ -231,11 +279,13 @@ export default function VigenciaResumenAlertas({
                       <div className="flex flex-wrap items-center gap-2">
                         <span
                           className={`rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${estadoDocumentalClass(
-                            fila.estadoEvidencia
+                            fila.estadoEvidencia,
+                            pendienteGestionActiva
                           )}`}
                         >
                           {estadoDocumentalLabel(
-                            fila.estadoEvidencia
+                            fila.estadoEvidencia,
+                            pendienteGestionActiva
                           )}
                         </span>
                         <span className="text-[10px] font-semibold text-slate-500">
@@ -252,25 +302,36 @@ export default function VigenciaResumenAlertas({
                       <p className="mt-1 whitespace-normal text-xs leading-5 text-slate-600">
                         {descripcion}
                       </p>
+                      {pendienteGestionActiva && (
+                        <p className="mt-2 text-xs font-semibold leading-5 text-amber-900">
+                          La evaluación Cumplido / 5 ya está guardada en la gestión actual. Agrega la evidencia antes de finalizar.
+                        </p>
+                      )}
                     </div>
 
                     <button
                       type="button"
                       onClick={() => abrirEvidencias(fila)}
                       className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-bold transition ${
-                        fila.evidenciaPendiente
+                        requiereAccion
                           ? "border-amber-300 bg-amber-100 text-amber-950 hover:bg-amber-200"
                           : "border-slate-300 bg-white text-slate-800 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
                       }`}
                     >
-                      {fila.evidenciaPendiente ? (
+                      {requiereAccion ? (
                         <AlertTriangle size={14} />
                       ) : fila.estadoEvidencia === "COMPLETA" ? (
                         <CheckCircle2 size={14} />
                       ) : (
                         <FolderOpen size={14} />
                       )}
-                      Abrir evidencias
+                      {pendienteGestionActiva
+                        ? "Agregar evidencia"
+                        : fila.evidenciaPendiente
+                          ? "Completar evidencia"
+                          : fila.estadoEvidencia === "COMPLETA"
+                            ? "Ver evidencia"
+                            : "Abrir evidencias"}
                     </button>
                   </article>
                 );
