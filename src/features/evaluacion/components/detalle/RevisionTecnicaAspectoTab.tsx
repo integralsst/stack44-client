@@ -39,7 +39,7 @@ export default function RevisionTecnicaAspectoTab({
       .map((evaluacion) => evaluacion.revisionTecnica)
       .filter(
         (revision): revision is NonNullable<typeof revision> =>
-          Boolean(revision) && revision.estado === "REQUIERE_AJUSTES"
+          revision !== null && revision.estado === "REQUIERE_AJUSTES"
       );
 
     if (!token || revisionesQueNecesitanFlujo.length === 0) {
