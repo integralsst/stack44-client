@@ -164,7 +164,7 @@ export default function GestionWorkspacePanel({
                   )}
                 </div>
               </>
-            ) : (
+            ) : puedeEvaluar ? (
               <>
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-slate-400">
                   Espacio de trabajo
@@ -174,6 +174,18 @@ export default function GestionWorkspacePanel({
                 </h2>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
                   Crea una visita, asesoría o jornada para registrar nuevas calificaciones.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-slate-400">
+                  Consulta SG-SST
+                </p>
+                <h2 className="mt-2 text-lg font-extrabold tracking-tight text-slate-950">
+                  Evaluación en modo consulta
+                </h2>
+                <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-500">
+                  Puedes consultar resultados, informes, historial y el estado de los aspectos. Las calificaciones y gestiones permanecen reservadas al equipo autorizado.
                 </p>
               </>
             )}
@@ -209,7 +221,9 @@ export default function GestionWorkspacePanel({
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex items-center gap-2">
             <span className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-slate-400">
-              Acciones de la gestión
+              {puedeEvaluar
+                ? "Acciones de la gestión"
+                : "Consulta y seguimiento"}
             </span>
             {gestionActiva && (
               <span className="hidden text-[10px] text-slate-400 sm:inline">
@@ -259,12 +273,14 @@ export default function GestionWorkspacePanel({
               onClick={onHistorial}
               disabled={bloqueado}
             />
-            <ActionButton
-              icon={<ClipboardCheck size={14} />}
-              label="No aplica / aprobaciones"
-              onClick={() => navigate(rutaControles)}
-              disabled={bloqueado}
-            />
+            {puedeEvaluar && (
+              <ActionButton
+                icon={<ClipboardCheck size={14} />}
+                label="No aplica / aprobaciones"
+                onClick={() => navigate(rutaControles)}
+                disabled={bloqueado}
+              />
+            )}
           </div>
         </div>
       </div>

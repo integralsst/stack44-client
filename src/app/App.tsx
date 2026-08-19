@@ -172,6 +172,11 @@ const EVALUACION_ROLES: UserRole[] = [
   "SUPERADMIN",
 ];
 
+const EVALUACION_LECTURA_ROLES: UserRole[] = [
+  "CLIENT_ADMIN",
+  ...EVALUACION_ROLES,
+];
+
 const INFORMES_ROLES: UserRole[] = [
   "CLIENT_USER",
   "CLIENT_ADMIN",
@@ -340,7 +345,7 @@ function AppRoutes() {
             <Route
               path="empresas/:empresaId/evaluacion"
               element={
-                <RoleGuard allowedRoles={EVALUACION_ROLES}>
+                <RoleGuard allowedRoles={EVALUACION_LECTURA_ROLES}>
                   <EvaluacionRoute />
                 </RoleGuard>
               }
