@@ -110,14 +110,19 @@ function companyToForm(company: Company): CompanyForm {
 export default function Companies() {
   const navigate = useNavigate();
   const { token, isInternalUser, hasRole } = useAuth();
+  const isClientAdmin = hasRole("CLIENT_ADMIN");
 
   const canOpenEvaluation = hasRole(
+    "CLIENT_ADMIN",
     "PROFESSIONAL",
     "COORDINATOR",
     "ADMIN",
     "OWNER",
     "SUPERADMIN"
   );
+  const evaluationActionLabel = isClientAdmin
+    ? "Consultar"
+    : "Evaluar";
 
   const [companies, setCompanies] = useState<Company[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -313,7 +318,9 @@ export default function Companies() {
             Gestión de empresas
           </h1>
           <p className="mt-1 max-w-2xl text-sm leading-6 text-neutral-400">
-            Administra la información general, contractual y de riesgo de los clientes SG-SST.
+            {isInternalUser
+              ? "Administra la información general, contractual y de riesgo de los clientes SG-SST."
+              : "Consulta la información y el estado de la gestión SG-SST de tu empresa."}
           </p>
         </div>
 
@@ -430,6 +437,7 @@ export default function Companies() {
                               ? () => openEvaluation(company)
                               : undefined
                           }
+                          evaluationLabel={evaluationActionLabel}
                           onEdit={
                             isInternalUser
                               ? () => openEdit(company)
@@ -530,7 +538,9 @@ export default function Companies() {
                     className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3 text-sm font-bold text-cyan-300 transition hover:bg-cyan-500/20"
                   >
                     <ClipboardCheck size={17} />
-                    Abrir evaluación SG-SST
+                    {isClientAdmin
+                      ? "Consultar evaluación SG-SST"
+                      : "Abrir evaluación SG-SST"}
                   </button>
                 )}
               </article>
@@ -948,11 +958,13 @@ function RelationSummary({
 
 function ActionButtons({
   onEvaluate,
+  evaluationLabel = "Evaluar",
   onEdit,
   onDelete,
   compact = false,
 }: {
   onEvaluate?: () => void;
+  evaluationLabel?: string;
   onEdit?: () => void;
   onDelete?: () => void;
   compact?: boolean;
@@ -968,10 +980,14 @@ function ActionButtons({
           type="button"
           onClick={onEvaluate}
           className="inline-flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-bold text-cyan-300 transition-colors hover:bg-cyan-500/20"
-          title="Abrir evaluación SG-SST"
+          title={
+            evaluationLabel === "Consultar"
+              ? "Consultar evaluación SG-SST"
+              : "Abrir evaluación SG-SST"
+          }
         >
           <ClipboardCheck size={16} />
-          {!compact && <span>Evaluar</span>}
+          {!compact && <span>{evaluationLabel}</span>}
         </button>
       )}
 
