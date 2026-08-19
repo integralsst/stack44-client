@@ -20,6 +20,7 @@ import { obtenerContextoEvaluacion } from "../api/evaluacion.api";
 import AprobacionesGestionPanel from "../components/aprobaciones/AprobacionesGestionPanel";
 import NoAplicaPeriodoPanel from "../components/no-aplica/NoAplicaPeriodoPanel";
 import { useControlesEvaluacion } from "../hooks/useControlesEvaluacion";
+import type { DecisionNoAplicaItem } from "../types/controles-evaluacion.types";
 
 type TabControl = "no-aplica" | "aprobaciones";
 
@@ -110,6 +111,18 @@ export default function ControlesEvaluacionPage() {
     );
   };
 
+  const reevaluarNoAplica = (item: DecisionNoAplicaItem) => {
+    if (!empresaId) return;
+
+    const params = new URLSearchParams();
+    params.set("anio", String(anio));
+    params.set("aspecto", item.evaluacion.aspecto.nombre);
+
+    navigate(
+      `/dashboard/empresas/${empresaId}/evaluacion?${params.toString()}`
+    );
+  };
+
   const puedeVerNoAplica = hasRole(
     "PROFESSIONAL",
     "COORDINATOR",
@@ -124,6 +137,7 @@ export default function ControlesEvaluacionPage() {
     "OWNER",
     "SUPERADMIN"
   );
+  const puedeReevaluarNoAplica = hasRole("PROFESSIONAL");
 
   if (cargandoContexto) {
     return (
@@ -254,6 +268,11 @@ export default function ControlesEvaluacionPage() {
               cargando={controles.cargando}
               procesando={controles.procesando}
               onDecide={controles.decidirSolicitudNoAplica}
+              onReevaluate={
+                puedeReevaluarNoAplica
+                  ? reevaluarNoAplica
+                  : undefined
+              }
             />
           ) : (
             <AprobacionesGestionPanel
