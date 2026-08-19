@@ -7,12 +7,18 @@ import {
   UserRound,
   Wrench,
 } from "lucide-react";
-import { useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
+import { useAuth } from "../../../auth/context/AuthContext";
+import { obtenerRevisionesTecnicasPeriodo } from "../../api/revisiones-tecnicas.api";
 import type {
   DetalleAspectoResponse,
   EvaluacionDetalleAspecto,
 } from "../../types/detalle-aspecto.types";
+import type { RevisionTecnicaEvaluacionItem } from "../../types/revision-tecnica.types";
 import RevisionTecnicaEstadoBadge from "../revisiones/RevisionTecnicaEstadoBadge";
 import DetalleColapsableCard from "./DetalleColapsableCard";
 
@@ -21,8 +27,52 @@ export default function RevisionTecnicaAspectoTab({
 }: {
   data: DetalleAspectoResponse;
 }) {
+  const { token } = useAuth();
   const evaluaciones = data.revisionesTecnicas;
   const [abiertaId, setAbiertaId] = useState<string | null>(null);
+  const [flujoPorRevision, setFlujoPorRevision] = useState<
+    Record<string, RevisionTecnicaEvaluacionItem>
+  >({});
+
+  useEffect(() => {
+    const revisionesQueNecesitanFlujo = evaluaciones
+      .map((evaluacion) => evaluacion.revisionTecnica)
+      .filter(
+        (revision): revision is NonNullable<typeof revision> =>
+          revision !== null && revision.estado === "REQUIERE_AJUSTES"
+      );
+
+    if (!token || revisionesQueNecesitanFlujo.length === 0) {
+      setFlujoPorRevision({});
+      return;
+    }
+
+    const ids = new Set(
+      revisionesQueNecesitanFlujo.map((revision) => revision.id)
+    );
+    let active = true;
+
+    void obtenerRevisionesTecnicasPeriodo(data.periodo.id, token)
+      .then((response) => {
+        if (!active) return;
+
+        const next = Object.fromEntries(
+          response.revisiones
+            .filter((revision) => ids.has(revision.id))
+            .map((revision) => [revision.id, revision])
+        );
+
+        setFlujoPorRevision(next);
+      })
+      .catch(() => {
+        // El detalle conserva el estado persistido como fallback si no es
+        // posible enriquecerlo con el estado de flujo calculado del periodo.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [data.periodo.id, evaluaciones, token]);
 
   if (evaluaciones.length === 0) {
     return (
@@ -63,12 +113,16 @@ export default function RevisionTecnicaAspectoTab({
           const revision = evaluacion.revisionTecnica;
           const id = revision?.id ?? evaluacion.id;
           const abierta = abiertaId === id;
+          const flujo = revision
+            ? flujoPorRevision[revision.id]
+            : undefined;
+          const estadoVisual = flujo?.estadoFlujo ?? revision?.estado;
 
           const summary = (
             <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
-                {revision ? (
-                  <RevisionTecnicaEstadoBadge estado={revision.estado} />
+                {estadoVisual ? (
+                  <RevisionTecnicaEstadoBadge estado={estadoVisual} />
                 ) : (
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-cyan-800">
                     <Clock3 size={12} />
@@ -118,6 +172,7 @@ export default function RevisionTecnicaAspectoTab({
                     esBorrador={
                       evaluacion.gestion.estado === "BORRADOR"
                     }
+                    flujo={flujo}
                   />
                 </DetalleColapsableCard>
               </div>
@@ -132,11 +187,14 @@ export default function RevisionTecnicaAspectoTab({
 function RevisionDetalleContenido({
   evaluacion,
   esBorrador,
+  flujo,
 }: {
   evaluacion: EvaluacionDetalleAspecto;
   esBorrador: boolean;
+  flujo?: RevisionTecnicaEvaluacionItem;
 }) {
   const revision = evaluacion.revisionTecnica;
+  const estadoFlujo = flujo?.estadoFlujo ?? revision?.estado;
 
   return (
     <div>
@@ -192,12 +250,58 @@ function RevisionDetalleContenido({
         </div>
       )}
 
-      {revision?.estado === "REQUIERE_AJUSTES" && (
+      {estadoFlujo === "REQUIERE_AJUSTES" && (
         <div className="mt-3 flex gap-3 rounded-xl border border-orange-200 bg-orange-50 p-3.5">
           <Wrench className="mt-0.5 h-4 w-4 shrink-0 text-orange-700" />
           <p className="text-xs leading-5 text-orange-800">
             Los ajustes deben registrarse en una nueva gestión. Esta evaluación permanece intacta en el historial.
           </p>
+        </div>
+      )}
+
+      {estadoFlujo === "EN_CORRECCION" && (
+        <div className="mt-3 flex gap-3 rounded-xl border border-cyan-200 bg-cyan-50 p-3.5">
+          <Wrench className="mt-0.5 h-4 w-4 shrink-0 text-cyan-700" />
+          <div>
+            <p className="text-xs font-semibold text-cyan-900">
+              Corrección en curso
+            </p>
+            <p className="mt-1 text-xs leading-5 text-cyan-800">
+              {flujo?.gestionCorreccion
+                ? `${flujo.gestionCorreccion.tipoActividad} · ${flujo.gestionCorreccion.profesional}`
+                : "La corrección ya está siendo atendida en una gestión vinculada."}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {estadoFlujo === "SUBSANADA" && (
+        <div className="mt-3 rounded-xl border border-teal-200 bg-teal-50 p-3.5">
+          <div className="flex gap-3">
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-teal-700" />
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-teal-900">
+                Corrección completada
+              </p>
+              <p className="mt-1 text-xs leading-5 text-teal-800">
+                La revisión quedó subsanada. El concepto técnico original y la evaluación de origen permanecen intactos en la trazabilidad.
+              </p>
+            </div>
+          </div>
+
+          {flujo?.gestionCorreccion && (
+            <div className="mt-3 rounded-lg border border-teal-200 bg-white/70 p-3">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-teal-700">
+                Corrección registrada
+              </p>
+              <p className="mt-1.5 text-xs font-semibold text-slate-800">
+                {flujo.gestionCorreccion.tipoActividad}
+              </p>
+              <p className="mt-1 text-[11px] text-slate-600">
+                {formatDate(flujo.gestionCorreccion.fechaGestion)} · {flujo.gestionCorreccion.profesional}
+              </p>
+            </div>
+          )}
         </div>
       )}
 
