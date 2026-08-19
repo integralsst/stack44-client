@@ -1,4 +1,5 @@
 import {
+  ArrowRight,
   CheckCircle2,
   Clock3,
   ExternalLink,
@@ -21,6 +22,7 @@ interface Props {
     decision: "APROBAR" | "RECHAZAR",
     observacion: string | null
   ) => Promise<boolean>;
+  onReevaluate?: (item: DecisionNoAplicaItem) => void;
 }
 
 function fecha(value: string | null) {
@@ -52,6 +54,7 @@ export default function NoAplicaPeriodoPanel({
   cargando,
   procesando,
   onDecide,
+  onReevaluate,
 }: Props) {
   const [observaciones, setObservaciones] = useState<
     Record<string, string>
@@ -132,6 +135,19 @@ export default function NoAplicaPeriodoPanel({
               <p className="mt-3 rounded-xl border border-neutral-700 bg-[#090a0b] p-3 text-xs leading-5 text-neutral-300">
                 Decisión: {item.observacionDecision}
               </p>
+            )}
+
+            {item.estado === "RECHAZADO" && onReevaluate && (
+              <div className="mt-3 flex justify-end">
+                <AppButton
+                  variant="primary"
+                  size="sm"
+                  trailingIcon={<ArrowRight size={14} />}
+                  onClick={() => onReevaluate(item)}
+                >
+                  Reevaluar aspecto
+                </AppButton>
+              </div>
             )}
 
             {item.puedeDecidir && (
