@@ -96,6 +96,20 @@ export function guardarEvaluaciones(
   );
 }
 
+export function eliminarEvaluacionBorrador(
+  gestionId: string,
+  aspectoId: number,
+  token: string
+) {
+  return apiRequest<{ eliminada: boolean; aspectoId: number }>(
+    `/api/evaluacion/gestiones/${gestionId}/evaluaciones/${aspectoId}`,
+    {
+      method: "DELETE",
+    },
+    token
+  );
+}
+
 export function finalizarGestionEvaluacion(
   gestionId: string,
   token: string

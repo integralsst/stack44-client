@@ -12,6 +12,7 @@ import {
   guardarEvaluaciones,
   obtenerContextoEvaluacion,
 } from "../api/evaluacion.api";
+import { escucharCambiosEvaluacionBorrador } from "../lib/evaluacion-borrador.events";
 import { escucharCambiosEvidenciaEvaluacion } from "../lib/evidencia-evaluacion.events";
 import type {
   ContextoEvaluacionResponse,
@@ -86,6 +87,14 @@ export function useEvaluacionEmpresa(
   useEffect(
     () =>
       escucharCambiosEvidenciaEvaluacion(() => {
+        void recargar({ mostrarCarga: false });
+      }),
+    [recargar]
+  );
+
+  useEffect(
+    () =>
+      escucharCambiosEvaluacionBorrador(() => {
         void recargar({ mostrarCarga: false });
       }),
     [recargar]

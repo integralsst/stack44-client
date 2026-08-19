@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Eye,
   LockKeyhole,
+  Trash2,
 } from "lucide-react";
 
 import type {
@@ -18,6 +19,7 @@ import type {
   GuardarEvaluacionInput,
 } from "../../../types/evaluacion.types";
 
+import { useEliminarEvaluacionBorrador } from "../hooks/useEliminarEvaluacionBorrador";
 import {
   existeCambioFechaDocumento,
   normalizarFechaInput,
@@ -197,6 +199,12 @@ export default function MatrizEvaluacion({
     filaRevisionSeleccionada,
     setFilaRevisionSeleccionada,
   ] = useState<FilaEvaluacion | null>(null);
+  const [
+    filaEliminarSeleccionada,
+    setFilaEliminarSeleccionada,
+  ] = useState<FilaEvaluacion | null>(null);
+  const { eliminar, eliminandoAspectoId } =
+    useEliminarEvaluacionBorrador();
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -522,6 +530,39 @@ export default function MatrizEvaluacion({
     }
   };
 
+  const confirmarEliminarEvaluacion = async () => {
+    const fila = filaEliminarSeleccionada;
+    const evaluacion = fila?.evaluacionGestionActiva;
+
+    if (!fila || !evaluacion) {
+      setFilaEliminarSeleccionada(null);
+      return;
+    }
+
+    try {
+      await eliminar(
+        evaluacion.gestion.id,
+        fila.aspecto.id
+      );
+      setFilaEliminarSeleccionada(null);
+      setToast({
+        tone: "success",
+        title: "Evaluación retirada",
+        description:
+          "La evaluación se quitó de la gestión en borrador. El historial de la acción quedó registrado.",
+      });
+    } catch (error) {
+      setToast({
+        tone: "error",
+        title: "No fue posible quitar la evaluación",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Ocurrió un error inesperado.",
+      });
+    }
+  };
+
   const rows = filasFiltradas.slice(0, visibles);
 
   return (
@@ -545,7 +586,7 @@ export default function MatrizEvaluacion({
         setMostrarFiltros={setMostrarFiltros}
         filtrosActivos={filtrosActivos}
         gestionActiva={gestionActiva}
-        procesando={procesando}
+        procesando={procesando || eliminandoAspectoId !== null}
         cambiosPendientes={modificados.size}
         visibles={visibles}
         totalFiltradas={filasFiltradas.length}
@@ -704,6 +745,25 @@ export default function MatrizEvaluacion({
                           )
                         )}
                       </div>
+
+                      {gestionActiva &&
+                        fila.evaluacionGestionActiva && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFilaEliminarSeleccionada(fila)
+                            }
+                            disabled={
+                              procesando ||
+                              eliminandoAspectoId !== null
+                            }
+                            className="mt-2 inline-flex items-center gap-1 rounded-lg border border-red-300 bg-red-50 px-2 py-1 text-[9px] font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                            title="Quitar esta evaluación de la gestión en borrador"
+                          >
+                            <Trash2 size={11} />
+                            Quitar evaluación
+                          </button>
+                        )}
                     </StickyCell>
 
                     <BodyCell className="w-[140px] min-w-[140px]">
@@ -1067,6 +1127,26 @@ export default function MatrizEvaluacion({
         busy={procesando}
         onCancel={() => setConfirmFinalizarOpen(false)}
         onConfirm={() => void confirmarFinalizacion()}
+      />
+
+      <AppConfirmDialog
+        open={filaEliminarSeleccionada !== null}
+        title="Quitar evaluación del borrador"
+        description={`Se retirará la evaluación guardada de “${
+          filaEliminarSeleccionada?.aspecto.nombre ?? "este aspecto"
+        }”. La acción quedará auditada y no afecta evaluaciones históricas finalizadas.${
+          modificados.size > 0
+            ? " Al actualizar la matriz se descartarán también los cambios locales que aún no hayas guardado."
+            : ""
+        }`}
+        confirmLabel="Quitar evaluación"
+        busy={eliminandoAspectoId !== null}
+        onCancel={() => {
+          if (eliminandoAspectoId === null) {
+            setFilaEliminarSeleccionada(null);
+          }
+        }}
+        onConfirm={() => void confirmarEliminarEvaluacion()}
       />
     </section>
   );
