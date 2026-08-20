@@ -2,10 +2,14 @@ import {
   BarChart3,
   CheckCircle2,
   ClipboardList,
+  Clock3,
   Scale,
 } from "lucide-react";
 
-import type { ResumenEmpresaResultado } from "../../types/resultados-evaluacion.types";
+import type {
+  ConteoProvisionalesResultado,
+  ResumenEmpresaResultado,
+} from "../../types/resultados-evaluacion.types";
 
 interface Props {
   resumen: ResumenEmpresaResultado;
@@ -14,6 +18,8 @@ interface Props {
 export default function ResumenResultadosEmpresa({
   resumen,
 }: Props) {
+  const provisionales = resumen.provisionales;
+
   return (
     <div className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -45,6 +51,10 @@ export default function ResumenResultadosEmpresa({
           detail={`${resumen.estandaresNoCumplidos} no cumplen · ${resumen.estandaresSinEvaluar} sin evaluar`}
         />
       </div>
+
+      {provisionales && provisionales.total > 0 && (
+        <ProvisionalSummary provisionales={provisionales} />
+      )}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -90,6 +100,74 @@ export default function ResumenResultadosEmpresa({
         </div>
       </section>
     </div>
+  );
+}
+
+function ProvisionalSummary({
+  provisionales,
+}: {
+  provisionales: ConteoProvisionalesResultado;
+}) {
+  return (
+    <section className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 shadow-sm">
+      <div className="flex items-start gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-200 bg-white text-amber-700">
+          <Clock3 size={17} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-sm font-semibold text-amber-950">
+              Resultado provisional
+            </h3>
+            <span className="rounded-full border border-amber-300 bg-white px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-800">
+              {provisionales.total}{" "}
+              {provisionales.total === 1
+                ? "evaluación pendiente"
+                : "evaluaciones pendientes"}
+            </span>
+          </div>
+          <p className="mt-1 text-xs leading-5 text-amber-900">
+            La nota administrativa conserva su valor efectivo mientras los
+            controles siguen pendientes. El cumplimiento ministerial solo se
+            consolida cuando estas evaluaciones dejan de ser provisionales.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2 text-[10px] font-semibold">
+            {provisionales.aprobacionGestion > 0 && (
+              <ProvisionalCause
+                value={provisionales.aprobacionGestion}
+                label="aprobación administrativa"
+              />
+            )}
+            {provisionales.noAplica > 0 && (
+              <ProvisionalCause
+                value={provisionales.noAplica}
+                label="decisión No aplica"
+              />
+            )}
+            {provisionales.revisionTecnica > 0 && (
+              <ProvisionalCause
+                value={provisionales.revisionTecnica}
+                label="revisión técnica"
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProvisionalCause({
+  value,
+  label,
+}: {
+  value: number;
+  label: string;
+}) {
+  return (
+    <span className="rounded-lg border border-amber-200 bg-white px-2.5 py-1.5 text-amber-900">
+      {value} {label}
+    </span>
   );
 }
 
