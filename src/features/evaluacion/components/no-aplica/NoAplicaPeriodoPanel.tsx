@@ -13,6 +13,7 @@ import {
 } from "react";
 
 import AppButton from "../../../../components/ui/AppButton";
+import AppDropdownSelect from "../../../../components/ui/AppDropdownSelect";
 import type {
   DecisionNoAplicaItem,
   EstadoDecisionNoAplica,
@@ -160,20 +161,41 @@ export default function NoAplicaPeriodoPanel({
                 <Filter size={12} />
                 Estado
               </span>
-              <select
+              <AppDropdownSelect
                 value={estadoFiltro}
-                onChange={(event) =>
-                  setEstadoFiltro(
-                    event.target.value as EstadoFiltro
-                  )
+                onChange={(value) =>
+                  setEstadoFiltro(value as EstadoFiltro)
                 }
-                className="w-full rounded-xl border border-neutral-700 bg-[#08090a] px-3 py-2.5 text-sm text-neutral-200 outline-none focus:border-cyan-500/50"
-              >
-                <option value="TODOS">Todos</option>
-                <option value="PENDIENTE">Pendientes</option>
-                <option value="APROBADO">Aprobados</option>
-                <option value="RECHAZADO">Rechazados</option>
-              </select>
+                ariaLabel="Filtrar solicitudes de No aplica por estado"
+                size="sm"
+                theme="light"
+                options={[
+                  {
+                    value: "TODOS",
+                    label: "Todos",
+                    description: "Mostrar todas las solicitudes",
+                    leadingIcon: <Filter size={15} className="text-cyan-500" />,
+                  },
+                  {
+                    value: "PENDIENTE",
+                    label: "Pendientes",
+                    description: "Solicitudes por decidir",
+                    leadingIcon: <Clock3 size={15} className="text-amber-500" />,
+                  },
+                  {
+                    value: "APROBADO",
+                    label: "Aprobados",
+                    description: "No aplica ya validados",
+                    leadingIcon: <CheckCircle2 size={15} className="text-emerald-500" />,
+                  },
+                  {
+                    value: "RECHAZADO",
+                    label: "Rechazados",
+                    description: "Solicitudes no aprobadas",
+                    leadingIcon: <XCircle size={15} className="text-red-500" />,
+                  },
+                ]}
+              />
             </label>
 
             <label className="space-y-1.5">
