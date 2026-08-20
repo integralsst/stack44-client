@@ -156,7 +156,7 @@ export default function NoAplicaPeriodoPanel({
       <section className="rounded-2xl border border-neutral-800 bg-[#101112] p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="grid flex-1 gap-3 sm:grid-cols-3">
-            <label className="space-y-1.5">
+            <div className="space-y-1.5">
               <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-neutral-500">
                 <Filter size={12} />
                 Estado
@@ -196,7 +196,7 @@ export default function NoAplicaPeriodoPanel({
                   },
                 ]}
               />
-            </label>
+            </div>
 
             <label className="space-y-1.5">
               <span className="text-[10px] font-bold uppercase tracking-wide text-neutral-500">
