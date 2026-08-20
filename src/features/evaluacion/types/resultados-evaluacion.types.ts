@@ -17,6 +17,13 @@ export interface ConteoEstadosResultado {
   sinEvaluar: number;
 }
 
+export interface ConteoProvisionalesResultado {
+  total: number;
+  aprobacionGestion: number;
+  noAplica: number;
+  revisionTecnica: number;
+}
+
 export interface GrupoMinisterialResultado {
   id: number;
   codigo: Exclude<GrupoResultadosEvaluacion, "TODOS">;
@@ -45,6 +52,7 @@ export interface ResumenEmpresaResultado {
   calificacionMinisterial: number;
   calificacionMinisterialMaxima: number;
   porcentajeMinisterial: number;
+  provisionales?: ConteoProvisionalesResultado;
 }
 
 export interface ResultadoProceso {
@@ -90,6 +98,7 @@ export interface ResultadoEstandar {
   estadoMinisterial: EstadoMinisterialResultado;
   calificacionMinisterialEsperada: number;
   calificacionMinisterialObtenida: number;
+  provisionales?: ConteoProvisionalesResultado;
 }
 
 export interface ResultadosEvaluacionResponse {
