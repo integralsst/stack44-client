@@ -4,7 +4,7 @@ import {
   ShieldCheck,
   XCircle,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import AppButton from "../../../../components/ui/AppButton";
 import type {
@@ -75,6 +75,31 @@ export default function AprobacionesGestionPanel({
     Record<string, string>
   >({});
 
+  const aprobacionMasRecientePorAspecto = useMemo(() => {
+    const mapa = new Map<
+      number,
+      { aprobacionId: string; generadaEn: number }
+    >();
+
+    for (const item of data?.items ?? []) {
+      const generadaEn = new Date(item.generadaEn).getTime();
+
+      for (const evaluacion of item.evaluaciones) {
+        const aspectoId = evaluacion.aspecto.id;
+        const actual = mapa.get(aspectoId);
+
+        if (!actual || generadaEn > actual.generadaEn) {
+          mapa.set(aspectoId, {
+            aprobacionId: item.id,
+            generadaEn,
+          });
+        }
+      }
+    }
+
+    return mapa;
+  }, [data]);
+
   if (cargando && !data) {
     return <p className="py-10 text-center text-sm text-neutral-400">Cargando aprobaciones de gestión...</p>;
   }
@@ -108,7 +133,7 @@ export default function AprobacionesGestionPanel({
       {data.items.map((item) => {
         const busy = procesando === `gestion:${item.id}`;
         const observacion = observaciones[item.id] ?? "";
-        const puedeCorregir = Boolean(
+        const puedeCorregirGestion = Boolean(
           item.estado === "RECHAZADA" &&
             onCorrectAspecto &&
             usuarioActualId &&
@@ -141,36 +166,54 @@ export default function AprobacionesGestionPanel({
                 Evaluaciones sujetas a esta aprobación ({item.evaluaciones.length})
               </p>
               <div className="mt-2 space-y-2">
-                {item.evaluaciones.map((evaluacion) => (
-                  <div
-                    key={evaluacion.id}
-                    className="rounded-lg border border-neutral-800 bg-[#101112] p-2.5"
-                  >
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="min-w-0">
-                        <p className="text-xs font-semibold text-white">
-                          {evaluacion.aspecto.codigo ? `${evaluacion.aspecto.codigo} · ` : ""}{evaluacion.aspecto.nombre}
-                        </p>
-                        <p className="mt-1 text-[11px] text-neutral-500">
-                          Registrada: {evaluacion.calificacionRegistrada} · {evaluacion.estadoCumplimiento.replaceAll("_", " ")}
-                        </p>
-                      </div>
+                {item.evaluaciones.map((evaluacion) => {
+                  const aprobacionMasReciente =
+                    aprobacionMasRecientePorAspecto.get(
+                      evaluacion.aspecto.id
+                    );
+                  const esAprobacionMasReciente =
+                    aprobacionMasReciente?.aprobacionId === item.id;
+                  const puedeCorregirAspecto =
+                    puedeCorregirGestion && esAprobacionMasReciente;
+                  const tieneEvaluacionPosterior =
+                    item.estado === "RECHAZADA" &&
+                    !esAprobacionMasReciente;
 
-                      {puedeCorregir && onCorrectAspecto && (
-                        <AppButton
-                          variant="primary"
-                          size="sm"
-                          trailingIcon={<ArrowRight size={14} />}
-                          onClick={() =>
-                            onCorrectAspecto(item, evaluacion)
-                          }
-                        >
-                          Corregir aspecto
-                        </AppButton>
-                      )}
+                  return (
+                    <div
+                      key={evaluacion.id}
+                      className="rounded-lg border border-neutral-800 bg-[#101112] p-2.5"
+                    >
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-white">
+                            {evaluacion.aspecto.codigo ? `${evaluacion.aspecto.codigo} · ` : ""}{evaluacion.aspecto.nombre}
+                          </p>
+                          <p className="mt-1 text-[11px] text-neutral-500">
+                            Registrada: {evaluacion.calificacionRegistrada} · {evaluacion.estadoCumplimiento.replaceAll("_", " ")}
+                          </p>
+                        </div>
+
+                        {puedeCorregirAspecto && onCorrectAspecto ? (
+                          <AppButton
+                            variant="primary"
+                            size="sm"
+                            trailingIcon={<ArrowRight size={14} />}
+                            onClick={() =>
+                              onCorrectAspecto(item, evaluacion)
+                            }
+                          >
+                            Corregir aspecto
+                          </AppButton>
+                        ) : tieneEvaluacionPosterior ? (
+                          <span className="inline-flex shrink-0 items-center rounded-full border border-neutral-700 bg-neutral-800/50 px-2.5 py-1 text-[10px] font-semibold text-neutral-400">
+                            Ya existe una evaluación posterior
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
