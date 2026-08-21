@@ -145,9 +145,19 @@ function DetalleEvaluacion({
       evaluacion.calificacionAdministrativa;
   const decisionNoAplica = item.decisionNoAplica ?? null;
   const aprobacion = item.aprobacionGestion ?? null;
-  const tonoAprobacion = aprobacion
-    ? aprobacionGestionTone(aprobacion.estado)
+  const estadoAprobacionEvento =
+    tipo === "APROBACION_GESTION"
+      ? evento.estado ?? aprobacion?.estado ?? null
+      : null;
+  const tonoAprobacion = estadoAprobacionEvento
+    ? aprobacionGestionTone(estadoAprobacionEvento)
     : null;
+  const observacionAprobacionEvento =
+    estadoAprobacionEvento &&
+    estadoAprobacionEvento !== "PENDIENTE" &&
+    estadoAprobacionEvento === aprobacion?.estado
+      ? aprobacion.observacionDecision ?? null
+      : null;
 
   return (
     <div className="space-y-3">
@@ -220,29 +230,32 @@ function DetalleEvaluacion({
           </div>
         )}
 
-      {tipo === "APROBACION_GESTION" && aprobacion && tonoAprobacion && (
-        <div
-          className={`rounded-xl border p-3 ${tonoAprobacion.container}`}
-        >
-          <p
-            className={`text-[9px] font-bold uppercase tracking-wider ${tonoAprobacion.label}`}
+      {tipo === "APROBACION_GESTION" &&
+        aprobacion &&
+        estadoAprobacionEvento &&
+        tonoAprobacion && (
+          <div
+            className={`rounded-xl border p-3 ${tonoAprobacion.container}`}
           >
-            Aprobación de gestión
-          </p>
-          <p
-            className={`mt-1 text-xs font-semibold ${tonoAprobacion.text}`}
-          >
-            Estado: {humanizar(aprobacion.estado)}
-          </p>
-          {aprobacion.observacionDecision && (
             <p
-              className={`mt-2 whitespace-pre-wrap text-xs leading-5 ${tonoAprobacion.body}`}
+              className={`text-[9px] font-bold uppercase tracking-wider ${tonoAprobacion.label}`}
             >
-              {aprobacion.observacionDecision}
+              Aprobación de gestión
             </p>
-          )}
-        </div>
-      )}
+            <p
+              className={`mt-1 text-xs font-semibold ${tonoAprobacion.text}`}
+            >
+              Estado: {humanizar(estadoAprobacionEvento)}
+            </p>
+            {observacionAprobacionEvento && (
+              <p
+                className={`mt-2 whitespace-pre-wrap text-xs leading-5 ${tonoAprobacion.body}`}
+              >
+                {observacionAprobacionEvento}
+              </p>
+            )}
+          </div>
+        )}
 
       {(evaluacion.observacion || evaluacion.justificacionNoAplica) &&
         tipo === "EVALUACION" && (
@@ -262,7 +275,7 @@ function DetalleEvaluacion({
       <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] text-slate-500">
         <span className="inline-flex items-center gap-1.5">
           <CalendarClock size={12} />
-          Gestión {formatDate(evaluacion.gestion.fechaGestion)}
+          Gestión {formatCalendarDate(evaluacion.gestion.fechaGestion)}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <FileCheck2 size={12} />
@@ -440,6 +453,23 @@ function MiniDato({
       </p>
     </div>
   );
+}
+
+function formatCalendarDate(
+  value: string | null | undefined
+): string {
+  if (!value) return "No registrada";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Fecha no disponible";
+  }
+
+  return new Intl.DateTimeFormat("es-CO", {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  }).format(date);
 }
 
 function aprobacionGestionTone(estado: string) {
