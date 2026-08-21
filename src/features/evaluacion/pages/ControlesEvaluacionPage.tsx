@@ -20,7 +20,10 @@ import { obtenerContextoEvaluacion } from "../api/evaluacion.api";
 import AprobacionesGestionPanel from "../components/aprobaciones/AprobacionesGestionPanel";
 import NoAplicaPeriodoPanel from "../components/no-aplica/NoAplicaPeriodoPanel";
 import { useControlesEvaluacion } from "../hooks/useControlesEvaluacion";
-import type { DecisionNoAplicaItem } from "../types/controles-evaluacion.types";
+import type {
+  AprobacionGestionItem,
+  DecisionNoAplicaItem,
+} from "../types/controles-evaluacion.types";
 
 type TabControl = "no-aplica" | "aprobaciones";
 
@@ -34,7 +37,7 @@ export default function ControlesEvaluacionPage() {
   const { empresaId } = useParams<{ empresaId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { token, hasRole } = useAuth();
+  const { token, hasRole, user } = useAuth();
   const anioParam = Number(searchParams.get("anio"));
   const anio =
     Number.isInteger(anioParam) && anioParam >= 2000 && anioParam <= 2100
@@ -123,6 +126,21 @@ export default function ControlesEvaluacionPage() {
     );
   };
 
+  const corregirAprobacionRechazada = (
+    _item: AprobacionGestionItem,
+    evaluacion: AprobacionGestionItem["evaluaciones"][number]
+  ) => {
+    if (!empresaId) return;
+
+    const params = new URLSearchParams();
+    params.set("anio", String(anio));
+    params.set("aspecto", evaluacion.aspecto.nombre);
+
+    navigate(
+      `/dashboard/empresas/${empresaId}/evaluacion?${params.toString()}`
+    );
+  };
+
   const puedeVerNoAplica = hasRole(
     "PROFESSIONAL",
     "COORDINATOR",
@@ -138,6 +156,13 @@ export default function ControlesEvaluacionPage() {
     "SUPERADMIN"
   );
   const puedeReevaluarNoAplica = hasRole("PROFESSIONAL");
+  const puedeCorregirAprobacion = hasRole(
+    "PROFESSIONAL",
+    "COORDINATOR",
+    "ADMIN",
+    "OWNER",
+    "SUPERADMIN"
+  );
 
   if (cargandoContexto) {
     return (
@@ -279,7 +304,13 @@ export default function ControlesEvaluacionPage() {
               data={controles.aprobaciones}
               cargando={controles.cargando}
               procesando={controles.procesando}
+              usuarioActualId={user?.id ?? null}
               onDecide={controles.decidirGestion}
+              onCorrectAspecto={
+                puedeCorregirAprobacion
+                  ? corregirAprobacionRechazada
+                  : undefined
+              }
             />
           )}
         </>
