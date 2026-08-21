@@ -1,4 +1,5 @@
 import {
+  ArrowRight,
   CheckCircle2,
   ShieldCheck,
   XCircle,
@@ -11,15 +12,23 @@ import type {
   AprobacionesGestionPeriodoResponse,
 } from "../../types/controles-evaluacion.types";
 
+type EvaluacionAprobacionItem =
+  AprobacionGestionItem["evaluaciones"][number];
+
 interface Props {
   data: AprobacionesGestionPeriodoResponse | null;
   cargando: boolean;
   procesando: string | null;
+  usuarioActualId: string | null;
   onDecide: (
     aprobacionId: string,
     decision: "APROBAR" | "RECHAZAR",
     observacion: string | null
   ) => Promise<boolean>;
+  onCorrectAspecto?: (
+    item: AprobacionGestionItem,
+    evaluacion: EvaluacionAprobacionItem
+  ) => void;
 }
 
 function fechaHora(value: string | null) {
@@ -58,7 +67,9 @@ export default function AprobacionesGestionPanel({
   data,
   cargando,
   procesando,
+  usuarioActualId,
   onDecide,
+  onCorrectAspecto,
 }: Props) {
   const [observaciones, setObservaciones] = useState<
     Record<string, string>
@@ -97,6 +108,12 @@ export default function AprobacionesGestionPanel({
       {data.items.map((item) => {
         const busy = procesando === `gestion:${item.id}`;
         const observacion = observaciones[item.id] ?? "";
+        const puedeCorregir = Boolean(
+          item.estado === "RECHAZADA" &&
+            onCorrectAspecto &&
+            usuarioActualId &&
+            item.gestion.usuarioCreador.id === usuarioActualId
+        );
 
         return (
           <article key={item.id} className="rounded-2xl border border-neutral-800 bg-[#101112] p-4">
@@ -125,13 +142,33 @@ export default function AprobacionesGestionPanel({
               </p>
               <div className="mt-2 space-y-2">
                 {item.evaluaciones.map((evaluacion) => (
-                  <div key={evaluacion.id} className="rounded-lg border border-neutral-800 bg-[#101112] p-2.5">
-                    <p className="text-xs font-semibold text-white">
-                      {evaluacion.aspecto.codigo ? `${evaluacion.aspecto.codigo} · ` : ""}{evaluacion.aspecto.nombre}
-                    </p>
-                    <p className="mt-1 text-[11px] text-neutral-500">
-                      Registrada: {evaluacion.calificacionRegistrada} · {evaluacion.estadoCumplimiento.replaceAll("_", " ")}
-                    </p>
+                  <div
+                    key={evaluacion.id}
+                    className="rounded-lg border border-neutral-800 bg-[#101112] p-2.5"
+                  >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-white">
+                          {evaluacion.aspecto.codigo ? `${evaluacion.aspecto.codigo} · ` : ""}{evaluacion.aspecto.nombre}
+                        </p>
+                        <p className="mt-1 text-[11px] text-neutral-500">
+                          Registrada: {evaluacion.calificacionRegistrada} · {evaluacion.estadoCumplimiento.replaceAll("_", " ")}
+                        </p>
+                      </div>
+
+                      {puedeCorregir && onCorrectAspecto && (
+                        <AppButton
+                          variant="primary"
+                          size="sm"
+                          trailingIcon={<ArrowRight size={14} />}
+                          onClick={() =>
+                            onCorrectAspecto(item, evaluacion)
+                          }
+                        >
+                          Corregir aspecto
+                        </AppButton>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
