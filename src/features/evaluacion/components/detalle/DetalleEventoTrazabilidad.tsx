@@ -145,6 +145,9 @@ function DetalleEvaluacion({
       evaluacion.calificacionAdministrativa;
   const decisionNoAplica = item.decisionNoAplica ?? null;
   const aprobacion = item.aprobacionGestion ?? null;
+  const tonoAprobacion = aprobacion
+    ? aprobacionGestionTone(aprobacion.estado)
+    : null;
 
   return (
     <div className="space-y-3">
@@ -217,16 +220,24 @@ function DetalleEvaluacion({
           </div>
         )}
 
-      {tipo === "APROBACION_GESTION" && aprobacion && (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
-          <p className="text-[9px] font-bold uppercase tracking-wider text-emerald-800">
+      {tipo === "APROBACION_GESTION" && aprobacion && tonoAprobacion && (
+        <div
+          className={`rounded-xl border p-3 ${tonoAprobacion.container}`}
+        >
+          <p
+            className={`text-[9px] font-bold uppercase tracking-wider ${tonoAprobacion.label}`}
+          >
             Aprobación de gestión
           </p>
-          <p className="mt-1 text-xs font-semibold text-emerald-950">
+          <p
+            className={`mt-1 text-xs font-semibold ${tonoAprobacion.text}`}
+          >
             Estado: {humanizar(aprobacion.estado)}
           </p>
           {aprobacion.observacionDecision && (
-            <p className="mt-2 whitespace-pre-wrap text-xs leading-5 text-emerald-950/80">
+            <p
+              className={`mt-2 whitespace-pre-wrap text-xs leading-5 ${tonoAprobacion.body}`}
+            >
               {aprobacion.observacionDecision}
             </p>
           )}
@@ -429,6 +440,33 @@ function MiniDato({
       </p>
     </div>
   );
+}
+
+function aprobacionGestionTone(estado: string) {
+  if (estado === "RECHAZADA") {
+    return {
+      container: "border-red-200 bg-red-50",
+      label: "text-red-800",
+      text: "text-red-950",
+      body: "text-red-950/80",
+    };
+  }
+
+  if (estado === "PENDIENTE") {
+    return {
+      container: "border-amber-200 bg-amber-50",
+      label: "text-amber-800",
+      text: "text-amber-950",
+      body: "text-amber-950/80",
+    };
+  }
+
+  return {
+    container: "border-emerald-200 bg-emerald-50",
+    label: "text-emerald-800",
+    text: "text-emerald-950",
+    body: "text-emerald-950/80",
+  };
 }
 
 function humanizar(value: string): string {

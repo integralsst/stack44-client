@@ -153,6 +153,17 @@ function descripcionHistoricaEvento(
   return `No aplica · Nota registrada ${registrada}.`;
 }
 
+function estadoResumenEvento(
+  evento: EventoTrazabilidadAspecto
+): string | null {
+  if (!evento.estado) return null;
+
+  const estado = evento.estado.replaceAll("_", " ");
+  return evento.tipo === "EVALUACION"
+    ? `Registrado: ${estado}`
+    : estado;
+}
+
 export default function TrazabilidadAspectoTimeline({
   data,
   onOpenRevisionTecnica,
@@ -257,6 +268,7 @@ export default function TrazabilidadAspectoTimeline({
               evento,
               data
             );
+            const estadoResumen = estadoResumenEvento(evento);
 
             const summary = (
               <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -267,9 +279,9 @@ export default function TrazabilidadAspectoTimeline({
                     >
                       {config.label}
                     </span>
-                    {evento.estado && (
+                    {estadoResumen && (
                       <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                        {evento.estado.replaceAll("_", " ")}
+                        {estadoResumen}
                       </span>
                     )}
                   </div>
