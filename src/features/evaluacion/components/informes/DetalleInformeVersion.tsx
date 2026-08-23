@@ -2,9 +2,11 @@ import {
   ArrowLeft,
   Building2,
   CalendarClock,
+  CheckCircle2,
   ClipboardCheck,
   Database,
   Download,
+  FileWarning,
   Layers3,
   UserRound,
 } from "lucide-react";
@@ -15,7 +17,10 @@ import {
 
 import AppButton from "../../../../components/ui/AppButton";
 import { useDescargaInformePdf } from "../../hooks/useDescargaInformePdf";
-import type { InformePeriodoDetalle } from "../../types/informe-periodo.types";
+import type {
+  EstadoDocumentalSnapshotInforme,
+  InformePeriodoDetalle,
+} from "../../types/informe-periodo.types";
 import ResumenResultadosEmpresa from "../resultados/ResumenResultadosEmpresa";
 import ResultadosEstandares from "../resultados/ResultadosEstandares";
 import ResultadosProcesos from "../resultados/ResultadosProcesos";
@@ -129,6 +134,12 @@ export default function DetalleInformeVersion({
         />
       </div>
 
+      {detalle.snapshot.estadoDocumental && (
+        <EstadoDocumentalCard
+          estadoDocumental={detalle.snapshot.estadoDocumental}
+        />
+      )}
+
       <div className="flex gap-1 overflow-x-auto border-b border-neutral-800">
         <TabButton
           active={vista === "EMPRESA"}
@@ -171,6 +182,98 @@ export default function DetalleInformeVersion({
       <p className="text-center text-[10px] leading-4 text-neutral-600">
         Esta fotografía no cambia cuando se incorporan nuevas tareas. Para reflejar actualizaciones del periodo se genera una versión posterior.
       </p>
+    </div>
+  );
+}
+
+function EstadoDocumentalCard({
+  estadoDocumental,
+}: {
+  estadoDocumental: EstadoDocumentalSnapshotInforme;
+}) {
+  const pendiente = estadoDocumental.evidenciasPendientes > 0;
+
+  return (
+    <div
+      className={`rounded-2xl border p-4 ${
+        pendiente
+          ? "border-amber-200 bg-amber-50"
+          : "border-emerald-200 bg-emerald-50"
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <span
+          className={`mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border bg-white ${
+            pendiente
+              ? "border-amber-200 text-amber-700"
+              : "border-emerald-200 text-emerald-700"
+          }`}
+        >
+          {pendiente ? (
+            <FileWarning size={18} />
+          ) : (
+            <CheckCircle2 size={18} />
+          )}
+        </span>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h4
+              className={`text-sm font-semibold ${
+                pendiente ? "text-amber-950" : "text-emerald-950"
+              }`}
+            >
+              Estado documental
+            </h4>
+            <span
+              className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                pendiente
+                  ? "border-amber-300 bg-white text-amber-800"
+                  : "border-emerald-300 bg-white text-emerald-800"
+              }`}
+            >
+              {pendiente
+                ? `${estadoDocumental.evidenciasPendientes} evidencia${
+                    estadoDocumental.evidenciasPendientes === 1 ? "" : "s"
+                  } pendiente${
+                    estadoDocumental.evidenciasPendientes === 1 ? "" : "s"
+                  }`
+                : "Completo"}
+            </span>
+          </div>
+
+          <p
+            className={`mt-1 text-xs leading-5 ${
+              pendiente ? "text-amber-800" : "text-emerald-800"
+            }`}
+          >
+            {pendiente
+              ? "La calificación administrativa se conserva, pero estos aspectos exigían soporte documental y no lo tenían en la fecha de corte."
+              : "En la fecha de corte no existían evidencias requeridas pendientes para los aspectos incluidos en esta versión."}
+          </p>
+
+          {pendiente && estadoDocumental.aspectosPendientes.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {estadoDocumental.aspectosPendientes.map((aspecto) => (
+                <div
+                  key={aspecto.evaluacionId}
+                  className="rounded-xl border border-amber-200 bg-white px-3 py-2.5"
+                >
+                  <p className="text-xs font-semibold text-neutral-900">
+                    {aspecto.aspectoCodigo
+                      ? `${aspecto.aspectoCodigo} · `
+                      : ""}
+                    {aspecto.aspectoNombre}
+                  </p>
+                  <p className="mt-1 text-[11px] text-neutral-600">
+                    Estándar {aspecto.estandar.codigo ?? "-"} · {aspecto.estandar.nombre}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
