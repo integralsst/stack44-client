@@ -70,6 +70,23 @@ export interface FuenteSnapshotInforme {
   ultimaActualizacionFuente: string | null;
 }
 
+export interface AspectoEvidenciaPendienteInforme {
+  evaluacionId: string;
+  aspectoId: number;
+  aspectoCodigo: string | null;
+  aspectoNombre: string;
+  estandar: {
+    id: number;
+    codigo: string | null;
+    nombre: string;
+  };
+}
+
+export interface EstadoDocumentalSnapshotInforme {
+  evidenciasPendientes: number;
+  aspectosPendientes: AspectoEvidenciaPendienteInforme[];
+}
+
 export interface SnapshotInformePeriodo {
   schemaVersion: number;
   tipo: "INFORME_PERIODO_SGSST";
@@ -80,6 +97,7 @@ export interface SnapshotInformePeriodo {
   };
   fuente: FuenteSnapshotInforme;
   resultado: ResultadosEvaluacionResponse;
+  estadoDocumental?: EstadoDocumentalSnapshotInforme;
 }
 
 export interface InformePeriodoDetalle
