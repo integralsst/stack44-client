@@ -9,6 +9,7 @@ import {
   ListChecks,
   LogOut,
   Menu,
+  Settings2,
   Table2,
   Users,
   X,
@@ -25,6 +26,7 @@ import {
   useCallback,
   useEffect,
   useState,
+  type ComponentType,
 } from "react";
 
 import { useAuth } from "../../features/auth/context/AuthContext";
@@ -39,6 +41,19 @@ const internalRoles = new Set([
 
 const SIDEBAR_STORAGE_KEY =
   "stack44_dashboard_sidebar_collapsed";
+
+type NavItem = {
+  to: string;
+  label: string;
+  icon: ComponentType<{ size?: number; className?: string }>;
+  visible: boolean;
+  exact: boolean;
+};
+
+type NavSection = {
+  label: string | null;
+  items: NavItem[];
+};
 
 export default function DashboardLayout() {
   const location = useLocation();
@@ -67,10 +82,6 @@ export default function DashboardLayout() {
     },
     []
   );
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -104,67 +115,101 @@ export default function DashboardLayout() {
     user.role === "CLIENT_ADMIN" ||
     user.role === "CLIENT_USER";
 
-  const items = [
+  const sections: NavSection[] = [
     {
-      to: "/dashboard",
-      label: "Inicio",
-      icon: LayoutDashboard,
-      visible: true,
-      exact: true,
+      label: null,
+      items: [
+        {
+          to: "/dashboard",
+          label: "Inicio",
+          icon: LayoutDashboard,
+          visible: true,
+          exact: true,
+        },
+        {
+          to: "/dashboard/acciones",
+          label: "Centro de acciones",
+          icon: ListChecks,
+          visible: canViewCentroAcciones,
+          exact: false,
+        },
+      ],
     },
     {
-      to: "/dashboard/acciones",
-      label: "Centro de acciones",
-      icon: ListChecks,
-      visible: canViewCentroAcciones,
-      exact: false,
+      label: isInternal ? "Administración" : "Trabajo",
+      items: [
+        {
+          to: "/dashboard/administracion",
+          label: "Administración",
+          icon: Settings2,
+          visible: isInternal,
+          exact: true,
+        },
+        {
+          to: "/dashboard/empresas",
+          label: "Empresas",
+          icon: Building2,
+          visible: true,
+          exact: false,
+        },
+        {
+          to: "/dashboard/profesionales",
+          label: "Profesionales",
+          icon: BriefcaseBusiness,
+          visible: isInternal,
+          exact: false,
+        },
+        {
+          to: "/dashboard/usuarios",
+          label: "Usuarios",
+          icon: Users,
+          visible: canManageUsers,
+          exact: false,
+        },
+      ],
     },
     {
-      to: "/dashboard/auditorias",
-      label: "Auditorías",
-      icon: FileSearch,
-      visible: canViewInformes,
-      exact: false,
+      label: "Operación",
+      items: [
+        {
+          to: "/dashboard/auditorias",
+          label: "Auditorías",
+          icon: FileSearch,
+          visible: canViewInformes,
+          exact: false,
+        },
+        {
+          to: "/dashboard/informes",
+          label: "Informes",
+          icon: FileText,
+          visible: canViewInformes,
+          exact: false,
+        },
+      ],
     },
     {
-      to: "/dashboard/empresas",
-      label: "Empresas",
-      icon: Building2,
-      visible: true,
-      exact: false,
-    },
-    {
-      to: "/dashboard/informes",
-      label: "Informes",
-      icon: FileText,
-      visible: canViewInformes,
-      exact: false,
-    },
-    {
-      to: "/dashboard/usuarios",
-      label: "Usuarios",
-      icon: Users,
-      visible: canManageUsers,
-      exact: false,
-    },
-    {
-      to: "/dashboard/profesionales",
-      label: "Profesionales",
-      icon: BriefcaseBusiness,
-      visible: isInternal,
-      exact: false,
-    },
-    {
-      to: "/dashboard/supermatriz",
-      label: "Supermatriz",
-      icon: Table2,
-      visible: canViewSupermatriz,
-      exact: false,
+      label: "Configuración",
+      items: [
+        {
+          to: "/dashboard/supermatriz",
+          label: "Supermatriz",
+          icon: Table2,
+          visible: canViewSupermatriz,
+          exact: false,
+        },
+      ],
     },
   ];
 
-  const visibleItems = items.filter(
-    (item) => item.visible
+  const visibleSections = sections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => item.visible),
+    }))
+    .filter((section) => section.items.length > 0);
+
+  const visibleItems = visibleSections.flatMap(
+    (section) => section.items
   );
 
   const isActive = (
@@ -172,16 +217,12 @@ export default function DashboardLayout() {
     exact = false
   ): boolean => {
     if (exact) {
-      return (
-        location.pathname === path
-      );
+      return location.pathname === path;
     }
 
     return (
       location.pathname === path ||
-      location.pathname.startsWith(
-        `${path}/`
-      )
+      location.pathname.startsWith(`${path}/`)
     );
   };
 
@@ -189,14 +230,10 @@ export default function DashboardLayout() {
     [...visibleItems]
       .sort(
         (first, second) =>
-          second.to.length -
-          first.to.length
+          second.to.length - first.to.length
       )
       .find((item) =>
-        isActive(
-          item.to,
-          item.exact
-        )
+        isActive(item.to, item.exact)
       )?.label ?? "Panel de control";
 
   const handleLogout = (): void => {
@@ -238,10 +275,7 @@ export default function DashboardLayout() {
           <button
             type="button"
             onClick={() =>
-              setCollapsed(
-                (current) =>
-                  !current
-              )
+              setCollapsed((current) => !current)
             }
             className="hidden h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 lg:flex"
             title={
@@ -256,13 +290,9 @@ export default function DashboardLayout() {
             }
           >
             {compact ? (
-              <ChevronRight
-                size={18}
-              />
+              <ChevronRight size={18} />
             ) : (
-              <ChevronLeft
-                size={18}
-              />
+              <ChevronLeft size={18} />
             )}
           </button>
         )}
@@ -270,9 +300,7 @@ export default function DashboardLayout() {
         {mobile && (
           <button
             type="button"
-            onClick={() =>
-              setMobileOpen(false)
-            }
+            onClick={() => setMobileOpen(false)}
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors hover:text-slate-900"
             aria-label="Cerrar menú"
           >
@@ -282,84 +310,91 @@ export default function DashboardLayout() {
       </div>
 
       <nav
-        className={`flex-1 space-y-2 overflow-y-auto py-5 ${
-          compact
-            ? "px-2"
-            : "px-4"
+        className={`flex-1 overflow-y-auto py-5 ${
+          compact ? "px-2" : "px-4"
         }`}
       >
-        {visibleItems.map(
-          (item) => {
-            const Icon =
-              item.icon;
+        <div className="space-y-5">
+          {visibleSections.map((section, sectionIndex) => (
+            <section
+              key={section.label ?? "principal"}
+              className={
+                compact && sectionIndex > 0
+                  ? "border-t border-slate-200 pt-3"
+                  : ""
+              }
+            >
+              {!compact && section.label && (
+                <p className="mb-2 px-3 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">
+                  {section.label}
+                </p>
+              )}
 
-            const active =
-              isActive(
-                item.to,
-                item.exact
-              );
+              <div className="space-y-1.5">
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.to, item.exact);
+                  const mostrarContador =
+                    item.to === "/dashboard/acciones" &&
+                    accionesPendientesTotal > 0;
 
-            const mostrarContador =
-              item.to === "/dashboard/acciones" &&
-              accionesPendientesTotal > 0;
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      onClick={() => {
+                        if (mobile) setMobileOpen(false);
+                      }}
+                      title={compact ? item.label : undefined}
+                      className={`group relative flex items-center rounded-xl py-3 transition-all ${
+                        compact
+                          ? "justify-center px-3"
+                          : "gap-3 px-4"
+                      } ${
+                        active
+                          ? "border border-cyan-200 bg-cyan-50 text-cyan-700"
+                          : "border border-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                      }`}
+                    >
+                      <Icon
+                        size={20}
+                        className="shrink-0"
+                      />
 
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                title={
-                  compact
-                    ? item.label
-                    : undefined
-                }
-                className={`group relative flex items-center rounded-xl py-3 transition-all ${
-                  compact
-                    ? "justify-center px-3"
-                    : "gap-3 px-4"
-                } ${
-                  active
-                    ? "border border-cyan-200 bg-cyan-50 text-cyan-700"
-                    : "border border-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                }`}
-              >
-                <Icon
-                  size={20}
-                  className="shrink-0"
-                />
+                      {!compact && (
+                        <>
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                            {item.label}
+                          </span>
+                          {mostrarContador && (
+                            <span className="flex min-h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-cyan-600 px-1.5 text-[10px] font-bold text-white">
+                              {accionesPendientesTotal > 99
+                                ? "99+"
+                                : accionesPendientesTotal}
+                            </span>
+                          )}
+                        </>
+                      )}
 
-                {!compact && (
-                  <>
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                      {item.label}
-                    </span>
-                    {mostrarContador && (
-                      <span className="flex min-h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-cyan-600 px-1.5 text-[10px] font-bold text-white">
-                        {accionesPendientesTotal > 99
-                          ? "99+"
-                          : accionesPendientesTotal}
-                      </span>
-                    )}
-                  </>
-                )}
-
-                {compact && mostrarContador && (
-                  <span className="absolute right-1 top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-cyan-600 px-1 text-[9px] font-bold text-white ring-2 ring-white">
-                    {accionesPendientesTotal > 9
-                      ? "9+"
-                      : accionesPendientesTotal}
-                  </span>
-                )}
-              </Link>
-            );
-          }
-        )}
+                      {compact && mostrarContador && (
+                        <span className="absolute right-1 top-1 flex min-h-4 min-w-4 items-center justify-center rounded-full bg-cyan-600 px-1 text-[9px] font-bold text-white ring-2 ring-white">
+                          {accionesPendientesTotal > 9
+                            ? "9+"
+                            : accionesPendientesTotal}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
       </nav>
 
       <div
         className={`shrink-0 border-t border-slate-200 ${
-          compact
-            ? "p-2"
-            : "p-4"
+          compact ? "p-2" : "p-4"
         }`}
       >
         {!compact ? (
@@ -381,20 +416,14 @@ export default function DashboardLayout() {
             className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl border border-cyan-200 bg-cyan-50 text-sm font-bold text-cyan-700"
             title={`${user.name} · ${user.role}`}
           >
-            {user.name
-              .charAt(0)
-              .toUpperCase()}
+            {user.name.charAt(0).toUpperCase()}
           </div>
         )}
 
         <button
           type="button"
           onClick={handleLogout}
-          title={
-            compact
-              ? "Cerrar sesión"
-              : undefined
-          }
+          title={compact ? "Cerrar sesión" : undefined}
           className={`flex w-full items-center rounded-xl py-3 text-red-600 transition-colors hover:bg-red-50 ${
             compact
               ? "justify-center px-3"
@@ -427,9 +456,7 @@ export default function DashboardLayout() {
             : "w-64"
         }`}
       >
-        {renderSidebar(
-          collapsed
-        )}
+        {renderSidebar(collapsed)}
       </aside>
 
       {mobileOpen && (
@@ -437,17 +464,12 @@ export default function DashboardLayout() {
           <button
             type="button"
             aria-label="Cerrar menú"
-            onClick={() =>
-              setMobileOpen(false)
-            }
+            onClick={() => setMobileOpen(false)}
             className="fixed inset-0 z-40 bg-slate-950/35 backdrop-blur-sm lg:hidden"
           />
 
           <aside className="fixed inset-y-0 left-0 z-50 w-[min(86vw,18rem)] border-r border-slate-200 bg-white shadow-2xl lg:hidden">
-            {renderSidebar(
-              false,
-              true
-            )}
+            {renderSidebar(false, true)}
           </aside>
         </>
       )}
@@ -457,9 +479,7 @@ export default function DashboardLayout() {
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
-              onClick={() =>
-                setMobileOpen(true)
-              }
+              onClick={() => setMobileOpen(true)}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900 lg:hidden"
               aria-label="Abrir menú"
             >
@@ -490,9 +510,7 @@ export default function DashboardLayout() {
               className="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-200 bg-cyan-50 text-xs font-bold text-cyan-700 sm:h-10 sm:w-10"
               title={user.name}
             >
-              {user.name
-                .charAt(0)
-                .toUpperCase()}
+              {user.name.charAt(0).toUpperCase()}
             </div>
           </div>
         </header>
