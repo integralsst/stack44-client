@@ -42,7 +42,6 @@ const NIVELES = {
 } as const;
 
 const CATEGORIAS = {
-  COMPROMISOS: "Compromiso",
   GESTIONES: "Gestión",
   EVIDENCIAS: "Evidencia",
   REVISION_TECNICA: "Revisión técnica",
