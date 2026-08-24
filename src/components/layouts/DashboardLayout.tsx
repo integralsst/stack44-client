@@ -149,21 +149,21 @@ export default function DashboardLayout() {
           to: "/dashboard/empresas",
           label: "Empresas",
           icon: Building2,
-          visible: true,
+          visible: !isInternal,
           exact: false,
         },
         {
           to: "/dashboard/profesionales",
           label: "Profesionales",
           icon: BriefcaseBusiness,
-          visible: isInternal,
+          visible: false,
           exact: false,
         },
         {
           to: "/dashboard/usuarios",
           label: "Usuarios",
           icon: Users,
-          visible: canManageUsers,
+          visible: !isInternal && canManageUsers,
           exact: false,
         },
       ],
@@ -201,16 +201,16 @@ export default function DashboardLayout() {
     },
   ];
 
+  const allItems = sections.flatMap(
+    (section) => section.items
+  );
+
   const visibleSections = sections
     .map((section) => ({
       ...section,
       items: section.items.filter((item) => item.visible),
     }))
     .filter((section) => section.items.length > 0);
-
-  const visibleItems = visibleSections.flatMap(
-    (section) => section.items
-  );
 
   const isActive = (
     path: string,
@@ -227,7 +227,7 @@ export default function DashboardLayout() {
   };
 
   const currentPage =
-    [...visibleItems]
+    [...allItems]
       .sort(
         (first, second) =>
           second.to.length - first.to.length
