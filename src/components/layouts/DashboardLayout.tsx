@@ -1,4 +1,5 @@
 import {
+  ArrowLeft,
   BriefcaseBusiness,
   Building2,
   ChevronLeft,
@@ -41,6 +42,12 @@ const internalRoles = new Set([
 
 const SIDEBAR_STORAGE_KEY =
   "stack44_dashboard_sidebar_collapsed";
+
+const ADMIN_SUBMODULE_PATHS = new Set([
+  "/dashboard/empresas",
+  "/dashboard/profesionales",
+  "/dashboard/usuarios",
+]);
 
 type NavItem = {
   to: string;
@@ -114,6 +121,10 @@ export default function DashboardLayout() {
     user.role === "PROFESSIONAL" ||
     user.role === "CLIENT_ADMIN" ||
     user.role === "CLIENT_USER";
+
+  const showAdminBack =
+    isInternal &&
+    ADMIN_SUBMODULE_PATHS.has(location.pathname);
 
   const sections: NavSection[] = [
     {
@@ -485,6 +496,20 @@ export default function DashboardLayout() {
             >
               <Menu size={20} />
             </button>
+
+            {showAdminBack && (
+              <Link
+                to="/dashboard/administracion"
+                className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-600 shadow-sm transition-colors hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-700"
+                title="Volver a Administración"
+                aria-label="Volver a Administración"
+              >
+                <ArrowLeft size={16} />
+                <span className="hidden sm:inline">
+                  Administración
+                </span>
+              </Link>
+            )}
 
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-900 sm:text-base">
