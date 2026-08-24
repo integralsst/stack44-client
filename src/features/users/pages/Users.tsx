@@ -55,6 +55,11 @@ const clientRoles = new Set([
   "CLIENT_ADMIN",
 ]);
 
+const professionalRoles = new Set<UserRole>([
+  "PROFESSIONAL",
+  "COORDINATOR",
+]);
+
 const internalRoles = new Set([
   "ADMIN",
   "OWNER",
@@ -102,6 +107,7 @@ export default function Users() {
           "CLIENT_USER",
           "CLIENT_ADMIN",
           "PROFESSIONAL",
+          "COORDINATOR",
           "ADMIN",
           "OWNER",
           "SUPERADMIN",
@@ -112,6 +118,7 @@ export default function Users() {
           "CLIENT_USER",
           "CLIENT_ADMIN",
           "PROFESSIONAL",
+          "COORDINATOR",
           "ADMIN",
         ];
       case "ADMIN":
@@ -120,6 +127,7 @@ export default function Users() {
           "CLIENT_USER",
           "CLIENT_ADMIN",
           "PROFESSIONAL",
+          "COORDINATOR",
         ];
       case "CLIENT_ADMIN":
         return ["CLIENT_USER"];
@@ -249,7 +257,7 @@ export default function Users() {
         ? current.companyId
         : "",
       professionalId:
-        role === "PROFESSIONAL"
+        professionalRoles.has(role)
           ? current.professionalId
           : "",
     }));
@@ -284,7 +292,7 @@ export default function Users() {
           ? form.companyId || null
           : null;
         payload.professionalId =
-          form.role === "PROFESSIONAL"
+          professionalRoles.has(form.role)
             ? form.professionalId || null
             : null;
         payload.isActive = form.isActive;
@@ -306,7 +314,7 @@ export default function Users() {
       }
 
       if (
-        form.role === "PROFESSIONAL" &&
+        professionalRoles.has(form.role) &&
         !form.professionalId
       ) {
         throw new Error(
@@ -691,7 +699,7 @@ export default function Users() {
                 </Field>
               )}
 
-              {form.role === "PROFESSIONAL" && (
+              {professionalRoles.has(form.role) && (
                 <Field label="Perfil profesional">
                   <AppSelect
                     required
