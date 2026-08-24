@@ -9,7 +9,6 @@ import {
   ListChecks,
 } from "lucide-react";
 import {
-  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -150,10 +149,6 @@ export default function VigenciaResumenAlertas({
 
         return a.orden - b.orden;
       });
-    const evidenciasPendientesGestionActiva =
-      requierenEvidencia.filter(
-        tieneEvidenciaPendienteGestionActiva
-      ).length;
 
     return {
       faltaFecha: unicas.filter(
@@ -171,7 +166,6 @@ export default function VigenciaResumenAlertas({
       evidenciasPendientes: requierenEvidencia.filter(
         requiereAccionEvidencia
       ).length,
-      evidenciasPendientesGestionActiva,
       evidenciasCompletas: requierenEvidencia.filter(
         (fila) =>
           !tieneEvidenciaPendienteGestionActiva(fila) &&
@@ -179,12 +173,6 @@ export default function VigenciaResumenAlertas({
       ).length,
     };
   }, [filas]);
-
-  useEffect(() => {
-    if (resumen.evidenciasPendientesGestionActiva > 0) {
-      setPanelEvidenciasAbierto(true);
-    }
-  }, [resumen.evidenciasPendientesGestionActiva]);
 
   const totalVigencia =
     resumen.faltaFecha + resumen.periodicidad;
