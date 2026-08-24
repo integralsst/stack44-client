@@ -72,6 +72,13 @@ const AuditoriaDetalleGovernancePage = lazy(
     )
 );
 
+const AdministracionPage = lazy(
+  () =>
+    import(
+      "../features/administracion/pages/AdministracionPage"
+    )
+);
+
 const Companies = lazy(
   () =>
     import(
@@ -308,6 +315,15 @@ function AppRoutes() {
               element={
                 <RoleGuard allowedRoles={INFORMES_ROLES}>
                   <AuditoriaDetalleGovernancePage />
+                </RoleGuard>
+              }
+            />
+
+            <Route
+              path="administracion"
+              element={
+                <RoleGuard allowedRoles={INTERNAL_ROLES}>
+                  <AdministracionPage />
                 </RoleGuard>
               }
             />
