@@ -1,7 +1,6 @@
 import {
   BriefcaseBusiness,
   Building2,
-  ClipboardList,
   ChevronLeft,
   ChevronRight,
   FileSearch,
@@ -29,7 +28,7 @@ import {
 } from "react";
 
 import { useAuth } from "../../features/auth/context/AuthContext";
-import CentroAlertasCompromisos from "../../features/compromisos/components/alertas/CentroAlertasCompromisos";
+import CentroAlertasAcciones from "../../features/acciones/components/CentroAlertasAcciones";
 import { ADMIN_LIGHT_SCOPE_CLASSES } from "../ui/adminLightTheme";
 
 const internalRoles = new Set([
@@ -98,12 +97,9 @@ export default function DashboardLayout() {
 
   const canViewInformes = user.role !== "USER";
 
-  const canSuperviseCommitments =
+  const canViewCentroAcciones =
     isInternal ||
-    user.role === "COORDINATOR";
-
-  const canViewOwnCommitments =
-    canSuperviseCommitments ||
+    user.role === "COORDINATOR" ||
     user.role === "PROFESSIONAL" ||
     user.role === "CLIENT_ADMIN" ||
     user.role === "CLIENT_USER";
@@ -120,7 +116,7 @@ export default function DashboardLayout() {
       to: "/dashboard/acciones",
       label: "Centro de acciones",
       icon: ListChecks,
-      visible: canViewOwnCommitments,
+      visible: canViewCentroAcciones,
       exact: false,
     },
     {
@@ -142,20 +138,6 @@ export default function DashboardLayout() {
       label: "Informes",
       icon: FileText,
       visible: canViewInformes,
-      exact: false,
-    },
-    {
-      to: "/dashboard/compromisos",
-      label: "Compromisos",
-      icon: ClipboardList,
-      visible: canSuperviseCommitments,
-      exact: true,
-    },
-    {
-      to: "/dashboard/mis-compromisos",
-      label: "Mis compromisos",
-      icon: ClipboardList,
-      visible: canViewOwnCommitments,
       exact: false,
     },
     {
@@ -499,8 +481,8 @@ export default function DashboardLayout() {
           </div>
 
           <div className="flex items-center gap-2">
-            {canViewOwnCommitments && (
-              <CentroAlertasCompromisos
+            {canViewCentroAcciones && (
+              <CentroAlertasAcciones
                 onTotalChange={actualizarTotalAcciones}
               />
             )}

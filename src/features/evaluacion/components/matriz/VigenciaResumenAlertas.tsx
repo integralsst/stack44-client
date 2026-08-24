@@ -3,11 +3,12 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Eye,
   FileCheck2,
   FolderOpen,
+  ListChecks,
 } from "lucide-react";
 import {
-  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -41,6 +42,15 @@ function requiereAccionEvidencia(
     fila.evidenciaPendiente ||
     tieneEvidenciaPendienteGestionActiva(fila)
   );
+}
+
+function tieneCompromisoPendiente(
+  fila: FilaEvaluacion
+): boolean {
+  const calificacion =
+    fila.ultimaEvaluacion?.calificacionAdministrativa;
+
+  return calificacion === 0 || calificacion === 3;
 }
 
 function estadoDocumentalLabel(
@@ -98,6 +108,8 @@ export default function VigenciaResumenAlertas({
 }) {
   const [searchParams, setSearchParams] =
     useSearchParams();
+  const [panelCompromisosAbierto, setPanelCompromisosAbierto] =
+    useState(true);
   const [panelEvidenciasAbierto, setPanelEvidenciasAbierto] =
     useState(false);
 
@@ -110,6 +122,17 @@ export default function VigenciaResumenAlertas({
     );
 
     const unicas = [...aspectos.values()];
+    const compromisosPendientes = unicas
+      .filter(tieneCompromisoPendiente)
+      .sort((a, b) => {
+        const notaA =
+          a.ultimaEvaluacion?.calificacionAdministrativa ?? 5;
+        const notaB =
+          b.ultimaEvaluacion?.calificacionAdministrativa ?? 5;
+
+        if (notaA !== notaB) return notaA - notaB;
+        return a.orden - b.orden;
+      });
     const requierenEvidencia = unicas
       .filter(
         (fila) =>
@@ -126,10 +149,6 @@ export default function VigenciaResumenAlertas({
 
         return a.orden - b.orden;
       });
-    const evidenciasPendientesGestionActiva =
-      requierenEvidencia.filter(
-        tieneEvidenciaPendienteGestionActiva
-      ).length;
 
     return {
       faltaFecha: unicas.filter(
@@ -142,11 +161,11 @@ export default function VigenciaResumenAlertas({
           fila.estadoVigencia ===
           "PERIODICIDAD_NO_CONFIGURADA"
       ).length,
+      compromisosPendientes,
       requierenEvidencia,
       evidenciasPendientes: requierenEvidencia.filter(
         requiereAccionEvidencia
       ).length,
-      evidenciasPendientesGestionActiva,
       evidenciasCompletas: requierenEvidencia.filter(
         (fila) =>
           !tieneEvidenciaPendienteGestionActiva(fila) &&
@@ -155,19 +174,16 @@ export default function VigenciaResumenAlertas({
     };
   }, [filas]);
 
-  useEffect(() => {
-    if (resumen.evidenciasPendientesGestionActiva > 0) {
-      setPanelEvidenciasAbierto(true);
-    }
-  }, [resumen.evidenciasPendientesGestionActiva]);
-
   const totalVigencia =
     resumen.faltaFecha + resumen.periodicidad;
+  const totalCompromisosPendientes =
+    resumen.compromisosPendientes.length;
   const totalRequierenEvidencia =
     resumen.requierenEvidencia.length;
 
   if (
     totalVigencia === 0 &&
+    totalCompromisosPendientes === 0 &&
     totalRequierenEvidencia === 0
   ) {
     return null;
@@ -187,7 +203,10 @@ export default function VigenciaResumenAlertas({
     );
   }
 
-  const abrirEvidencias = (fila: FilaEvaluacion) => {
+  const abrirDetalle = (
+    fila: FilaEvaluacion,
+    detalle: "RESUMEN" | "EVIDENCIAS"
+  ) => {
     const siguientesParametros =
       new URLSearchParams(searchParams);
 
@@ -195,13 +214,118 @@ export default function VigenciaResumenAlertas({
       "tareaId",
       String(fila.tareaId)
     );
-    siguientesParametros.set("detalle", "EVIDENCIAS");
+    siguientesParametros.set("detalle", detalle);
 
     setSearchParams(siguientesParametros);
   };
 
   return (
     <div className="space-y-3 px-4 pb-4 pt-4 sm:px-5 sm:pb-5">
+      {totalCompromisosPendientes > 0 && (
+        <section className="overflow-hidden rounded-2xl border border-amber-200 bg-white text-slate-950 shadow-sm">
+          <button
+            type="button"
+            onClick={() =>
+              setPanelCompromisosAbierto((actual) => !actual)
+            }
+            aria-expanded={panelCompromisosAbierto}
+            className="flex w-full flex-col gap-4 px-5 py-4 text-left transition hover:bg-amber-50/40 sm:px-6 lg:flex-row lg:items-center lg:justify-between"
+          >
+            <div className="flex min-w-0 gap-3.5">
+              <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-700 ring-1 ring-amber-200">
+                <ListChecks size={18} />
+              </span>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-sm font-bold text-slate-950 sm:text-base">
+                    Compromisos pendientes
+                  </h3>
+                  <span className="rounded-full border border-amber-300 bg-amber-100 px-2.5 py-1 text-[10px] font-extrabold text-amber-950 sm:text-xs">
+                    {totalCompromisosPendientes}
+                  </span>
+                  <span className="text-[10px] font-semibold text-amber-700 sm:text-xs">
+                    {panelCompromisosAbierto
+                      ? "Ocultar aspectos"
+                      : "Ver aspectos"}
+                  </span>
+                </div>
+                <p className="mt-1.5 max-w-3xl text-xs leading-5 text-slate-600">
+                  Se calculan automáticamente desde la última evaluación válida: una nota 0 o 3 mantiene el aspecto pendiente; al llegar a 5 el pendiente desaparece sin cierre adicional.
+                </p>
+              </div>
+            </div>
+
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-amber-200 bg-white text-amber-800 shadow-sm">
+              {panelCompromisosAbierto ? (
+                <ChevronUp size={16} />
+              ) : (
+                <ChevronDown size={16} />
+              )}
+            </span>
+          </button>
+
+          {panelCompromisosAbierto && (
+            <div className="max-h-72 divide-y divide-amber-100 overflow-y-auto border-t border-amber-200 bg-amber-50/30 p-2 sm:p-3">
+              {resumen.compromisosPendientes.map((fila) => {
+                const calificacion =
+                  fila.ultimaEvaluacion?.calificacionAdministrativa ?? 0;
+                const incumplimientoTotal = calificacion === 0;
+
+                return (
+                  <article
+                    key={fila.aspecto.id}
+                    className="flex flex-col gap-3 bg-white px-4 py-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-950">
+                          Compromiso pendiente
+                        </span>
+                        <span
+                          className={`rounded-full border px-2 py-0.5 text-[9px] font-bold ${
+                            incumplimientoTotal
+                              ? "border-red-200 bg-red-50 text-red-800"
+                              : "border-orange-200 bg-orange-50 text-orange-800"
+                          }`}
+                        >
+                          {incumplimientoTotal
+                            ? "No cumple · 0"
+                            : "Parcial · 3"}
+                        </span>
+                        <span className="text-[10px] font-semibold text-slate-500">
+                          Orden {fila.orden}
+                          {fila.codigo
+                            ? ` · ${fila.codigo}`
+                            : ""}
+                        </span>
+                      </div>
+
+                      <p className="mt-2 whitespace-normal text-sm font-bold leading-5 text-slate-950">
+                        {fila.aspecto.nombre}
+                      </p>
+                      {fila.aspecto.planAccionEspecifico && (
+                        <p className="mt-1 line-clamp-2 whitespace-normal text-xs leading-5 text-slate-600">
+                          {fila.aspecto.planAccionEspecifico}
+                        </p>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => abrirDetalle(fila, "RESUMEN")}
+                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-100 px-3.5 py-2.5 text-xs font-bold text-amber-950 transition hover:bg-amber-200"
+                    >
+                      <Eye size={14} />
+                      Ver aspecto
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
+
       {totalRequierenEvidencia > 0 && (
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-950 shadow-sm">
           <button
@@ -311,7 +435,7 @@ export default function VigenciaResumenAlertas({
 
                     <button
                       type="button"
-                      onClick={() => abrirEvidencias(fila)}
+                      onClick={() => abrirDetalle(fila, "EVIDENCIAS")}
                       className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-bold transition ${
                         requiereAccion
                           ? "border-amber-300 bg-amber-100 text-amber-950 hover:bg-amber-200"

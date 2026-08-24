@@ -1,5 +1,6 @@
 import { apiRequest } from "../../../lib/api";
 import type {
+  AccionesDestacadasResponse,
   AccionesEmpresaResponse,
   ConsultaCentroAcciones,
   EmpresasCentroAccionesResponse,
@@ -17,6 +18,14 @@ function construirQuery(consulta: ConsultaCentroAcciones = {}): string {
 
   const texto = query.toString();
   return texto ? `?${texto}` : "";
+}
+
+export function obtenerAccionesDestacadas(token: string) {
+  return apiRequest<AccionesDestacadasResponse>(
+    "/api/acciones/destacadas",
+    {},
+    token
+  );
 }
 
 export function obtenerResumenCentroAcciones(token: string) {

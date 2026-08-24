@@ -4,16 +4,21 @@ import {
 } from "react";
 
 import { useAuth } from "../../auth/context/AuthContext";
-import {
-  finalizarGestionConCompromisos,
-  obtenerPreparacionFinalizacion,
-} from "../api/compromisos.api";
+import { finalizarGestionConCompromisos } from "../api/compromisos.api";
 import type {
   FinalizacionGestionResponse,
   FinalizarGestionInput,
   PreparacionFinalizacionResponse,
 } from "../types/compromiso.types";
 
+/**
+ * Puente temporal de compatibilidad con la pantalla de evaluación.
+ *
+ * El flujo vigente ya no prepara compromisos operativos: una evaluación
+ * finalizada en 0/3 se representa como "Compromiso pendiente" derivado de
+ * la última evaluación válida. Conservamos esta interfaz para no reescribir
+ * innecesariamente la pantalla crítica de evaluación durante la transición.
+ */
 export function usePreparacionFinalizacion() {
   const { token } = useAuth();
   const [preparacion, setPreparacion] =
@@ -44,22 +49,20 @@ export function usePreparacionFinalizacion() {
       setError(null);
 
       try {
-        const resultado =
-          await obtenerPreparacionFinalizacion(
-            gestionId,
-            token
-          );
+        const resultado: PreparacionFinalizacionResponse = {
+          gestionId,
+          totalEvaluaciones: 0,
+          requiereCompromisos: false,
+          totalRequierenCompromiso: 0,
+          totalNuevos: 0,
+          totalVinculados: 0,
+          evaluaciones: [],
+          recalificacionesCumplidas: [],
+          responsablesDisponibles: [],
+        };
 
         setPreparacion(resultado);
         return resultado;
-      } catch (currentError) {
-        const message =
-          currentError instanceof Error
-            ? currentError.message
-            : "No fue posible preparar la finalización.";
-
-        setError(message);
-        throw currentError;
       } finally {
         setCargando(false);
       }
