@@ -1,5 +1,4 @@
 export type CategoriaAccionCentro =
-  | "COMPROMISOS"
   | "GESTIONES"
   | "EVIDENCIAS"
   | "REVISION_TECNICA"
@@ -13,7 +12,6 @@ export type FiltroPrioridadAcciones = "TODAS" | "URGENTE" | "PENDIENTE";
 export type NivelAccionCentro = "ALTA" | "MEDIA" | "BAJA";
 
 export interface ConteoCategoriasAcciones {
-  COMPROMISOS: number;
   GESTIONES: number;
   EVIDENCIAS: number;
   REVISION_TECNICA: number;
@@ -70,6 +68,36 @@ export interface AccionCentro {
     etiqueta: string;
     ruta: string;
   };
+}
+
+export interface AccionDestacada {
+  id: string;
+  tipo: string;
+  nivel: NivelAccionCentro;
+  titulo: string;
+  descripcion: string;
+  empresa: {
+    id: string;
+    nombre: string;
+  };
+  aspecto: {
+    id: number;
+    nombre: string;
+  };
+  fechaLimite: string;
+  accion: {
+    etiqueta: string;
+    ruta: string;
+  };
+}
+
+export interface AccionesDestacadasResponse {
+  resumen: {
+    total: number;
+    urgentes: number;
+  };
+  alertas: AccionDestacada[];
+  generadasEn: string;
 }
 
 export interface PaginacionAcciones {
