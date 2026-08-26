@@ -24,6 +24,7 @@ import VersionsManager from "../components/VersionsManager";
 import StructureWorkspace from "../components/structure/StructureWorkspace";
 import { useSupermatrizAdmin } from "../hooks/useSupermatrizAdmin";
 import type {
+  MatrixVersionStatus,
   ProcessCatalog,
 } from "../types/supermatriz.types";
 
@@ -41,6 +42,14 @@ const tabs: Array<{
   { id: "versiones", label: "Versiones", icon: Layers3 },
   { id: "historial", label: "Historial", icon: FileClock },
 ];
+
+function versionStatusLabel(
+  status: MatrixVersionStatus
+): string {
+  return status === "CERRADA"
+    ? "HISTÓRICA"
+    : status;
+}
 
 export default function Supermatriz() {
   const { user, token } = useAuth();
@@ -121,7 +130,7 @@ export default function Supermatriz() {
               >
                 {matrix.versions.map((version) => (
                   <option key={version.id} value={version.id}>
-                    {version.nombre} · {version.estado}
+                    {version.nombre} · {versionStatusLabel(version.estado)}
                   </option>
                 ))}
               </AppSelect>
@@ -208,7 +217,6 @@ export default function Supermatriz() {
           onUpdate={matrix.updateVersion}
           onClone={matrix.cloneVersion}
           onPublish={matrix.publishVersion}
-          onClose={matrix.closeVersion}
         />
       ) : !selectedVersion ? (
         <div className="rounded-2xl border border-dashed border-neutral-800 px-6 py-20 text-center text-sm text-neutral-500">
