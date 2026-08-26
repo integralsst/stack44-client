@@ -35,6 +35,30 @@ interface Props {
   onDeactivateAspect: (aspect: AspectCatalog) => void;
 }
 
+interface VisibleStandard {
+  standard: Standard;
+  aspects: AspectCatalog[];
+}
+
+interface VisibleCategory {
+  category: StandardCategory;
+  standards: VisibleStandard[];
+}
+
+interface VisibleCycle {
+  cycle: PhvaCycle;
+  categories: VisibleCategory[];
+}
+
+function matchesSearch(
+  search: string,
+  ...values: Array<string | null | undefined>
+): boolean {
+  return values.some((value) =>
+    (value ?? "").toLowerCase().includes(search)
+  );
+}
+
 export default function StructureTree({
   catalogs,
   canEdit,
@@ -57,27 +81,89 @@ export default function StructureTree({
 
   const normalizedSearch = search.trim().toLowerCase();
 
-  const cycles = useMemo(() => {
-    if (!normalizedSearch) return catalogs.ciclosPhva;
+  const structure = useMemo<VisibleCycle[]>(() => {
+    const showAll = !normalizedSearch;
 
-    return catalogs.ciclosPhva.filter((cycle) => {
-      const categories = catalogs.categoriasEstandar.filter(
-        (category) => category.cicloPhvaId === cycle.id
-      );
-      const standards = catalogs.estandares.filter((standard) =>
-        categories.some((category) => category.id === standard.categoriaEstandarId)
-      );
-      const aspects = catalogs.aspectos.filter((aspect) =>
-        standards.some((standard) => standard.id === aspect.estandarId)
-      );
+    return catalogs.ciclosPhva.flatMap((cycle) => {
+      const cycleMatches =
+        showAll ||
+        matchesSearch(
+          normalizedSearch,
+          cycle.codigo,
+          cycle.nombre
+        );
+
+      const categories = catalogs.categoriasEstandar
+        .filter((category) => category.cicloPhvaId === cycle.id)
+        .flatMap<VisibleCategory>((category) => {
+          const categoryMatches =
+            cycleMatches ||
+            matchesSearch(
+              normalizedSearch,
+              category.codigo,
+              category.nombre
+            );
+
+          const standards = catalogs.estandares
+            .filter(
+              (standard) =>
+                standard.categoriaEstandarId === category.id
+            )
+            .flatMap<VisibleStandard>((standard) => {
+              const standardMatches =
+                categoryMatches ||
+                matchesSearch(
+                  normalizedSearch,
+                  standard.codigo,
+                  standard.nombre
+                );
+
+              const aspects = catalogs.aspectos.filter(
+                (aspect) =>
+                  aspect.estandarId === standard.id &&
+                  (standardMatches ||
+                    matchesSearch(
+                      normalizedSearch,
+                      aspect.codigo,
+                      aspect.nombre,
+                      aspect.planAccionEspecifico?.descripcion
+                    ))
+              );
+
+              if (!standardMatches && aspects.length === 0) {
+                return [];
+              }
+
+              return [
+                {
+                  standard,
+                  aspects,
+                },
+              ];
+            });
+
+          if (!categoryMatches && standards.length === 0) {
+            return [];
+          }
+
+          return [
+            {
+              category,
+              standards,
+            },
+          ];
+        });
+
+      if (!cycleMatches && categories.length === 0) {
+        return [];
+      }
 
       return [
-        cycle.codigo,
-        cycle.nombre,
-        ...categories.flatMap((item) => [item.codigo ?? "", item.nombre]),
-        ...standards.flatMap((item) => [item.codigo ?? "", item.nombre]),
-        ...aspects.flatMap((item) => [item.codigo ?? "", item.nombre]),
-      ].some((value) => value.toLowerCase().includes(normalizedSearch));
+        {
+          cycle,
+          categories,
+        },
+      ];
     });
   }, [
     catalogs.aspectos,
@@ -91,7 +177,7 @@ export default function StructureTree({
     setter(list.includes(id) ? list.filter((item) => item !== id) : [...list, id]);
   }
 
-  if (cycles.length === 0) {
+  if (structure.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-neutral-800 px-5 py-16 text-center text-sm text-neutral-500">
         No se encontraron elementos en la estructura.
@@ -101,10 +187,7 @@ export default function StructureTree({
 
   return (
     <div className="space-y-3">
-      {cycles.map((cycle) => {
-        const categories = catalogs.categoriasEstandar.filter(
-          (category) => category.cicloPhvaId === cycle.id
-        );
+      {structure.map(({ cycle, categories }) => {
         const cycleClosed = closedCycles.includes(cycle.id) && !normalizedSearch;
 
         return (
@@ -135,10 +218,7 @@ export default function StructureTree({
                 {categories.length === 0 ? (
                   <EmptyChild text="Este ciclo todavía no tiene categorías." />
                 ) : (
-                  categories.map((category) => {
-                    const standards = catalogs.estandares.filter(
-                      (standard) => standard.categoriaEstandarId === category.id
-                    );
+                  categories.map(({ category, standards }) => {
                     const categoryClosed = closedCategories.includes(category.id) && !normalizedSearch;
 
                     return (
@@ -166,10 +246,7 @@ export default function StructureTree({
                             {standards.length === 0 ? (
                               <EmptyChild text="Esta categoría todavía no tiene estándares." level={2} />
                             ) : (
-                              standards.map((standard) => {
-                                const aspects = catalogs.aspectos.filter(
-                                  (aspect) => aspect.estandarId === standard.id
-                                );
+                              standards.map(({ standard, aspects }) => {
                                 const standardClosed = closedStandards.includes(standard.id) && !normalizedSearch;
 
                                 return (

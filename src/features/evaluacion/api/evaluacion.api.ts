@@ -5,11 +5,40 @@ import type {
   GuardarEvaluacionInput,
 } from "../../../types/evaluacion.types";
 
+type GestionContexto = NonNullable<
+  ContextoEvaluacionResponse["gestionActiva"]
+>;
+
+function normalizarFechaCalendarioIso(value: string): string {
+  const fecha = value.slice(0, 10);
+  return `${fecha}T12:00:00.000Z`;
+}
+
+function normalizarFechaGestion(
+  gestion: GestionContexto
+): GestionContexto {
+  return {
+    ...gestion,
+    // fechaGestion representa un día calendario, no un instante horario.
+    // Normalizamos a mediodía UTC para que registros históricos guardados
+    // a las 00:00 UTC no se pinten como el día anterior en Colombia.
+    fechaGestion: normalizarFechaCalendarioIso(
+      gestion.fechaGestion
+    ),
+  };
+}
+
 function aplicarResultadoEfectivoEnVista(
   contexto: ContextoEvaluacionResponse
 ): ContextoEvaluacionResponse {
   return {
     ...contexto,
+    gestionActiva: contexto.gestionActiva
+      ? normalizarFechaGestion(contexto.gestionActiva)
+      : null,
+    gestionesActivas: contexto.gestionesActivas.map(
+      normalizarFechaGestion
+    ),
     filas: contexto.filas.map((fila) => ({
       ...fila,
       // La matriz es una vista operativa: para la última evaluación
