@@ -44,15 +44,16 @@ export function emptyAspectDraft(
       permiteNoAplica: true,
     },
     configuracionVigencia: {
-      tipoFechaBase: "FECHA_DOCUMENTO",
+      tipoFechaBase: "FECHA_ULTIMA_REVISION",
       fuentePeriodicidad: "CONFIGURACION_TECNICA",
-      cantidad: 12,
-      unidad: "MES",
+      cantidad: 1,
+      unidad: "ANIO",
       diasAlertaPrevia: 30,
       permiteFechaManual: true,
       mesFechaFija: null,
       diaFechaFija: null,
-      descripcionRegla: null,
+      descripcionRegla:
+        "Revisión anual por defecto para aspectos nuevos sin periodicidad documental explícita.",
     },
     configuracionEvidencia: {
       requiereEvidencia: false,
