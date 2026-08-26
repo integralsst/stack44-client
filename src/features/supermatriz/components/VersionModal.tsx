@@ -56,14 +56,15 @@ export default function VersionModal({
     validFrom,
     setValidFrom,
   ] = useState("");
-  const [
-    validUntil,
-    setValidUntil,
-  ] = useState("");
   const [saving, setSaving] =
     useState(false);
   const [error, setError] =
     useState<string | null>(null);
+
+  const requiresStartDate =
+    mode === "clonar" ||
+    (mode === "editar" &&
+      Boolean(current?.clonadaDeId));
 
   useEffect(() => {
     if (!open) return;
@@ -81,28 +82,21 @@ export default function VersionModal({
           current.vigenteDesde
         )
       );
-      setValidUntil(
-        dateValue(
-          current.vigenteHasta
-        )
-      );
     } else if (
       mode === "clonar" &&
       current
     ) {
       setName(
-        `${current.nombre} - copia`
+        `${current.nombre} - actualización`
       );
       setDescription(
-        `Clon editable de ${current.nombre}.`
+        `Nueva versión basada en ${current.nombre}.`
       );
       setValidFrom("");
-      setValidUntil("");
     } else {
       setName("");
       setDescription("");
       setValidFrom("");
-      setValidUntil("");
     }
 
     setError(null);
@@ -112,8 +106,19 @@ export default function VersionModal({
     event: FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
-    setSaving(true);
     setError(null);
+
+    if (
+      requiresStartDate &&
+      !validFrom
+    ) {
+      setError(
+        "Indica la fecha desde la cual empezará a aplicar esta versión."
+      );
+      return;
+    }
+
+    setSaving(true);
 
     try {
       await onSave({
@@ -123,8 +128,7 @@ export default function VersionModal({
           null,
         vigenteDesde:
           validFrom || null,
-        vigenteHasta:
-          validUntil || null,
+        vigenteHasta: null,
       });
 
       onClose();
@@ -141,15 +145,17 @@ export default function VersionModal({
 
   const title =
     mode === "crear"
-      ? "Nueva versión vacía"
+      ? "Nueva versión inicial"
       : mode === "editar"
         ? "Editar versión"
-        : "Clonar versión";
+        : "Crear versión sucesora";
 
   const descriptionText =
     mode === "clonar"
-      ? "Se copiará toda la estructura: ciclos, categorías, estándares, aspectos, procesos, configuraciones y filas."
-      : "Las nuevas versiones se crean como BORRADOR.";
+      ? "Se copiará la estructura vigente para aplicar cambios desde una fecha específica. La versión anterior se conservará como histórica al publicar la sucesora."
+      : mode === "crear"
+        ? "Usa esta opción únicamente para crear la primera Supermatriz. Las versiones posteriores se crean clonando la vigente."
+        : "Puedes ajustar los datos del borrador antes de publicarlo.";
 
   return (
     <AppModal
@@ -182,7 +188,7 @@ export default function VersionModal({
             )}
             {mode ===
             "clonar"
-              ? "Clonar"
+              ? "Crear sucesora"
               : "Guardar"}
           </button>
         </div>
@@ -211,7 +217,7 @@ export default function VersionModal({
                 event.target.value
               )
             }
-            placeholder="Ej. Supermatriz 2027"
+            placeholder="Ej. Actualización Resolución 1843"
             className={
               inputClass
             }
@@ -234,42 +240,29 @@ export default function VersionModal({
           />
         </label>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label>
-            <span className="mb-1.5 block text-xs font-medium text-neutral-400">
-              Vigente desde
-            </span>
-            <input
-              type="date"
-              value={validFrom}
-              onChange={(event) =>
-                setValidFrom(
-                  event.target.value
-                )
-              }
-              className={
-                inputClass
-              }
-            />
-          </label>
-          <label>
-            <span className="mb-1.5 block text-xs font-medium text-neutral-400">
-              Vigente hasta
-            </span>
-            <input
-              type="date"
-              value={validUntil}
-              onChange={(event) =>
-                setValidUntil(
-                  event.target.value
-                )
-              }
-              className={
-                inputClass
-              }
-            />
-          </label>
-        </div>
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-medium text-neutral-400">
+            Vigente desde{requiresStartDate ? " *" : ""}
+          </span>
+          <input
+            type="date"
+            required={requiresStartDate}
+            value={validFrom}
+            onChange={(event) =>
+              setValidFrom(
+                event.target.value
+              )
+            }
+            className={
+              inputClass
+            }
+          />
+          <span className="mt-1.5 block text-xs text-neutral-600">
+            {requiresStartDate
+              ? "La sucesora empezará a aplicar desde esta fecha. La vigencia final de la versión anterior se calculará automáticamente."
+              : "La primera versión puede quedar sin fecha inicial para representar el origen histórico de la Supermatriz."}
+          </span>
+        </label>
       </form>
     </AppModal>
   );
