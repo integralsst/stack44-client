@@ -38,7 +38,7 @@ export default function EvaluacionEmpresaHeader({
     value: String(year),
     label: String(year),
     description:
-      year === currentYear ? "Periodo actual" : "Periodo de evaluación",
+      year === currentYear ? "Periodo actual" : "Periodo de gestión",
   }));
 
   return (
@@ -87,7 +87,7 @@ export default function EvaluacionEmpresaHeader({
           <div className="flex items-center justify-between gap-3">
             <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600">
               <CalendarDays size={12} />
-              Periodo de evaluación
+              Periodo de gestión
             </span>
 
             <span
@@ -108,21 +108,14 @@ export default function EvaluacionEmpresaHeader({
             value={String(anio)}
             options={opcionesPeriodo}
             onChange={(value) => onAnioChange(Number(value))}
-            ariaLabel="Seleccionar periodo"
+            ariaLabel="Seleccionar periodo de gestión"
             size="sm"
             theme="light"
             className="mt-2"
           />
 
-          <p
-            className="mt-2 truncate text-[10px] font-medium text-slate-500"
-            title={
-              periodo?.versionSupermatriz.nombre ??
-              "Sin versión asignada"
-            }
-          >
-            {periodo?.versionSupermatriz.nombre ??
-              "Sin versión de Supermatriz asignada"}
+          <p className="mt-2 text-[10px] font-medium text-slate-500">
+            El periodo organiza las gestiones e informes del año.
           </p>
         </div>
       </div>
