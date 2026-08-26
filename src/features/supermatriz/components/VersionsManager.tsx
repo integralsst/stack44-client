@@ -2,7 +2,6 @@ import {
   CheckCircle2,
   Copy,
   Edit2,
-  Lock,
   Plus,
 } from "lucide-react";
 import {
@@ -40,9 +39,93 @@ interface Props {
   onPublish: (
     id: number
   ) => Promise<unknown>;
-  onClose: (
-    id: number
-  ) => Promise<unknown>;
+}
+
+function parseCalendarDate(
+  value: string
+): Date {
+  const [year, month, day] = value
+    .slice(0, 10)
+    .split("-")
+    .map(Number);
+
+  return new Date(
+    Date.UTC(
+      year,
+      month - 1,
+      day,
+      12
+    )
+  );
+}
+
+function formatCalendarDate(
+  value: string | null
+): string | null {
+  if (!value) return null;
+
+  return new Intl.DateTimeFormat(
+    "es-CO",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      timeZone: "UTC",
+    }
+  ).format(parseCalendarDate(value));
+}
+
+function previousCalendarDate(
+  value: string
+): string {
+  const date = parseCalendarDate(value);
+  date.setUTCDate(date.getUTCDate() - 1);
+
+  return new Intl.DateTimeFormat(
+    "es-CO",
+    {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      timeZone: "UTC",
+    }
+  ).format(date);
+}
+
+function validityLabel(
+  version: MatrixVersion
+): string {
+  if (version.estado === "CERRADA") {
+    const until = formatCalendarDate(
+      version.vigenteHasta
+    );
+
+    return until
+      ? `Aplicó hasta ${until}`
+      : "Versión histórica";
+  }
+
+  if (version.estado === "VIGENTE") {
+    const from = formatCalendarDate(
+      version.vigenteDesde
+    );
+
+    return from
+      ? `Vigente desde ${from}`
+      : "Vigente desde el inicio";
+  }
+
+  if (version.clonadaDeId) {
+    const from = formatCalendarDate(
+      version.vigenteDesde
+    );
+
+    return from
+      ? `Programada desde ${from}`
+      : "Fecha de vigencia pendiente";
+  }
+
+  return "Versión inicial en preparación";
 }
 
 export default function VersionsManager({
@@ -54,7 +137,6 @@ export default function VersionsManager({
   onUpdate,
   onClone,
   onPublish,
-  onClose,
 }: Props) {
   const [modal, setModal] =
     useState<{
@@ -67,32 +149,32 @@ export default function VersionsManager({
       current: null,
     });
 
+  const hasPublishedLine =
+    versions.some(
+      (version) =>
+        version.estado === "VIGENTE" ||
+        version.estado === "CERRADA"
+    );
+
   async function publish(
     version: MatrixVersion
   ) {
-    if (
-      !window.confirm(
-        `¿Publicar "${version.nombre}" como versión vigente? La versión vigente anterior se cerrará.`
-      )
-    ) {
+    const from = formatCalendarDate(
+      version.vigenteDesde
+    );
+
+    const message =
+      version.vigenteDesde && from
+        ? `¿Publicar "${version.nombre}" desde ${from}? La versión vigente anterior pasará automáticamente a histórica hasta ${previousCalendarDate(
+            version.vigenteDesde
+          )}.`
+        : `¿Publicar "${version.nombre}" como versión inicial vigente? Aplicará desde el inicio de la operación.`;
+
+    if (!window.confirm(message)) {
       return;
     }
 
     await onPublish(version.id);
-  }
-
-  async function close(
-    version: MatrixVersion
-  ) {
-    if (
-      !window.confirm(
-        `¿Cerrar la versión "${version.nombre}"? Quedará en modo de solo lectura.`
-      )
-    ) {
-      return;
-    }
-
-    await onClose(version.id);
   }
 
   return (
@@ -103,26 +185,27 @@ export default function VersionsManager({
             Versiones de la Supermatriz
           </h2>
           <p className="mt-1 max-w-3xl text-sm text-neutral-500">
-            Los cambios se realizan en borradores. Publicar una versión la vuelve vigente y protege su estructura histórica.
+            La Supermatriz funciona como una línea temporal. Cada actualización entra en vigor desde una fecha y la versión anterior queda protegida como histórica.
           </p>
         </div>
 
-        {canAdminister && (
-          <button
-            type="button"
-            onClick={() =>
-              setModal({
-                open: true,
-                mode: "crear",
-                current: null,
-              })
-            }
-            className="flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black"
-          >
-            <Plus size={17} />
-            Nueva versión vacía
-          </button>
-        )}
+        {canAdminister &&
+          !hasPublishedLine && (
+            <button
+              type="button"
+              onClick={() =>
+                setModal({
+                  open: true,
+                  mode: "crear",
+                  current: null,
+                })
+              }
+              className="flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-black"
+            >
+              <Plus size={17} />
+              Crear versión inicial
+            </button>
+          )}
       </header>
 
       <section className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
@@ -169,7 +252,16 @@ export default function VersionsManager({
                     />
                   </div>
 
-                  <div className="mt-5 grid grid-cols-3 gap-2 text-center">
+                  <div className="mt-4 rounded-xl border border-neutral-800 bg-[#0a0a0a] px-3 py-2.5">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-600">
+                      Vigencia
+                    </p>
+                    <p className="mt-1 text-xs font-semibold text-neutral-300">
+                      {validityLabel(version)}
+                    </p>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-3 gap-2 text-center">
                     <Metric
                       label="Filas"
                       value={
@@ -198,7 +290,7 @@ export default function VersionsManager({
 
                   <div className="mt-4 text-[11px] text-neutral-600">
                     {version.clonadaDe
-                      ? `Clonada de ${version.clonadaDe.nombre}`
+                      ? `Basada en ${version.clonadaDe.nombre}`
                       : "Versión original"}
                   </div>
                 </button>
@@ -248,43 +340,26 @@ export default function VersionsManager({
                       </>
                     )}
 
-                    <Action
-                      icon={
-                        <Copy
-                          size={
-                            14
-                          }
-                        />
-                      }
-                      label="Clonar"
-                      onClick={() =>
-                        setModal({
-                          open: true,
-                          mode:
-                            "clonar",
-                          current:
-                            version,
-                        })
-                      }
-                    />
-
-                    {version.estado !==
-                      "CERRADA" && (
+                    {version.estado ===
+                      "VIGENTE" && (
                       <Action
                         icon={
-                          <Lock
+                          <Copy
                             size={
                               14
                             }
                           />
                         }
-                        label="Cerrar"
+                        label="Crear sucesora"
                         onClick={() =>
-                          void close(
-                            version
-                          )
+                          setModal({
+                            open: true,
+                            mode:
+                              "clonar",
+                            current:
+                              version,
+                          })
                         }
-                        danger
                       />
                     )}
                   </div>
@@ -368,24 +443,20 @@ function Action({
   label,
   onClick,
   emphasis = false,
-  danger = false,
 }: {
   icon: ReactNode;
   label: string;
   onClick: () => void;
   emphasis?: boolean;
-  danger?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-[11px] font-medium ${
-        danger
-          ? "border-red-500/20 text-red-400"
-          : emphasis
-            ? "border-cyan-500/20 bg-cyan-500/10 text-cyan-300"
-            : "border-neutral-800 text-neutral-300 hover:text-white"
+        emphasis
+          ? "border-cyan-500/20 bg-cyan-500/10 text-cyan-300"
+          : "border-neutral-800 text-neutral-300 hover:text-white"
       }`}
     >
       {icon}
