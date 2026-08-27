@@ -32,6 +32,32 @@ interface Props {
 
 type Vista = "EMPRESA" | "PROCESOS" | "ESTANDARES";
 
+function formatCalendarDate(value: string): string {
+  const [year, month, day] = value
+    .slice(0, 10)
+    .split("-")
+    .map(Number);
+
+  if (!year || !month || !day) {
+    return "Fecha no disponible";
+  }
+
+  const date = new Date(
+    Date.UTC(year, month - 1, day, 12)
+  );
+
+  if (Number.isNaN(date.getTime())) {
+    return "Fecha no disponible";
+  }
+
+  return new Intl.DateTimeFormat("es-CO", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+}
+
 export default function DetalleInformeVersion({
   detalle,
   onBack,
@@ -115,7 +141,7 @@ export default function DetalleInformeVersion({
         <InfoItem
           icon={<CalendarClock size={15} />}
           label="Fecha de corte"
-          value={new Date(detalle.fechaCorte).toLocaleString("es-CO")}
+          value={formatCalendarDate(detalle.fechaCorte)}
         />
         <InfoItem
           icon={<UserRound size={15} />}

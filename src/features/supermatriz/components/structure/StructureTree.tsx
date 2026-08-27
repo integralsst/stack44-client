@@ -59,6 +59,21 @@ function matchesSearch(
   );
 }
 
+function matchesNode(
+  search: string,
+  exactCodeMode: boolean,
+  code: string | null | undefined,
+  ...values: Array<string | null | undefined>
+): boolean {
+  if (!search) return true;
+
+  if (exactCodeMode) {
+    return (code ?? "").trim().toLowerCase() === search;
+  }
+
+  return matchesSearch(search, code, ...values);
+}
+
 export default function StructureTree({
   catalogs,
   canEdit,
@@ -81,14 +96,36 @@ export default function StructureTree({
 
   const normalizedSearch = search.trim().toLowerCase();
 
+  const hasExactCodeMatch = useMemo(() => {
+    if (!normalizedSearch) return false;
+
+    return [
+      ...catalogs.ciclosPhva,
+      ...catalogs.categoriasEstandar,
+      ...catalogs.estandares,
+      ...catalogs.aspectos,
+    ].some(
+      (item) =>
+        (item.codigo ?? "").trim().toLowerCase() ===
+        normalizedSearch
+    );
+  }, [
+    catalogs.aspectos,
+    catalogs.categoriasEstandar,
+    catalogs.ciclosPhva,
+    catalogs.estandares,
+    normalizedSearch,
+  ]);
+
   const structure = useMemo<VisibleCycle[]>(() => {
     const showAll = !normalizedSearch;
 
     return catalogs.ciclosPhva.flatMap((cycle) => {
       const cycleMatches =
         showAll ||
-        matchesSearch(
+        matchesNode(
           normalizedSearch,
+          hasExactCodeMatch,
           cycle.codigo,
           cycle.nombre
         );
@@ -98,8 +135,9 @@ export default function StructureTree({
         .flatMap<VisibleCategory>((category) => {
           const categoryMatches =
             cycleMatches ||
-            matchesSearch(
+            matchesNode(
               normalizedSearch,
+              hasExactCodeMatch,
               category.codigo,
               category.nombre
             );
@@ -112,8 +150,9 @@ export default function StructureTree({
             .flatMap<VisibleStandard>((standard) => {
               const standardMatches =
                 categoryMatches ||
-                matchesSearch(
+                matchesNode(
                   normalizedSearch,
+                  hasExactCodeMatch,
                   standard.codigo,
                   standard.nombre
                 );
@@ -122,8 +161,9 @@ export default function StructureTree({
                 (aspect) =>
                   aspect.estandarId === standard.id &&
                   (standardMatches ||
-                    matchesSearch(
+                    matchesNode(
                       normalizedSearch,
+                      hasExactCodeMatch,
                       aspect.codigo,
                       aspect.nombre,
                       aspect.planAccionEspecifico?.descripcion
@@ -170,6 +210,7 @@ export default function StructureTree({
     catalogs.categoriasEstandar,
     catalogs.ciclosPhva,
     catalogs.estandares,
+    hasExactCodeMatch,
     normalizedSearch,
   ]);
 
