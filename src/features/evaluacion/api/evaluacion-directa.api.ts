@@ -1,5 +1,6 @@
 import { apiRequest } from "../../../lib/api";
 import type {
+  ContextoEvaluacionResponse,
   GuardarEvaluacionInput,
 } from "../../../types/evaluacion.types";
 
@@ -15,6 +16,22 @@ export interface GuardarEvaluacionesDirectasResponse {
     gestionId: string;
     aspectoId: number;
   }>;
+}
+
+export function obtenerContextoEvaluacionDirecta(
+  empresaId: string,
+  anio: number,
+  token: string
+) {
+  const params = new URLSearchParams({
+    anio: String(anio),
+  });
+
+  return apiRequest<ContextoEvaluacionResponse>(
+    `/api/evaluacion/empresas/${empresaId}/contexto-directo?${params.toString()}`,
+    {},
+    token
+  );
 }
 
 export function guardarEvaluacionesDirectas(
