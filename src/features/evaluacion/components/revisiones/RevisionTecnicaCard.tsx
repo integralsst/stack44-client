@@ -369,15 +369,6 @@ function estadoLabel(value: string): string {
     .replace(/^./, (letter) => letter.toUpperCase());
 }
 
-function formatDate(value: string): string {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? "Fecha no disponible"
-    : new Intl.DateTimeFormat("es-CO", {
-        dateStyle: "medium",
-      }).format(date);
-}
-
 function formatDateTime(value: string): string {
   const date = new Date(value);
   return Number.isNaN(date.getTime())
