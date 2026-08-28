@@ -66,6 +66,10 @@ export interface InformesPeriodoResponse {
 export interface FuenteSnapshotInforme {
   totalGestionesFuente: number;
   totalEvaluacionesRegistradas: number;
+  totalEvaluacionesDirectas?: number;
+  usaEvaluacionDirecta?: boolean;
+  modelo?: "EVALUACIONES_POR_ASPECTO" | "GESTIONES_LEGADAS";
+  totalRegistrosEvaluacion?: number;
   registrosHistoricosPosteriores: number;
   ultimaActualizacionFuente: string | null;
 }
