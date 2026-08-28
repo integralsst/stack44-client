@@ -1,6 +1,8 @@
 import {
+  ArrowUpRight,
   CheckCircle2,
   ChevronDown,
+  FileWarning,
   Filter,
   History,
   Save,
@@ -13,6 +15,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import type {
   BorradorEvaluacionAspecto,
@@ -55,7 +58,7 @@ const ESTADO_LABEL: Record<EstadoCumplimientoAspecto, string> = {
 };
 
 const controlClass =
-  "w-full rounded-lg border border-neutral-700 bg-[#090a0b] px-2.5 py-2 text-xs text-white outline-none transition placeholder:text-neutral-600 hover:border-neutral-600 focus:border-cyan-500/60 focus:ring-2 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:opacity-45";
+  "w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs text-slate-800 shadow-sm outline-none transition placeholder:text-slate-400 hover:border-slate-400 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400 disabled:opacity-70";
 
 function nuevoRegistro(
   fila: FilaEvaluacion
@@ -83,13 +86,13 @@ function nuevoRegistro(
 function estadoClass(estado: EstadoCumplimientoAspecto): string {
   switch (estado) {
     case "CUMPLIDO":
-      return "border-emerald-500/30 bg-emerald-500/10 text-emerald-200";
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
     case "PARCIAL":
-      return "border-amber-500/30 bg-amber-500/10 text-amber-200";
+      return "border-amber-200 bg-amber-50 text-amber-700";
     case "NO_CUMPLIDO":
-      return "border-red-500/30 bg-red-500/10 text-red-200";
+      return "border-red-200 bg-red-50 text-red-700";
     case "NO_APLICA":
-      return "border-cyan-500/30 bg-cyan-500/10 text-cyan-200";
+      return "border-sky-200 bg-sky-50 text-sky-700";
   }
 }
 
@@ -113,6 +116,7 @@ export default function MatrizEvaluacionDirecta({
   onAbrirDetalle,
 }: Props) {
   const { hasRole } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const puedeProponerNoAplica = hasRole("PROFESSIONAL");
   const [busqueda, setBusqueda] = useState("");
   const [procesoId, setProcesoId] = useState("");
@@ -155,6 +159,11 @@ export default function MatrizEvaluacionDirecta({
     filas.forEach((fila) => map.set(fila.estandar.id, fila.estandar.nombre));
     return [...map.entries()].sort((a, b) => a[1].localeCompare(b[1], "es"));
   }, [filas]);
+
+  const evidenciasPendientes = useMemo(
+    () => filas.filter((fila) => fila.evidenciaPendiente),
+    [filas]
+  );
 
   const filasFiltradas = useMemo(() => {
     const term = busqueda.trim().toLocaleLowerCase("es");
@@ -344,23 +353,88 @@ export default function MatrizEvaluacionDirecta({
     }
   };
 
+  const abrirDetalle = (
+    fila: FilaEvaluacion,
+    detalle: "HISTORIAL" | "EVIDENCIAS"
+  ) => {
+    const siguientes = new URLSearchParams(searchParams);
+    siguientes.set("tareaId", String(fila.tareaId));
+    siguientes.set("detalle", detalle);
+    setSearchParams(siguientes, { replace: true });
+    onAbrirDetalle(fila);
+  };
+
   const rows = filasFiltradas.slice(0, visibles);
   const filtrosActivos = [procesoId, estandarId, vigencia].filter(Boolean).length;
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-2xl border border-neutral-800 bg-[#101112] shadow-2xl">
-      <div className="border-b border-neutral-800 bg-[#0c0d0e] p-3 sm:p-4">
+    <section className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 border-t-2 border-t-cyan-500 bg-white shadow-sm">
+      {evidenciasPendientes.length > 0 && (
+        <div className="border-b border-amber-200 bg-gradient-to-r from-amber-50 via-white to-amber-50/40 px-4 py-4 sm:px-5">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex min-w-0 items-start gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-200 bg-white text-amber-600 shadow-sm">
+                <FileWarning size={19} />
+              </span>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-sm font-bold text-slate-900">
+                    Evidencias pendientes
+                  </h2>
+                  <span className="rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-800">
+                    {evidenciasPendientes.length} pendiente{evidenciasPendientes.length === 1 ? "" : "s"}
+                  </span>
+                </div>
+                <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-600">
+                  Estos aspectos conservan su calificación, pero todavía requieren un soporte documental válido. Puedes completar cada evidencia sin crear una nueva evaluación.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3 grid gap-2 xl:grid-cols-2">
+            {evidenciasPendientes.map((fila) => (
+              <button
+                key={`evidencia-${fila.tareaId}`}
+                type="button"
+                onClick={() => abrirDetalle(fila, "EVIDENCIAS")}
+                className="group flex min-w-0 items-center justify-between gap-3 rounded-xl border border-amber-200 bg-white px-3.5 py-3 text-left shadow-sm transition hover:border-amber-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-100"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-bold text-slate-800">
+                    {fila.aspecto.codigo ? `${fila.aspecto.codigo} · ` : ""}
+                    {fila.aspecto.nombre}
+                  </p>
+                  <p className="mt-1 truncate text-[10px] text-slate-500">
+                    {fila.estandar.nombre}
+                  </p>
+                </div>
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[10px] font-bold text-amber-700 transition group-hover:bg-amber-100">
+                  Completar soporte
+                  <ArrowUpRight size={12} />
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="border-b border-slate-200 bg-gradient-to-r from-white via-cyan-50/30 to-white p-4 sm:p-5">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <ShieldCheck size={17} className="text-cyan-300" />
-              <h2 className="text-sm font-bold text-white">
-                Evaluación directa de la Supermatriz
-              </h2>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-50 text-cyan-700">
+                <ShieldCheck size={17} />
+              </span>
+              <div>
+                <h2 className="text-sm font-bold text-slate-900">
+                  Evaluación directa de la Supermatriz
+                </h2>
+                <p className="mt-0.5 text-xs leading-5 text-slate-500">
+                  Registra únicamente lo revisado. Cada guardado crea una nueva evaluación y conserva íntegramente el historial anterior.
+                </p>
+              </div>
             </div>
-            <p className="mt-1 text-xs leading-5 text-neutral-500">
-              Registra únicamente lo que revisaste hoy. Cada guardado crea una nueva evaluación y conserva las anteriores en el historial.
-            </p>
           </div>
 
           {editable && (
@@ -368,7 +442,7 @@ export default function MatrizEvaluacionDirecta({
               type="button"
               onClick={() => void guardar()}
               disabled={procesando || modificados.size === 0}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-cyan-500 disabled:cursor-not-allowed disabled:opacity-45"
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-cyan-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
             >
               <Save size={16} />
               {procesando
@@ -380,11 +454,11 @@ export default function MatrizEvaluacionDirecta({
           )}
         </div>
 
-        <div className="mt-3 flex flex-col gap-2 lg:flex-row lg:items-center">
+        <div className="mt-4 flex flex-col gap-2 lg:flex-row lg:items-center">
           <label className="relative min-w-0 flex-1">
             <Search
               size={15}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
             />
             <input
               type="search"
@@ -398,12 +472,12 @@ export default function MatrizEvaluacionDirecta({
           <button
             type="button"
             onClick={() => setMostrarFiltros((actual) => !actual)}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-700 bg-[#090a0b] px-3 py-2 text-xs font-semibold text-neutral-300 transition hover:border-neutral-600"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
           >
             <Filter size={14} />
             Filtros
             {filtrosActivos > 0 && (
-              <span className="rounded-full bg-cyan-500/15 px-1.5 py-0.5 text-[10px] text-cyan-200">
+              <span className="rounded-full bg-cyan-100 px-1.5 py-0.5 text-[10px] font-bold text-cyan-800">
                 {filtrosActivos}
               </span>
             )}
@@ -462,14 +536,14 @@ export default function MatrizEvaluacionDirecta({
         )}
       </div>
 
-      <div className="max-h-[72vh] min-h-[420px] overflow-auto overscroll-contain [scrollbar-gutter:stable]">
-        <table className="min-w-[1960px] border-separate border-spacing-0 text-left text-[11px]">
-          <thead className="sticky top-0 z-40 bg-[#08090a] text-[9px] uppercase tracking-wider text-neutral-400">
+      <div className="max-h-[72vh] min-h-[420px] overflow-auto overscroll-contain bg-white [scrollbar-gutter:stable]">
+        <table className="min-w-[1960px] border-separate border-spacing-0 text-left text-[11px] text-slate-700">
+          <thead className="sticky top-0 z-40 bg-slate-50 text-[9px] uppercase tracking-wider text-slate-500">
             <tr>
               <Header sticky className="left-0 w-[54px] min-w-[54px] text-center">
                 Orden
               </Header>
-              <Header sticky className="left-[54px] w-[330px] min-w-[330px] border-r border-neutral-700">
+              <Header sticky className="left-[54px] w-[330px] min-w-[330px] border-r border-slate-200">
                 Aspecto
               </Header>
               <Header className="w-[180px] min-w-[180px]">Proceso</Header>
@@ -495,27 +569,27 @@ export default function MatrizEvaluacionDirecta({
               const permiteNoAplica =
                 puedeProponerNoAplica &&
                 fila.aspecto.configuracion?.permiteNoAplica !== false;
-              const stickyBg = cambio ? "bg-[#102126]" : "bg-[#101112]";
+              const stickyBg = cambio ? "bg-cyan-50" : "bg-white";
 
               return (
                 <tr
                   key={fila.tareaId}
-                  className={cambio ? "bg-cyan-500/[0.035]" : "hover:bg-neutral-800/20"}
+                  className={cambio ? "bg-cyan-50/60" : "bg-white hover:bg-slate-50/70"}
                 >
-                  <Cell sticky className={`left-0 text-center font-mono text-neutral-500 ${stickyBg}`}>
+                  <Cell sticky className={`left-0 text-center font-mono text-slate-400 ${stickyBg}`}>
                     {fila.orden}
                   </Cell>
-                  <Cell sticky className={`left-[54px] border-r border-neutral-700 ${stickyBg}`}>
-                    <p className="font-semibold leading-5 text-neutral-100">
+                  <Cell sticky className={`left-[54px] border-r border-slate-200 ${stickyBg}`}>
+                    <p className="font-semibold leading-5 text-slate-900">
                       {fila.aspecto.codigo ? `${fila.aspecto.codigo} · ` : ""}
                       {fila.aspecto.nombre}
                     </p>
-                    <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-neutral-500">
+                    <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-slate-500">
                       {fila.estandar.nombre}
                     </p>
                   </Cell>
                   <Cell>
-                    <p className="leading-5 text-neutral-300">{fila.proceso.nombre}</p>
+                    <p className="leading-5 text-slate-600">{fila.proceso.nombre}</p>
                   </Cell>
                   <Cell>
                     {ultima ? (
@@ -523,18 +597,22 @@ export default function MatrizEvaluacionDirecta({
                         <span className={`inline-flex rounded-full border px-2 py-1 text-[9px] font-bold uppercase ${estadoClass(ultima.estadoCumplimiento)}`}>
                           {ESTADO_LABEL[ultima.estadoCumplimiento]} · {ultima.calificacionEfectiva}
                         </span>
-                        <p className="text-[10px] text-neutral-500">
+                        <p className="text-[10px] text-slate-500">
                           {fechaCorta(ultima.gestion.fechaGestion)}
                           {ultima.resultadoProvisional ? " · provisional" : ""}
                         </p>
                         {fila.evidenciaPendiente && (
-                          <span className="inline-flex rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[9px] font-bold text-amber-200">
+                          <button
+                            type="button"
+                            onClick={() => abrirDetalle(fila, "EVIDENCIAS")}
+                            className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[9px] font-bold text-amber-700 transition hover:bg-amber-100"
+                          >
                             Evidencia pendiente
-                          </span>
+                          </button>
                         )}
                       </div>
                     ) : (
-                      <span className="text-neutral-600">Sin revisión</span>
+                      <span className="text-slate-400">Sin revisión</span>
                     )}
                   </Cell>
                   <Cell>
@@ -559,7 +637,7 @@ export default function MatrizEvaluacionDirecta({
                     </select>
                   </Cell>
                   <Cell className="text-center">
-                    <span className="text-base font-bold text-white">
+                    <span className="text-base font-bold text-slate-900">
                       {registro.calificacionAdministrativa ?? "—"}
                     </span>
                   </Cell>
@@ -612,7 +690,7 @@ export default function MatrizEvaluacionDirecta({
                       />
                     ) : (
                       <div className="space-y-2">
-                        <label className="flex items-center gap-2 text-[10px] text-neutral-300">
+                        <label className="flex items-center gap-2 text-[10px] text-slate-600">
                           <input
                             type="checkbox"
                             checked={registro.marcadaRevisionTecnica}
@@ -622,6 +700,7 @@ export default function MatrizEvaluacionDirecta({
                                 marcadaRevisionTecnica: event.target.checked,
                               })
                             }
+                            className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
                           />
                           {revisionObligatoria
                             ? "Revisión técnica obligatoria"
@@ -647,8 +726,8 @@ export default function MatrizEvaluacionDirecta({
                   <Cell className="text-center">
                     <button
                       type="button"
-                      onClick={() => onAbrirDetalle(fila)}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-700 px-2.5 py-2 text-[10px] font-semibold text-neutral-300 transition hover:border-cyan-500/40 hover:text-cyan-200"
+                      onClick={() => abrirDetalle(fila, "HISTORIAL")}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-[10px] font-semibold text-slate-600 shadow-sm transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
                       title={`Abrir detalle de ${fila.aspecto.nombre}`}
                     >
                       <History size={13} />
@@ -661,7 +740,7 @@ export default function MatrizEvaluacionDirecta({
 
             {rows.length === 0 && (
               <tr>
-                <td colSpan={11} className="px-6 py-16 text-center text-sm text-neutral-500">
+                <td colSpan={11} className="px-6 py-16 text-center text-sm text-slate-500">
                   No hay aspectos que coincidan con los filtros.
                 </td>
               </tr>
@@ -670,18 +749,18 @@ export default function MatrizEvaluacionDirecta({
         </table>
 
         {visibles < filasFiltradas.length && (
-          <div ref={sentinelRef} className="flex items-center justify-center py-5 text-xs text-neutral-500">
+          <div ref={sentinelRef} className="flex items-center justify-center py-5 text-xs text-slate-500">
             Cargando más aspectos...
           </div>
         )}
       </div>
 
-      <div className="flex flex-col gap-2 border-t border-neutral-800 bg-[#0c0d0e] px-4 py-3 text-[10px] text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 border-t border-slate-200 bg-slate-50/70 px-4 py-3 text-[10px] text-slate-500 sm:flex-row sm:items-center sm:justify-between">
         <span>
           {Math.min(visibles, filasFiltradas.length)} de {filasFiltradas.length} filas visibles
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <CheckCircle2 size={12} />
+          <CheckCircle2 size={12} className="text-emerald-600" />
           Guardar registra oficialmente; no existe un paso adicional de finalización.
         </span>
       </div>
@@ -709,7 +788,7 @@ function Header({
 }) {
   return (
     <th
-      className={`border-b border-neutral-700 bg-[#08090a] px-3 py-3 align-middle ${
+      className={`border-b border-slate-200 bg-slate-50 px-3 py-3 align-middle ${
         sticky ? "sticky z-50" : ""
       } ${className}`}
     >
@@ -729,7 +808,7 @@ function Cell({
 }) {
   return (
     <td
-      className={`border-b border-neutral-800 px-3 py-3 align-top ${
+      className={`border-b border-slate-200 px-3 py-3 align-top ${
         sticky ? "sticky z-20" : ""
       } ${className}`}
     >
