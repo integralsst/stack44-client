@@ -200,8 +200,10 @@ export default function RevisionTecnicaCard({
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <Fact
               icon={CalendarDays}
-              label="Gestión original"
-              value={`${formatDate(evaluacion.gestion.fechaGestion)} · ${evaluacion.gestion.tipoActividad}`}
+              label="Evaluación revisada"
+              value={formatDateTime(
+                evaluacion.creadaEn ?? revision.solicitadaEn
+              )}
             />
             <Fact
               icon={UserRound}
@@ -244,7 +246,10 @@ export default function RevisionTecnicaCard({
                 {revision.gestionCorreccion.tipoActividad}
               </p>
               <p className="mt-1 text-xs leading-5 text-slate-600">
-                {formatDate(revision.gestionCorreccion.fechaGestion)} · {revision.gestionCorreccion.profesional}
+                {formatDateTime(
+                  revision.evaluacionCorrectiva?.creadaEn ??
+                    revision.gestionCorreccion.fechaGestion
+                )} · {revision.gestionCorreccion.profesional}
               </p>
               {revision.evaluacionCorrectiva && (
                 <p className="mt-2 text-xs text-slate-700">
