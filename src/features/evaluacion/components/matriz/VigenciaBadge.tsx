@@ -17,6 +17,7 @@ import type {
 
 interface Props {
   detalle: DetalleVigenciaEvaluacion;
+  estado?: EstadoVigenciaEvaluacion;
   compact?: boolean;
   fechaDocumentoPendiente?: boolean;
   fechaDocumentoLocal?: string;
@@ -81,6 +82,7 @@ function formatDate(
 
 export default function VigenciaBadge({
   detalle,
+  estado,
   compact = false,
   fechaDocumentoPendiente = false,
   fechaDocumentoLocal = "",
@@ -120,7 +122,7 @@ export default function VigenciaBadge({
     );
   }
 
-  const current = config[detalle.estado];
+  const current = config[estado ?? detalle.estado];
   const Icon = current.icon;
 
   return (
