@@ -22,6 +22,7 @@ export default function ResumenEvaluacion({
       detail: `${resumen.evaluados} evaluados`,
       icon: ListChecks,
       attention: false,
+      featured: false,
     },
     {
       label: "Sin revisión",
@@ -29,6 +30,23 @@ export default function ResumenEvaluacion({
       detail: "Pendientes por evaluar",
       icon: Clock3,
       attention: false,
+      featured: false,
+    },
+    {
+      label: "Administrativo",
+      value: resumen.cumplimientoAdministrativo.toFixed(2),
+      detail: "Promedio sobre 5",
+      icon: Gauge,
+      attention: false,
+      featured: true,
+    },
+    {
+      label: "Ministerial",
+      value: resumen.calificacionMinisterial.toFixed(2),
+      detail: `Calificación obtenida de ${resumen.calificacionMinisterialMaxima.toFixed(2)}`,
+      icon: Scale,
+      attention: false,
+      featured: true,
     },
     {
       label: "Vigentes",
@@ -38,6 +56,7 @@ export default function ResumenEvaluacion({
       } por completar`,
       icon: CheckCircle2,
       attention: false,
+      featured: false,
     },
     {
       label: "Vencidos",
@@ -45,75 +64,71 @@ export default function ResumenEvaluacion({
       detail: "Requieren atención",
       icon: AlertTriangle,
       attention: resumen.vencidos > 0,
+      featured: false,
     },
     {
       label: "Evidencias pendientes",
       value: resumen.evidenciasPendientes ?? 0,
-      detail: "Cumplen con nota 5, pero todavía falta un soporte documental válido",
+      detail: "Aspectos con nota 5 que todavía requieren soporte documental",
       icon: FileWarning,
       attention: (resumen.evidenciasPendientes ?? 0) > 0,
-    },
-    {
-      label: "Administrativo",
-      value: resumen.cumplimientoAdministrativo.toFixed(2),
-      detail: "Promedio sobre 5",
-      icon: Gauge,
-      attention: false,
-    },
-    {
-      label: "Ministerial",
-      value: resumen.calificacionMinisterial.toFixed(2),
-      detail: `Calificación obtenida de ${resumen.calificacionMinisterialMaxima.toFixed(2)}`,
-      icon: Scale,
-      attention: false,
+      featured: false,
     },
   ];
 
   return (
-    <section className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7">
+    <section className="grid grid-cols-2 gap-2.5 md:grid-cols-4 xl:gap-3">
       {cards.map(
-        ({ label, value, detail, icon: Icon, attention }) => (
+        ({ label, value, detail, icon: Icon, attention, featured }) => (
           <article
             key={label}
-            className={`min-w-0 rounded-xl border p-3.5 shadow-sm ${
+            className={`min-w-0 rounded-2xl border p-3.5 shadow-sm transition sm:p-4 ${
               attention
-                ? "border-amber-300 bg-amber-50"
-                : "border-slate-200 bg-white"
-            }`}
+                ? "border-amber-300 bg-gradient-to-br from-amber-50 to-white"
+                : featured
+                  ? "border-cyan-200 bg-gradient-to-br from-cyan-50/70 to-white"
+                  : "border-slate-200 bg-white"
+            } ${label === "Evidencias pendientes" ? "md:col-span-2 xl:col-span-2" : ""}`}
           >
-            <div className="flex items-start justify-between gap-2">
-              <p
-                className={`min-w-0 whitespace-normal text-[9px] font-bold uppercase leading-4 tracking-wider sm:text-[10px] ${
-                  attention
-                    ? "text-amber-900"
-                    : "text-slate-600"
-                }`}
-              >
-                {label}
-              </p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p
+                  className={`text-[9px] font-bold uppercase leading-4 tracking-[0.12em] sm:text-[10px] ${
+                    attention
+                      ? "text-amber-900"
+                      : featured
+                        ? "text-cyan-800"
+                        : "text-slate-600"
+                  }`}
+                >
+                  {label}
+                </p>
+                <p
+                  className={`mt-2 text-xl font-bold leading-none sm:text-2xl ${
+                    attention
+                      ? "text-amber-950"
+                      : "text-slate-900"
+                  }`}
+                >
+                  {value}
+                </p>
+              </div>
+
               <span
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
                   attention
                     ? "bg-amber-100 text-amber-700"
-                    : "bg-slate-50 text-slate-500"
+                    : featured
+                      ? "bg-cyan-100 text-cyan-700"
+                      : "bg-slate-50 text-slate-500"
                 }`}
               >
-                <Icon size={14} />
+                <Icon size={16} />
               </span>
             </div>
 
             <p
-              className={`mt-2 text-lg font-bold leading-none sm:text-xl ${
-                attention
-                  ? "text-amber-950"
-                  : "text-slate-900"
-              }`}
-            >
-              {value}
-            </p>
-
-            <p
-              className={`mt-2 whitespace-normal text-[10px] leading-4 sm:text-[11px] ${
+              className={`mt-2.5 text-[10px] leading-4 sm:text-[11px] ${
                 attention
                   ? "text-amber-800"
                   : "text-slate-600"
