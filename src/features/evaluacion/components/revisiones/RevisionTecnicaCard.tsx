@@ -34,6 +34,7 @@ export default function RevisionTecnicaCard({
   const evaluacion = revision.evaluacion;
   const urgente = revision.estadoFlujo === "REQUIERE_AJUSTES";
   const enCorreccion = revision.estadoFlujo === "EN_CORRECCION";
+  const subsanada = revision.estadoFlujo === "SUBSANADA";
   const puedeCorregir =
     revision.puedeCorregir && (urgente || enCorreccion);
 
@@ -45,7 +46,9 @@ export default function RevisionTecnicaCard({
           ? "border-red-200 bg-red-50/70 ring-1 ring-red-100"
           : enCorreccion
             ? "border-cyan-200 bg-cyan-50/70"
-            : "border-slate-200 bg-white"
+            : subsanada
+              ? "border-emerald-200 bg-emerald-50/40"
+              : "border-slate-200 bg-white"
       } ${
         highlighted
           ? "ring-2 ring-cyan-500 ring-offset-2 ring-offset-white"
@@ -75,7 +78,7 @@ export default function RevisionTecnicaCard({
             <Meta icon={UserRound} text={evaluacion.gestion.profesional} />
             <Meta
               icon={FileCheck2}
-              text={`${estadoLabel(evaluacion.estadoCumplimiento)} · Nota ${evaluacion.calificacionAdministrativa.toFixed(2)}`}
+              text={`${subsanada ? "Evaluación revisada: " : ""}${estadoLabel(evaluacion.estadoCumplimiento)} · Nota ${evaluacion.calificacionAdministrativa.toFixed(2)}`}
             />
             <Meta
               icon={Paperclip}
@@ -124,18 +127,56 @@ export default function RevisionTecnicaCard({
         </div>
       </div>
 
+      {subsanada && revision.evaluacionCorrectiva && (
+        <div className="mt-4 grid gap-2 rounded-xl border border-emerald-200 bg-white p-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center sm:gap-3">
+          <div className="min-w-0 rounded-lg bg-slate-50 px-3 py-2.5">
+            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
+              Evaluación revisada
+            </p>
+            <p className="mt-1 text-xs font-semibold text-slate-800">
+              {estadoLabel(evaluacion.estadoCumplimiento)} · Nota {evaluacion.calificacionAdministrativa.toFixed(2)}
+            </p>
+            <p className="mt-1 text-[10px] text-slate-500">
+              {evaluacion.gestion.profesional} · {formatDateTime(evaluacion.gestion.fechaGestion)}
+            </p>
+          </div>
+
+          <div className="flex justify-center text-emerald-600">
+            <ArrowRight size={18} className="rotate-90 sm:rotate-0" />
+          </div>
+
+          <div className="min-w-0 rounded-lg bg-emerald-50 px-3 py-2.5">
+            <p className="text-[9px] font-bold uppercase tracking-wider text-emerald-700">
+              Corrección registrada
+            </p>
+            <p className="mt-1 text-xs font-semibold text-emerald-900">
+              {estadoLabel(revision.evaluacionCorrectiva.estadoCumplimiento)} · Nota {revision.evaluacionCorrectiva.calificacionAdministrativa.toFixed(2)}
+            </p>
+            <p className="mt-1 text-[10px] text-emerald-700/80">
+              {revision.gestionCorreccion?.profesional ?? "Profesional"} · {formatDateTime(revision.evaluacionCorrectiva.creadaEn)}
+            </p>
+          </div>
+        </div>
+      )}
+
       {revision.conceptoTecnico && (
         <div
           className={`mt-4 rounded-xl border p-3.5 ${
             urgente
               ? "border-red-200 bg-red-50"
-              : "border-cyan-200 bg-cyan-50"
+              : subsanada
+                ? "border-emerald-200 bg-emerald-50"
+                : "border-cyan-200 bg-cyan-50"
           }`}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p
               className={`text-[10px] font-bold uppercase tracking-wider ${
-                urgente ? "text-red-700" : "text-cyan-700"
+                urgente
+                  ? "text-red-700"
+                  : subsanada
+                    ? "text-emerald-700"
+                    : "text-cyan-700"
               }`}
             >
               {urgente ? "Qué debe corregirse" : "Concepto técnico"}
