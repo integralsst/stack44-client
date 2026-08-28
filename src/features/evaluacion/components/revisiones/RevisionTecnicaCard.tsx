@@ -137,7 +137,7 @@ export default function RevisionTecnicaCard({
               {estadoLabel(evaluacion.estadoCumplimiento)} · Nota {evaluacion.calificacionAdministrativa.toFixed(2)}
             </p>
             <p className="mt-1 text-[10px] text-slate-500">
-              {evaluacion.gestion.profesional} · {formatDateTime(evaluacion.gestion.fechaGestion)}
+              {evaluacion.gestion.profesional} · {formatDateTime(evaluacion.creadaEn ?? revision.solicitadaEn)}
             </p>
           </div>
 
