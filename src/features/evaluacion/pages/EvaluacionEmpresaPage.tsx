@@ -1,6 +1,9 @@
 import {
+  BarChart3,
   ClipboardCheck,
+  FileText,
   Plus,
+  Settings2,
   Wrench,
 } from "lucide-react";
 import {
@@ -15,28 +18,19 @@ import {
 } from "react-router-dom";
 
 import AppModal from "../../../components/ui/AppModal";
-import type { CrearGestionInput } from "../../../types/evaluacion.types";
+import type { GuardarEvaluacionInput } from "../../../types/evaluacion.types";
 import { useAuth } from "../../auth/context/AuthContext";
-import CompromisosFinalizacionModal from "../../compromisos/components/finalizacion/CompromisosFinalizacionModal";
-import { usePreparacionFinalizacion } from "../../compromisos/hooks/usePreparacionFinalizacion";
-import { notificarCambioCompromisos } from "../../compromisos/lib/alertas-compromisos.events";
-import type { CompromisoFinalizacionInput } from "../../compromisos/types/compromiso.types";
 import DetalleAspectoDrawer from "../components/detalle/DetalleAspectoDrawer";
 import EvaluacionEmpresaHeader from "../components/EvaluacionEmpresaHeader";
 import AppAlert from "../components/feedback/AppAlert";
 import AppSpinner from "../components/feedback/AppSpinner";
 import EvaluacionPageSkeleton from "../components/feedback/EvaluacionPageSkeleton";
-import EvaluacionTransitionOverlay from "../components/feedback/EvaluacionTransitionOverlay";
-import EquipoGestionModal from "../components/gestiones/EquipoGestionModal";
-import GestionWorkspacePanel from "../components/gestiones/GestionWorkspacePanel";
-import HistorialGestionesEmpresa from "../components/gestiones/HistorialGestionesEmpresa";
 import InformesPeriodoPanel from "../components/informes/InformesPeriodoPanel";
-import MatrizEvaluacion from "../components/MatrizEvaluacion";
-import NuevaGestionModal from "../components/NuevaGestionModal";
+import MatrizEvaluacionDirecta from "../components/MatrizEvaluacionDirecta";
 import ResumenEvaluacion from "../components/ResumenEvaluacion";
 import ResultadosEvaluacionPanel from "../components/resultados/ResultadosEvaluacionPanel";
 import RevisionesTecnicasPeriodo from "../components/revisiones/RevisionesTecnicasPeriodo";
-import { useEvaluacionEmpresa } from "../hooks/useEvaluacionEmpresa";
+import { useEvaluacionDirectaEmpresa } from "../hooks/useEvaluacionDirectaEmpresa";
 import { useInformesPeriodo } from "../hooks/useInformesPeriodo";
 import { useResultadosEvaluacion } from "../hooks/useResultadosEvaluacion";
 import { useRevisionesTecnicas } from "../hooks/useRevisionesTecnicas";
@@ -44,12 +38,6 @@ import type {
   EstadoFlujoRevisionTecnica,
   RevisionTecnicaEvaluacionItem,
 } from "../types/revision-tecnica.types";
-
-type EtapaFinalizacion =
-  | "PREPARANDO"
-  | "FINALIZANDO"
-  | "ACTUALIZANDO"
-  | null;
 
 const ESTADOS_FLUJO_REVISION = new Set<EstadoFlujoRevisionTecnica>([
   "PENDIENTE",
@@ -77,46 +65,40 @@ function enfocarAspectoEnMatriz(aspectoNombre: string) {
   row.classList.add(
     "outline",
     "outline-2",
-    "outline-red-400",
+    "outline-cyan-400",
     "outline-offset-[-2px]",
-    "bg-red-500/10"
+    "bg-cyan-500/10"
   );
 
   window.setTimeout(() => {
     row.classList.remove(
       "outline",
       "outline-2",
-      "outline-red-400",
+      "outline-cyan-400",
       "outline-offset-[-2px]",
-      "bg-red-500/10"
+      "bg-cyan-500/10"
     );
-  }, 6000);
-}
-
-async function esperarPintadoInterfaz(): Promise<void> {
-  if (typeof window === "undefined") return;
-
-  await new Promise<void>((resolve) => {
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => resolve());
-    });
-  });
+  }, 5000);
 }
 
 export default function EvaluacionEmpresaPage() {
   const { empresaId } = useParams<{ empresaId: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { hasRole, user } = useAuth();
+  const { hasRole } = useAuth();
+
   const anioSolicitado = Number(searchParams.get("anio"));
-  const gestionIdSolicitada =
-    searchParams.get("gestionId")?.trim() || null;
+  const anio =
+    Number.isInteger(anioSolicitado) &&
+    anioSolicitado >= 2000 &&
+    anioSolicitado <= 2100
+      ? anioSolicitado
+      : new Date().getFullYear();
+
   const aspectoSolicitado =
     searchParams.get("aspecto")?.trim() || null;
   const compromisoParaRecalificar =
     searchParams.get("compromiso")?.trim() || null;
-  const aspectoParaRecalificar =
-    compromisoParaRecalificar ? aspectoSolicitado : null;
   const revisionesSolicitadas =
     searchParams.get("revisiones") === "1";
   const revisionIdSolicitada =
@@ -136,39 +118,13 @@ export default function EvaluacionEmpresaPage() {
   const detalleInicial =
     searchParams.get("detalle")?.toUpperCase() === "EVIDENCIAS"
       ? ("EVIDENCIAS" as const)
-      : ("RESUMEN" as const);
-  const anio =
-    Number.isInteger(anioSolicitado) &&
-    anioSolicitado >= 2000 &&
-    anioSolicitado <= 2100
-      ? anioSolicitado
-      : new Date().getFullYear();
+      : searchParams.get("detalle")?.toUpperCase() === "HISTORIAL"
+        ? ("HISTORIAL" as const)
+        : ("RESUMEN" as const);
 
-  const cambiarAnio = (siguienteAnio: number) => {
-    const siguientesParametros = new URLSearchParams(searchParams);
-    siguientesParametros.set("anio", String(siguienteAnio));
-    siguientesParametros.delete("gestionId");
-    setSearchParams(siguientesParametros);
-  };
-
-  const seleccionarGestion = (gestionId: string) => {
-    if (!gestionId) return;
-
-    const siguientesParametros = new URLSearchParams(searchParams);
-    siguientesParametros.set("gestionId", gestionId);
-    siguientesParametros.delete("aspecto");
-    siguientesParametros.delete("compromiso");
-    siguientesParametros.delete("tareaId");
-    siguientesParametros.delete("detalle");
-    setSearchParams(siguientesParametros);
-  };
-
-  const [gestionModalOpen, setGestionModalOpen] = useState(false);
-  const [equipoModalOpen, setEquipoModalOpen] = useState(false);
-  const [historialModalOpen, setHistorialModalOpen] = useState(false);
-  const [revisionesModalOpen, setRevisionesModalOpen] = useState(false);
   const [resultadosModalOpen, setResultadosModalOpen] = useState(false);
   const [informesModalOpen, setInformesModalOpen] = useState(false);
+  const [revisionesModalOpen, setRevisionesModalOpen] = useState(false);
   const [tareaDetalleId, setTareaDetalleId] = useState<number | null>(
     () =>
       Number.isInteger(tareaDetalleSolicitada) &&
@@ -176,10 +132,6 @@ export default function EvaluacionEmpresaPage() {
         ? tareaDetalleSolicitada
         : null
   );
-  const [revisionCorreccion, setRevisionCorreccion] =
-    useState<RevisionTecnicaEvaluacionItem | null>(null);
-  const [etapaFinalizacion, setEtapaFinalizacion] =
-    useState<EtapaFinalizacion>(null);
 
   const {
     contexto,
@@ -188,25 +140,8 @@ export default function EvaluacionEmpresaPage() {
     error,
     recargar,
     abrirPeriodo,
-    crearGestion,
     guardar,
-  } = useEvaluacionEmpresa(
-    empresaId,
-    anio,
-    gestionIdSolicitada
-  );
-
-  const finalizacionCompromisos = usePreparacionFinalizacion();
-
-  const cambiandoBorrador = Boolean(
-    contexto &&
-      cargando &&
-      gestionIdSolicitada &&
-      gestionIdSolicitada !== contexto.gestionActiva?.id
-  );
-  const transicionFinalizacion = etapaFinalizacion !== null;
-  const interfazBloqueada =
-    procesando || cambiandoBorrador || transicionFinalizacion;
+  } = useEvaluacionDirectaEmpresa(empresaId, anio);
 
   const puedeEvaluar = hasRole(
     "PROFESSIONAL",
@@ -215,32 +150,6 @@ export default function EvaluacionEmpresaPage() {
     "OWNER",
     "SUPERADMIN"
   );
-  const esAdministradorEvaluacion = hasRole(
-    "ADMIN",
-    "OWNER",
-    "SUPERADMIN"
-  );
-
-  const tieneBorradorPropio = Boolean(
-    user &&
-      contexto?.gestionesActivas.some(
-        (gestion) => gestion.usuarioCreador.id === user.id
-      )
-  );
-  const puedeCrearGestionPropia =
-    puedeEvaluar && !tieneBorradorPropio;
-
-  const puedeEditarGestionActiva = Boolean(
-    contexto?.gestionActiva &&
-      (esAdministradorEvaluacion ||
-        contexto.gestionActiva.participacionActual?.puedeEvaluar)
-  );
-  const puedeFinalizarGestionActiva = Boolean(
-    contexto?.gestionActiva &&
-      (esAdministradorEvaluacion ||
-        contexto.gestionActiva.participacionActual?.esLider)
-  );
-
   const puedeVerRevisiones = hasRole(
     "PROFESSIONAL",
     "COORDINATOR",
@@ -263,109 +172,13 @@ export default function EvaluacionEmpresaPage() {
     informesModalOpen && Boolean(contexto?.periodo)
   );
 
-  const recargarDespuesDeFinalizar = async () => {
-    await Promise.all([
-      recargar({
-        gestionId: null,
-        mostrarCarga: false,
-      }),
-      revisiones.recargar(),
-      resultados.recargar(),
-    ]);
-  };
-
-  const completarFinalizacion = async (
-    compromisos: CompromisoFinalizacionInput[]
-  ) => {
-    const gestionId = contexto?.gestionActiva?.id;
-
-    if (!gestionId) {
-      throw new Error(
-        "No hay una gestión en borrador para finalizar."
-      );
-    }
-
-    setEtapaFinalizacion("FINALIZANDO");
-
-    try {
-      await finalizacionCompromisos.finalizar(
-        gestionId,
-        { compromisos }
-      );
-
-      setEtapaFinalizacion("ACTUALIZANDO");
-      await recargarDespuesDeFinalizar();
-
-      const siguientesParametros =
-        new URLSearchParams(searchParams);
-      siguientesParametros.delete("gestionId");
-      siguientesParametros.delete("compromiso");
-      siguientesParametros.delete("aspecto");
-      siguientesParametros.delete("tareaId");
-      siguientesParametros.delete("detalle");
-      setSearchParams(siguientesParametros, {
-        replace: true,
-      });
-
-      notificarCambioCompromisos();
-      await esperarPintadoInterfaz();
-    } finally {
-      setEtapaFinalizacion(null);
-    }
-  };
-
-  const prepararFinalizacion = async () => {
-    const gestionId = contexto?.gestionActiva?.id;
-
-    if (!gestionId) {
-      throw new Error(
-        "No hay una gestión en borrador para finalizar."
-      );
-    }
-
-    if (!puedeFinalizarGestionActiva) {
-      throw new Error(
-        "Solo el líder de la gestión puede preparar y ejecutar la finalización."
-      );
-    }
-
-    setEtapaFinalizacion("PREPARANDO");
-
-    try {
-      const preparacion =
-        await finalizacionCompromisos.cargar(gestionId);
-
-      if (!preparacion) {
-        throw new Error(
-          "No fue posible preparar la finalización."
-        );
-      }
-
-      if (preparacion.totalNuevos === 0) {
-        await completarFinalizacion([]);
-        return;
-      }
-
-      setEtapaFinalizacion(null);
-    } catch (currentError) {
-      setEtapaFinalizacion(null);
-      throw currentError;
-    }
-  };
-
-  const recargarDespuesDeInvalidar = async () => {
-    const siguientesParametros = new URLSearchParams(searchParams);
-    siguientesParametros.delete("gestionId");
-    setSearchParams(siguientesParametros, {
-      replace: true,
-    });
-
-    await Promise.all([
-      recargar({ gestionId: null }),
-      revisiones.recargar(),
-      resultados.recargar(),
-    ]);
-    notificarCambioCompromisos();
+  const cambiarAnio = (siguienteAnio: number) => {
+    const siguientes = new URLSearchParams(searchParams);
+    siguientes.set("anio", String(siguienteAnio));
+    siguientes.delete("gestionId");
+    siguientes.delete("tareaId");
+    siguientes.delete("detalle");
+    setSearchParams(siguientes);
   };
 
   const cerrarRevisiones = useCallback(() => {
@@ -379,99 +192,55 @@ export default function EvaluacionEmpresaPage() {
       return;
     }
 
-    const siguientesParametros = new URLSearchParams(searchParams);
-    siguientesParametros.delete("revisiones");
-    siguientesParametros.delete("revisionEstado");
-    siguientesParametros.delete("revisionId");
-    setSearchParams(siguientesParametros, {
-      replace: true,
-    });
+    const siguientes = new URLSearchParams(searchParams);
+    siguientes.delete("revisiones");
+    siguientes.delete("revisionEstado");
+    siguientes.delete("revisionId");
+    setSearchParams(siguientes, { replace: true });
   }, [searchParams, setSearchParams]);
-
-  const crearGestionYSeleccionar = async (
-    data: CrearGestionInput
-  ): Promise<void> => {
-    const creada = await crearGestion(data);
-    if (!creada?.id) return;
-
-    const siguientesParametros = new URLSearchParams(searchParams);
-    siguientesParametros.set("gestionId", creada.id);
-    siguientesParametros.delete("compromiso");
-    siguientesParametros.delete("tareaId");
-    siguientesParametros.delete("detalle");
-    siguientesParametros.delete("revisiones");
-    siguientesParametros.delete("revisionEstado");
-    siguientesParametros.delete("revisionId");
-
-    if (revisionCorreccion) {
-      siguientesParametros.set(
-        "aspecto",
-        revisionCorreccion.evaluacion.aspecto.nombre
-      );
-    } else {
-      siguientesParametros.delete("aspecto");
-    }
-
-    setSearchParams(siguientesParametros, {
-      replace: true,
-    });
-  };
 
   const enfocarRevision = useCallback(
     (revision: RevisionTecnicaEvaluacionItem) => {
-      setRevisionCorreccion(revision);
       setRevisionesModalOpen(false);
+      const siguientes = new URLSearchParams(searchParams);
+      siguientes.delete("revisiones");
+      siguientes.delete("revisionEstado");
+      siguientes.delete("revisionId");
+      siguientes.delete("gestionId");
+      siguientes.set(
+        "aspecto",
+        revision.evaluacion.aspecto.nombre
+      );
+      setSearchParams(siguientes, { replace: true });
 
-      const siguientesParametros = new URLSearchParams(searchParams);
-      siguientesParametros.delete("revisiones");
-      siguientesParametros.delete("revisionEstado");
-      siguientesParametros.delete("revisionId");
-
-      if (
-        revision.gestionCorreccion?.estado === "BORRADOR"
-      ) {
-        siguientesParametros.set(
-          "gestionId",
-          revision.gestionCorreccion.id
-        );
-        siguientesParametros.set(
-          "aspecto",
+      window.setTimeout(() => {
+        enfocarAspectoEnMatriz(
           revision.evaluacion.aspecto.nombre
         );
-        siguientesParametros.delete("compromiso");
-        siguientesParametros.delete("tareaId");
-        siguientesParametros.delete("detalle");
-        setSearchParams(siguientesParametros, {
-          replace: true,
-        });
-        return;
-      }
-
-      if (
-        searchParams.has("revisiones") ||
-        searchParams.has("revisionEstado") ||
-        searchParams.has("revisionId")
-      ) {
-        setSearchParams(siguientesParametros, {
-          replace: true,
-        });
-      }
-
-      setGestionModalOpen(true);
+      }, 350);
     },
     [searchParams, setSearchParams]
   );
 
+  const guardarYActualizar = async (
+    evaluaciones: GuardarEvaluacionInput[]
+  ) => {
+    const resultado = await guardar(evaluaciones);
+    await Promise.all([
+      revisiones.recargar(),
+      resultados.recargar(),
+    ]);
+    return resultado;
+  };
+
   useEffect(() => {
     if (
-      !contexto?.periodo ||
-      !puedeVerRevisiones ||
-      !revisionesSolicitadas
+      contexto?.periodo &&
+      puedeVerRevisiones &&
+      revisionesSolicitadas
     ) {
-      return;
+      setRevisionesModalOpen(true);
     }
-
-    setRevisionesModalOpen(true);
   }, [
     contexto?.periodo,
     puedeVerRevisiones,
@@ -479,50 +248,14 @@ export default function EvaluacionEmpresaPage() {
   ]);
 
   useEffect(() => {
-    if (!contexto?.gestionActiva || gestionIdSolicitada) {
-      return;
-    }
-
-    const siguientesParametros = new URLSearchParams(searchParams);
-    siguientesParametros.set(
-      "gestionId",
-      contexto.gestionActiva.id
-    );
-    setSearchParams(siguientesParametros, {
-      replace: true,
-    });
-  }, [
-    contexto?.gestionActiva,
-    gestionIdSolicitada,
-    searchParams,
-    setSearchParams,
-  ]);
-
-  useEffect(() => {
     if (!contexto?.periodo || !aspectoSolicitado) return;
 
     const timer = window.setTimeout(() => {
       enfocarAspectoEnMatriz(aspectoSolicitado);
-    }, 500);
-
-    return () => window.clearTimeout(timer);
-  }, [
-    aspectoSolicitado,
-    contexto?.periodo?.id,
-    contexto?.gestionActiva?.id,
-  ]);
-
-  useEffect(() => {
-    if (!contexto?.gestionActiva || !revisionCorreccion) return;
-
-    const timer = window.setTimeout(() => {
-      enfocarAspectoEnMatriz(
-        revisionCorreccion.evaluacion.aspecto.nombre
-      );
     }, 450);
 
     return () => window.clearTimeout(timer);
-  }, [contexto?.gestionActiva, revisionCorreccion]);
+  }, [aspectoSolicitado, contexto?.periodo?.id]);
 
   if (cargando && !contexto) {
     return <EvaluacionPageSkeleton />;
@@ -552,29 +285,6 @@ export default function EvaluacionEmpresaPage() {
     revisiones.data?.resumen.requierenAjustesActivos ?? 0;
   const pendientesRevision =
     revisiones.data?.resumen.pendientes ?? 0;
-  const enCorreccion =
-    revisiones.data?.resumen.enCorreccion ?? 0;
-  const correccionesTecnicasGestionActiva = contexto.gestionActiva
-    ? (revisiones.data?.revisiones ?? []).filter(
-        (revision) =>
-          revision.estadoFlujo === "EN_CORRECCION" &&
-          revision.gestionCorreccion?.estado === "BORRADOR" &&
-          revision.gestionCorreccion.id === contexto.gestionActiva?.id
-      )
-    : [];
-
-  const tituloTransicion =
-    etapaFinalizacion === "FINALIZANDO"
-      ? "Finalizando gestión"
-      : etapaFinalizacion === "ACTUALIZANDO"
-        ? "Actualizando evaluación"
-        : "Preparando finalización";
-  const descripcionTransicion =
-    etapaFinalizacion === "FINALIZANDO"
-      ? "Estamos consolidando evaluaciones, compromisos y trazabilidad. No cierres esta ventana hasta terminar."
-      : etapaFinalizacion === "ACTUALIZANDO"
-        ? "El cierre ya fue registrado. Estamos actualizando el borrador activo, resultados y acciones para mostrarte el estado final correcto."
-        : "Estamos verificando si esta gestión requiere compromisos antes de completar el cierre.";
 
   return (
     <div className="flex min-h-full w-full min-w-0 max-w-none flex-col gap-3 pb-6">
@@ -596,56 +306,67 @@ export default function EvaluacionEmpresaPage() {
 
       <ResumenEvaluacion resumen={contexto.resumen} />
 
-      {aspectoParaRecalificar && puedeEvaluar && (
-        <AppAlert
-          tone="warning"
-          title={`Recalificación pendiente: ${aspectoParaRecalificar}`}
-          description={
-            contexto.gestionActiva
-              ? "Ya tienes una gestión en borrador. Ve directamente al aspecto, registra la nueva calificación en 5 y finaliza la gestión."
-              : "Crea una nueva gestión de seguimiento; después la aplicación resaltará el aspecto exacto que debes recalificar en 5."
-          }
-        >
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <button
-              type="button"
-              onClick={() => {
-                if (contexto.gestionActiva) {
-                  enfocarAspectoEnMatriz(
-                    aspectoParaRecalificar
-                  );
-                } else {
-                  setGestionModalOpen(true);
+      {contexto.periodo && (
+        <section className="flex flex-col gap-3 rounded-2xl border border-neutral-800 bg-[#101112] p-3 shadow-xl lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-white">
+              Operación directa
+            </p>
+            <p className="mt-1 text-xs leading-5 text-neutral-500">
+              No necesitas crear gestiones ni equipos. Califica lo revisado y guarda; cada registro queda inmediatamente en el historial del aspecto.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <ActionButton
+              icon={<BarChart3 size={15} />}
+              label="Resultados"
+              onClick={() => setResultadosModalOpen(true)}
+            />
+            <ActionButton
+              icon={<FileText size={15} />}
+              label="Informes"
+              onClick={() => setInformesModalOpen(true)}
+            />
+            {puedeVerRevisiones && (
+              <ActionButton
+                icon={<Wrench size={15} />}
+                label={
+                  ajustesActivos + pendientesRevision > 0
+                    ? `Revisiones (${ajustesActivos + pendientesRevision})`
+                    : "Revisiones"
                 }
-              }}
-              className="rounded-xl bg-amber-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-amber-800"
-            >
-              {contexto.gestionActiva
-                ? "Ir al aspecto"
-                : "Crear gestión para recalificar"}
-            </button>
-            {compromisoParaRecalificar && (
-              <button
-                type="button"
+                onClick={() => setRevisionesModalOpen(true)}
+              />
+            )}
+            {puedeEvaluar && (
+              <ActionButton
+                icon={<Settings2 size={15} />}
+                label="Controles"
                 onClick={() =>
                   navigate(
-                    `/dashboard/compromisos/${compromisoParaRecalificar}`
+                    `/dashboard/empresas/${contexto.empresa.id}/evaluacion/controles?anio=${anio}`
                   )
                 }
-                className="rounded-xl border border-amber-300 bg-white px-4 py-2 text-sm font-bold text-amber-900 transition hover:bg-amber-50"
-              >
-                Ver compromiso
-              </button>
+              />
             )}
           </div>
-        </AppAlert>
+        </section>
+      )}
+
+      {aspectoSolicitado && compromisoParaRecalificar && puedeEvaluar && (
+        <AppAlert
+          tone="warning"
+          title={`Recalificación pendiente: ${aspectoSolicitado}`}
+          description="Ubica el aspecto resaltado, registra la nueva calificación y guarda. No necesitas crear ni finalizar una gestión."
+        />
       )}
 
       {(contexto.resumen.pendientesVigencia ?? 0) > 0 && (
         <AppAlert
           tone="warning"
           title="Hay información pendiente para calcular vigencias"
-          description={`${contexto.resumen.pendientesVigencia} aspecto(s) finalizado(s) requieren fecha del documento o completar su periodicidad en la Supermatriz.`}
+          description={`${contexto.resumen.pendientesVigencia} aspecto(s) requieren fecha del documento o completar su periodicidad en la Supermatriz.`}
         />
       )}
 
@@ -658,13 +379,13 @@ export default function EvaluacionEmpresaPage() {
             El periodo {anio} todavía no está abierto
           </h2>
           <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-neutral-400">
-            Al abrirlo se fijará la versión de la Supermatriz que se utilizará para todas las evaluaciones históricas de este año.
+            Al abrir el periodo podrás registrar evaluaciones. La versión de la Supermatriz se resolverá según la fecha efectiva de cada evaluación.
           </p>
 
           {contexto.versionDisponible ? (
             <div className="mt-5">
               <p className="mb-3 text-xs text-neutral-500">
-                Versión disponible:{" "}
+                Versión disponible hoy:{" "}
                 <strong className="text-neutral-300">
                   {contexto.versionDisponible.nombre}
                 </strong>
@@ -687,279 +408,39 @@ export default function EvaluacionEmpresaPage() {
             </div>
           ) : (
             <div className="mx-auto mt-5 max-w-xl rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-              No existe una versión vigente de la Supermatriz aplicable a este año. Publícala primero desde el módulo Supermatriz.
+              No existe una versión vigente de la Supermatriz aplicable. Publícala primero desde Supermatriz.
             </div>
           )}
         </section>
       ) : (
         <>
-          <GestionWorkspacePanel
-            gestiones={contexto.gestionesActivas}
-            gestionActiva={contexto.gestionActiva}
-            bloqueado={interfazBloqueada}
-            cambiandoBorrador={cambiandoBorrador}
-            puedeEvaluar={puedeEvaluar}
-            puedeVerRevisiones={puedeVerRevisiones}
-            puedeCrearGestionPropia={puedeCrearGestionPropia}
-            ajustesActivos={ajustesActivos}
-            pendientesRevision={pendientesRevision}
-            onSeleccionarGestion={seleccionarGestion}
-            onResultados={() => setResultadosModalOpen(true)}
-            onInformes={() => setInformesModalOpen(true)}
-            onEquipo={() => setEquipoModalOpen(true)}
-            onRevisiones={() => setRevisionesModalOpen(true)}
-            onHistorial={() => setHistorialModalOpen(true)}
-            onNuevaGestion={() => {
-              setRevisionCorreccion(null);
-              setGestionModalOpen(true);
-            }}
-          />
-
-          {contexto.gestionActiva &&
-            puedeEvaluar &&
-            !puedeEditarGestionActiva && (
-              <AppAlert
-                tone="info"
-                title="Participación en modo consulta"
-                description="Formas parte de esta gestión, pero tu participación actual no permite registrar evaluaciones. El líder puede habilitar ese permiso desde Equipo de gestión."
-              />
-            )}
-
-          {contexto.gestionActiva &&
-            puedeEditarGestionActiva &&
-            !puedeFinalizarGestionActiva && (
-              <AppAlert
-                tone="info"
-                title="Puedes evaluar, pero no cerrar la gestión"
-                description="Los participantes pueden trabajar sobre el mismo borrador. La preparación y finalización permanecen reservadas al líder de la gestión."
-              />
-            )}
-
           {ajustesActivos > 0 && (
-            <div className="flex flex-col gap-4 rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex min-w-0 gap-3">
-                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100 text-red-700">
-                  <Wrench size={18} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-red-900">
-                    Hay {ajustesActivos} evaluación(es) que requieren corrección
-                  </p>
-                  <p className="mt-1 text-sm leading-5 text-slate-700">
-                    Revisa el concepto técnico y registra una nueva evaluación. La gestión original permanecerá intacta.
-                  </p>
-                </div>
-              </div>
+            <AppAlert
+              tone="warning"
+              title={`${ajustesActivos} evaluación(es) requieren corrección técnica`}
+              description="Abre Revisiones, consulta el concepto y registra directamente una nueva evaluación del aspecto. La evaluación anterior permanecerá intacta."
+            >
               <button
                 type="button"
                 onClick={() => setRevisionesModalOpen(true)}
-                disabled={interfazBloqueada}
-                className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl bg-amber-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-amber-800"
               >
-                <Wrench size={16} />
-                Ver y corregir
+                Ver revisiones
               </button>
-            </div>
+            </AppAlert>
           )}
 
-          {correccionesTecnicasGestionActiva.length > 0 && (
-            <section className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4 shadow-sm">
-              <div className="flex min-w-0 gap-3">
-                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-100 text-cyan-800">
-                  <Wrench size={18} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-cyan-950">
-                    {correccionesTecnicasGestionActiva.length === 1
-                      ? "Corrección técnica activa"
-                      : `${correccionesTecnicasGestionActiva.length} correcciones técnicas activas`}
-                  </p>
-                  <p className="mt-1 text-sm leading-5 text-slate-700">
-                    Esta gestión está vinculada a la revisión técnica que originó la corrección. Trabaja sobre el aspecto indicado y conserva el concepto como guía.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 space-y-3">
-                {correccionesTecnicasGestionActiva.map(
-                  (revision, index) => (
-                    <article
-                      key={revision.id}
-                      className="rounded-xl border border-cyan-200 bg-white p-4"
-                    >
-                      {correccionesTecnicasGestionActiva.length > 1 && (
-                        <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-cyan-800">
-                          Corrección {index + 1}
-                        </p>
-                      )}
-
-                      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
-                        Aspecto a corregir
-                      </p>
-                      <p className="mt-1 text-sm font-bold leading-5 text-slate-950">
-                        {revision.evaluacion.aspecto.nombre}
-                      </p>
-
-                      <div className="mt-3 rounded-xl bg-slate-50 px-3.5 py-3">
-                        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500">
-                          Concepto técnico
-                        </p>
-                        <p className="mt-1 text-sm leading-5 text-slate-700">
-                          {revision.conceptoTecnico ??
-                            "La revisión requiere registrar una nueva evaluación del aspecto indicado."}
-                        </p>
-                      </div>
-
-                      <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-xs font-bold text-cyan-900">
-                          <Wrench size={13} />
-                          En corrección
-                        </span>
-
-                        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              enfocarAspectoEnMatriz(
-                                revision.evaluacion.aspecto.nombre
-                              )
-                            }
-                            disabled={interfazBloqueada}
-                            className="rounded-xl bg-cyan-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-cyan-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                          >
-                            Ir al aspecto
-                          </button>
-
-                          {puedeVerRevisiones && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const siguientesParametros =
-                                  new URLSearchParams(searchParams);
-                                siguientesParametros.set(
-                                  "revisiones",
-                                  "1"
-                                );
-                                siguientesParametros.set(
-                                  "revisionEstado",
-                                  revision.estadoFlujo
-                                );
-                                siguientesParametros.set(
-                                  "revisionId",
-                                  revision.id
-                                );
-                                setSearchParams(
-                                  siguientesParametros,
-                                  { replace: true }
-                                );
-                                setRevisionesModalOpen(true);
-                              }}
-                              disabled={interfazBloqueada}
-                              className="rounded-xl border border-cyan-300 bg-white px-4 py-2 text-sm font-bold text-cyan-950 transition hover:bg-cyan-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                              Ver revisión
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </article>
-                  )
-                )}
-              </div>
-            </section>
-          )}
-
-          {enCorreccion > 0 &&
-            ajustesActivos === 0 &&
-            correccionesTecnicasGestionActiva.length === 0 && (
-              <AppAlert
-                tone="info"
-                title={`${enCorreccion} revisión(es) están en corrección`}
-                description="Finaliza la nueva evaluación para que dejen de aparecer como una acción activa y queden registradas como subsanadas."
-              />
-            )}
-
-          <div
-            className={
-              puedeFinalizarGestionActiva
-                ? undefined
-                : "matriz-sin-finalizacion"
+          <MatrizEvaluacionDirecta
+            filas={contexto.filas}
+            editable={puedeEvaluar && contexto.periodo.estado === "ABIERTO"}
+            procesando={procesando}
+            onGuardar={guardarYActualizar}
+            onAbrirDetalle={(fila) =>
+              setTareaDetalleId(fila.tareaId)
             }
-          >
-            <MatrizEvaluacion
-              filas={contexto.filas}
-              gestionActiva={puedeEditarGestionActiva}
-              procesando={interfazBloqueada}
-              onGuardar={guardar}
-              onFinalizar={prepararFinalizacion}
-              onAbrirDetalle={(fila) =>
-                setTareaDetalleId(fila.tareaId)
-              }
-            />
-          </div>
-          <style>{`.matriz-sin-finalizacion [data-action="finalizar"] { display: none !important; }`}</style>
+          />
         </>
       )}
-
-      {finalizacionCompromisos.preparacion &&
-        finalizacionCompromisos.preparacion.totalNuevos > 0 && (
-          <CompromisosFinalizacionModal
-            preparacion={finalizacionCompromisos.preparacion}
-            busy={finalizacionCompromisos.finalizando}
-            error={finalizacionCompromisos.error}
-            onClose={finalizacionCompromisos.limpiar}
-            onSubmit={completarFinalizacion}
-          />
-        )}
-
-      <NuevaGestionModal
-        open={gestionModalOpen}
-        busy={procesando}
-        categorias={contexto.categoriasGestion}
-        initialValues={
-          revisionCorreccion
-            ? {
-                modalidad: "SEGUIMIENTO_PUNTUAL",
-                tipoActividad: `Corrección técnica · ${revisionCorreccion.evaluacion.aspecto.nombre}`,
-                categoriaGestionId:
-                  revisionCorreccion.evaluacion.gestion
-                    .categoriaGestion?.id ?? null,
-                observacionGeneral: `Corrección solicitada mediante revisión técnica.\n\nConcepto: ${revisionCorreccion.conceptoTecnico ?? "Pendiente de corrección."}`,
-              }
-            : aspectoParaRecalificar
-              ? {
-                  modalidad: "SEGUIMIENTO_PUNTUAL",
-                  tipoActividad: `Recalificación de compromiso · ${aspectoParaRecalificar}`,
-                  categoriaGestionId: null,
-                  observacionGeneral:
-                    "Seguimiento para verificar el cumplimiento del compromiso y registrar la calificación posterior.",
-                }
-              : null
-        }
-        correctionContext={
-          revisionCorreccion
-            ? {
-                revisionId: revisionCorreccion.id,
-                aspectoNombre:
-                  revisionCorreccion.evaluacion.aspecto.nombre,
-                conceptoTecnico:
-                  revisionCorreccion.conceptoTecnico,
-              }
-            : null
-        }
-        onClose={() => setGestionModalOpen(false)}
-        onSubmit={crearGestionYSeleccionar}
-      />
-
-      <EquipoGestionModal
-        open={equipoModalOpen}
-        gestionId={contexto.gestionActiva?.id ?? null}
-        gestionNombre={
-          contexto.gestionActiva?.tipoActividad ?? "Gestión SG-SST"
-        }
-        onClose={() => setEquipoModalOpen(false)}
-        onChanged={recargar}
-      />
 
       {contexto.periodo && (
         <AppModal
@@ -1013,26 +494,11 @@ export default function EvaluacionEmpresaPage() {
         </AppModal>
       )}
 
-      {contexto.periodo && (
-        <AppModal
-          open={historialModalOpen}
-          title={`Historial de gestiones · ${anio}`}
-          description={`Consulta las visitas, asesorías y jornadas realizadas para ${contexto.empresa.nombre}. Desde aquí también puedes invalidar una gestión completamente equivocada.`}
-          onClose={() => setHistorialModalOpen(false)}
-          size="2xl"
-        >
-          <HistorialGestionesEmpresa
-            periodoId={contexto.periodo.id}
-            onGestionInvalidada={recargarDespuesDeInvalidar}
-          />
-        </AppModal>
-      )}
-
       {contexto.periodo && puedeVerRevisiones && (
         <AppModal
           open={revisionesModalOpen}
           title={`Revisiones técnicas · ${anio}`}
-          description={`Consulta, resuelve y corrige las evaluaciones de ${contexto.empresa.nombre} que requieren validación técnica.`}
+          description={`Consulta y resuelve las evaluaciones de ${contexto.empresa.nombre} que requieren validación técnica.`}
           onClose={() => {
             if (!revisiones.procesando) {
               cerrarRevisiones();
@@ -1051,13 +517,15 @@ export default function EvaluacionEmpresaPage() {
             onReload={revisiones.recargar}
             onResolve={revisiones.resolver}
             onCorregir={enfocarRevision}
-            onResolved={recargar}
+            onResolved={async () => {
+              await recargar(false);
+            }}
           />
         </AppModal>
       )}
 
       <DetalleAspectoDrawer
-        key={`${contexto.gestionActiva?.id ?? "sin-gestion"}:${tareaDetalleId ?? "closed"}:${detalleInicial}`}
+        key={`${tareaDetalleId ?? "closed"}:${detalleInicial}`}
         open={tareaDetalleId !== null}
         empresaId={empresaId}
         tareaId={tareaDetalleId}
@@ -1070,28 +538,34 @@ export default function EvaluacionEmpresaPage() {
             searchParams.has("tareaId") ||
             searchParams.has("detalle")
           ) {
-            const siguientesParametros =
-              new URLSearchParams(searchParams);
-            siguientesParametros.delete("tareaId");
-            siguientesParametros.delete("detalle");
-            setSearchParams(siguientesParametros, {
-              replace: true,
-            });
+            const siguientes = new URLSearchParams(searchParams);
+            siguientes.delete("tareaId");
+            siguientes.delete("detalle");
+            setSearchParams(siguientes, { replace: true });
           }
         }}
       />
-
-      <EvaluacionTransitionOverlay
-        open={cambiandoBorrador}
-        title="Cambiando de borrador"
-        description="Estamos cargando la gestión seleccionada y sus evaluaciones. Tus borradores permanecen separados."
-      />
-
-      <EvaluacionTransitionOverlay
-        open={!cambiandoBorrador && transicionFinalizacion}
-        title={tituloTransicion}
-        description={descripcionTransicion}
-      />
     </div>
+  );
+}
+
+function ActionButton({
+  icon,
+  label,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-2 rounded-xl border border-neutral-700 bg-[#0a0b0c] px-3.5 py-2.5 text-xs font-semibold text-neutral-200 transition hover:border-cyan-500/40 hover:text-cyan-200"
+    >
+      {icon}
+      {label}
+    </button>
   );
 }
