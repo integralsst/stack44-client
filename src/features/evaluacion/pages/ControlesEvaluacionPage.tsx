@@ -16,7 +16,7 @@ import {
 
 import type { ContextoEvaluacionResponse } from "../../../types/evaluacion.types";
 import { useAuth } from "../../auth/context/AuthContext";
-import { obtenerContextoEvaluacion } from "../api/evaluacion.api";
+import { obtenerContextoEvaluacionDirecta } from "../api/evaluacion-directa.api";
 import AprobacionesGestionPanel from "../components/aprobaciones/AprobacionesGestionPanel";
 import NoAplicaPeriodoPanel from "../components/no-aplica/NoAplicaPeriodoPanel";
 import { useControlesEvaluacion } from "../hooks/useControlesEvaluacion";
@@ -58,7 +58,7 @@ export default function ControlesEvaluacionPage() {
     let active = true;
     const keyActual = requestKey;
 
-    obtenerContextoEvaluacion(empresaId, anio, token)
+    obtenerContextoEvaluacionDirecta(empresaId, anio, token)
       .then((data) => {
         if (!active) return;
 
@@ -211,7 +211,7 @@ export default function ControlesEvaluacionPage() {
                 {contexto.empresa.nombre}
               </h1>
               <p className="mt-1 text-xs text-neutral-500">
-                Periodo {anio} · decisiones posteriores a gestiones finalizadas
+                Periodo {anio} · decisiones posteriores a evaluaciones registradas
               </p>
             </div>
           </div>
@@ -272,7 +272,7 @@ export default function ControlesEvaluacionPage() {
               >
                 <span className="flex items-center gap-2 font-bold">
                   <ShieldCheck size={17} />
-                  Aprobaciones de gestión
+                  Aprobaciones administrativas
                 </span>
                 <span className="rounded-full bg-black/20 px-2 py-1 text-xs font-bold">
                   {controles.aprobaciones?.resumen.pendientes ?? 0}
