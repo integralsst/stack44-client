@@ -9,11 +9,11 @@ import type {
   GuardarEvaluacionInput,
 } from "../../../types/evaluacion.types";
 import { useAuth } from "../../auth/context/AuthContext";
+import { abrirPeriodoEvaluacion } from "../api/evaluacion.api";
 import {
-  abrirPeriodoEvaluacion,
-  obtenerContextoEvaluacion,
-} from "../api/evaluacion.api";
-import { guardarEvaluacionesDirectas } from "../api/evaluacion-directa.api";
+  guardarEvaluacionesDirectas,
+  obtenerContextoEvaluacionDirecta,
+} from "../api/evaluacion-directa.api";
 import { escucharCambiosEvidenciaEvaluacion } from "../lib/evidencia-evaluacion.events";
 
 export function useEvaluacionDirectaEmpresa(
@@ -37,29 +37,13 @@ export function useEvaluacionDirectaEmpresa(
       setError(null);
 
       try {
-        const data = await obtenerContextoEvaluacion(
+        const data = await obtenerContextoEvaluacionDirecta(
           empresaId,
           anio,
-          token,
-          null
+          token
         );
 
-        // La interfaz directa nunca consume evaluaciones provisionales de
-        // una gestión legada. El estado visible es siempre el oficial.
-        setContexto({
-          ...data,
-          gestionActiva: null,
-          gestionesActivas: [],
-          filas: data.filas.map((fila) => ({
-            ...fila,
-            evaluacionGestionActiva: null,
-            estadoVigencia: fila.estadoVigenciaOficial,
-            detalleVigencia: {
-              ...fila.detalleVigencia,
-              provisional: false,
-            },
-          })),
-        });
+        setContexto(data);
       } catch (currentError) {
         setError(
           currentError instanceof Error
