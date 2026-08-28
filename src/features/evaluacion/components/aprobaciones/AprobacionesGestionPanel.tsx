@@ -101,15 +101,15 @@ export default function AprobacionesGestionPanel({
   }, [data]);
 
   if (cargando && !data) {
-    return <p className="py-10 text-center text-sm text-neutral-400">Cargando aprobaciones de gestión...</p>;
+    return <p className="py-10 text-center text-sm text-neutral-400">Cargando aprobaciones administrativas...</p>;
   }
 
   if (!data || data.items.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-neutral-700 bg-[#0b0c0d] p-6 text-center">
         <ShieldCheck className="mx-auto text-emerald-400" />
-        <p className="mt-2 text-sm font-bold text-white">Sin gestiones sujetas a aprobación</p>
-        <p className="mt-1 text-xs text-neutral-500">Solo aparecerán gestiones que coincidan con una Regla de aprobación activa de la Supermatriz.</p>
+        <p className="mt-2 text-sm font-bold text-white">Sin evaluaciones sujetas a aprobación</p>
+        <p className="mt-1 text-xs text-neutral-500">Solo aparecerán evaluaciones que coincidan con una regla de aprobación activa de la Supermatriz.</p>
       </div>
     );
   }
@@ -133,7 +133,7 @@ export default function AprobacionesGestionPanel({
       {data.items.map((item) => {
         const busy = procesando === `gestion:${item.id}`;
         const observacion = observaciones[item.id] ?? "";
-        const puedeCorregirGestion = Boolean(
+        const puedeCorregirRegistro = Boolean(
           item.estado === "RECHAZADA" &&
             onCorrectAspecto &&
             usuarioActualId &&
@@ -144,12 +144,16 @@ export default function AprobacionesGestionPanel({
           <article key={item.id} className="rounded-2xl border border-neutral-800 bg-[#101112] p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-xs font-semibold text-cyan-300">{item.gestion.tipoActividad}</p>
+                <p className="text-xs font-semibold text-cyan-300">
+                  {item.gestion.tipoActividad === "Evaluación directa"
+                    ? "Evaluación directa"
+                    : item.gestion.tipoActividad}
+                </p>
                 <h3 className="mt-1 text-sm font-bold text-white">
                   {item.gestion.usuarioCreador.nombre} · {item.gestion.modalidad.replaceAll("_", " ")}
                 </h3>
                 <p className="mt-1 text-xs text-neutral-500">
-                  Gestión del {fechaCalendario(item.gestion.fechaGestion)} · control generado {fechaHora(item.generadaEn)}
+                  Evaluación del {fechaCalendario(item.gestion.fechaGestion)} · control generado {fechaHora(item.generadaEn)}
                 </p>
               </div>
               <Estado item={item} />
@@ -174,7 +178,7 @@ export default function AprobacionesGestionPanel({
                   const esAprobacionMasReciente =
                     aprobacionMasReciente?.aprobacionId === item.id;
                   const puedeCorregirAspecto =
-                    puedeCorregirGestion && esAprobacionMasReciente;
+                    puedeCorregirRegistro && esAprobacionMasReciente;
                   const tieneEvaluacionPosterior =
                     item.estado === "RECHAZADA" &&
                     !esAprobacionMasReciente;
@@ -250,7 +254,7 @@ export default function AprobacionesGestionPanel({
                     disabled={Boolean(procesando)}
                     onClick={() => void onDecide(item.id, "RECHAZAR", observacion.trim() || null)}
                   >
-                    Rechazar gestión
+                    Rechazar evaluación
                   </AppButton>
                   <AppButton
                     variant="success"
@@ -259,7 +263,7 @@ export default function AprobacionesGestionPanel({
                     disabled={Boolean(procesando)}
                     onClick={() => void onDecide(item.id, "APROBAR", observacion.trim() || null)}
                   >
-                    Aprobar gestión
+                    Aprobar evaluación
                   </AppButton>
                 </div>
               </div>

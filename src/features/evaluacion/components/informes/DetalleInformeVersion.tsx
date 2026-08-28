@@ -58,6 +58,20 @@ function formatCalendarDate(value: string): string {
   }).format(date);
 }
 
+function fuenteInforme(detalle: InformePeriodoDetalle): string {
+  const fuente = detalle.snapshot.fuente;
+
+  if (fuente.modelo === "EVALUACIONES_POR_ASPECTO") {
+    const registros =
+      fuente.totalRegistrosEvaluacion ??
+      fuente.totalEvaluacionesRegistradas;
+
+    return `${registros} registros de evaluación · ${detalle.totalEvaluacionesFuente} aspectos`;
+  }
+
+  return `${detalle.totalGestionesFuente} gestiones · ${detalle.totalEvaluacionesFuente} aspectos`;
+}
+
 export default function DetalleInformeVersion({
   detalle,
   onBack,
@@ -151,7 +165,7 @@ export default function DetalleInformeVersion({
         <InfoItem
           icon={<Database size={15} />}
           label="Fuente"
-          value={`${detalle.totalGestionesFuente} gestiones · ${detalle.totalEvaluacionesFuente} aspectos`}
+          value={fuenteInforme(detalle)}
         />
         <InfoItem
           icon={<Layers3 size={15} />}
