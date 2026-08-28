@@ -755,13 +755,10 @@ export default function MatrizEvaluacionDirecta({
         )}
       </div>
 
-      <div className="flex flex-col gap-2 border-t border-slate-200 bg-slate-50/70 px-4 py-3 text-[10px] text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-        <span>
-          {Math.min(visibles, filasFiltradas.length)} de {filasFiltradas.length} filas visibles
-        </span>
+      <div className="border-t border-slate-200 bg-slate-50/70 px-4 py-3 text-[10px] text-slate-500">
         <span className="inline-flex items-center gap-1.5">
           <CheckCircle2 size={12} className="text-emerald-600" />
-          Guardar registra oficialmente; no existe un paso adicional de finalización.
+          {Math.min(visibles, filasFiltradas.length)} de {filasFiltradas.length} filas visibles
         </span>
       </div>
 
