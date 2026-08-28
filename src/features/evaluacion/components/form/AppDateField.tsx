@@ -14,6 +14,7 @@ interface AppDateFieldProps {
   disabled?: boolean;
   permiteFechaManual?: boolean;
   pending?: boolean;
+  inputClassName?: string;
   onChange: (value: string) => void;
 }
 
@@ -22,6 +23,7 @@ export default function AppDateField({
   disabled = false,
   permiteFechaManual = true,
   pending = false,
+  inputClassName = "",
   onChange,
 }: AppDateFieldProps) {
   const normalizedValue =
@@ -47,6 +49,7 @@ export default function AppDateField({
           pending
             ? "border-cyan-500/40 bg-cyan-500/[0.045]"
             : "",
+          inputClassName,
         ].join(" ")}
         title={
           permiteFechaManual
