@@ -2,6 +2,7 @@ import {
   Ban,
   CalendarDays,
   FileCheck2,
+  GitCompareArrows,
   UserRound,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -38,6 +39,21 @@ export type HistorialConResultadoEfectivo =
     calificacionEfectiva?: number;
     resultadoProvisional?: boolean;
     causaResultadoEfectivo?: string;
+    registradoPor?: {
+      id: string;
+      nombre: string;
+      rol: string;
+    } | null;
+    evaluacionAnterior?: {
+      estadoCumplimiento: string | null;
+      calificacionAdministrativa: number | null;
+      observacion: string | null;
+      registradaPor: {
+        id: string;
+        nombre: string;
+        rol: string | null;
+      } | null;
+    } | null;
     decisionNoAplica?: {
       estado: string;
       resultadoEfectivo: number;
@@ -49,6 +65,21 @@ export type HistorialConResultadoEfectivo =
     } | null;
   };
 
+function rolLabel(rol: string | null | undefined): string {
+  const labels: Record<string, string> = {
+    PROFESIONAL: "Profesional",
+    PROFESSIONAL: "Profesional",
+    COORDINADOR: "Coordinador",
+    COORDINATOR: "Coordinador",
+    ADMIN: "Administrador",
+    OWNER: "Propietario",
+    PROPIETARIO: "Propietario",
+    SUPERADMIN: "Superadmin",
+  };
+
+  return rol ? labels[rol] ?? rol.replaceAll("_", " ") : "";
+}
+
 export default function HistorialEvaluacionCard({
   item,
 }: {
@@ -56,6 +87,8 @@ export default function HistorialEvaluacionCard({
 }) {
   const itemEfectivo = item as HistorialConResultadoEfectivo;
   const invalidada = item.gestion.estado === "INVALIDADA";
+  const evaluacionDirecta =
+    item.gestion.tipoActividad === "Evaluación directa";
   const registrada =
     itemEfectivo.calificacionRegistrada ??
     item.calificacionAdministrativa;
@@ -63,7 +96,11 @@ export default function HistorialEvaluacionCard({
     itemEfectivo.calificacionEfectiva ??
     item.calificacionAdministrativa;
   const decisionNoAplica = itemEfectivo.decisionNoAplica ?? null;
+  const registradoPor = itemEfectivo.registradoPor ?? null;
+  const anterior = itemEfectivo.evaluacionAnterior ?? null;
   const cambioResultado = registrada !== efectiva;
+  const autor = registradoPor?.nombre ?? item.usuarioRegistrador ?? item.gestion.profesional;
+  const autorRol = rolLabel(registradoPor?.rol);
 
   const summary = (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -112,20 +149,21 @@ export default function HistorialEvaluacionCard({
           {invalidada && (
             <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-red-800">
               <Ban size={11} />
-              Gestión invalidada
+              Evaluación invalidada
             </span>
           )}
         </div>
 
         <h4 className="mt-2 truncate text-sm font-semibold text-slate-950">
-          {item.gestion.tipoActividad}
+          {evaluacionDirecta ? "Evaluación registrada" : item.gestion.tipoActividad}
         </h4>
         <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-600">
-          <span>{formatDate(item.gestion.fechaGestion)}</span>
+          <span>{formatDate(item.creadaEn, true)}</span>
           <span aria-hidden="true">·</span>
-          <span className="inline-flex items-center gap-1">
+          <span className="inline-flex items-center gap-1 font-medium">
             <UserRound size={12} />
-            {item.gestion.profesional}
+            {autor}
+            {autorRol ? ` · ${autorRol}` : ""}
           </span>
         </p>
       </div>
@@ -142,11 +180,61 @@ export default function HistorialEvaluacionCard({
       }
       contentClassName="p-4 sm:p-5"
     >
-      <p className="text-xs text-slate-600">
-        {item.gestion.categoriaGestion ?? "Gestión general"}
-        {` · ${item.gestion.modalidad.replaceAll("_", " ")}`}
-        {` · Registrada ${formatDate(item.creadaEn, true)}`}
-      </p>
+      {evaluacionDirecta ? (
+        <p className="text-xs text-slate-600">
+          Registro individual · Fecha evaluada {formatDate(item.gestion.fechaGestion)} · Autoría conservada
+        </p>
+      ) : (
+        <p className="text-xs text-slate-600">
+          {item.gestion.categoriaGestion ?? "Gestión general"}
+          {` · ${item.gestion.modalidad.replaceAll("_", " ")}`}
+          {` · Registrada ${formatDate(item.creadaEn, true)}`}
+        </p>
+      )}
+
+      {anterior && (
+        <div className="mt-4 rounded-xl border border-cyan-200 bg-cyan-50 p-3">
+          <p className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-wider text-cyan-800">
+            <GitCompareArrows size={13} />
+            Cambio frente al estado anterior
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-slate-200 bg-white p-3">
+              <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                Antes
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">
+                {anterior.estadoCumplimiento
+                  ? stateLabel[anterior.estadoCumplimiento] ?? anterior.estadoCumplimiento
+                  : "Sin evaluación"}
+                {anterior.calificacionAdministrativa != null
+                  ? ` · ${anterior.calificacionAdministrativa}`
+                  : ""}
+              </p>
+              {anterior.registradaPor && (
+                <p className="mt-1 text-[10px] text-slate-500">
+                  Por {anterior.registradaPor.nombre}
+                  {anterior.registradaPor.rol
+                    ? ` · ${rolLabel(anterior.registradaPor.rol)}`
+                    : ""}
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-cyan-200 bg-white p-3">
+              <p className="text-[9px] font-bold uppercase tracking-wider text-cyan-700">
+                Nuevo registro
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-950">
+                {stateLabel[item.estadoCumplimiento] ?? item.estadoCumplimiento} · {registrada}
+              </p>
+              <p className="mt-1 text-[10px] text-slate-500">
+                Por {autor}{autorRol ? ` · ${autorRol}` : ""}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {invalidada && (
         <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3">
@@ -200,8 +288,8 @@ export default function HistorialEvaluacionCard({
       <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <DetalleDato
           icon={<UserRound size={13} />}
-          label="Profesional"
-          value={item.gestion.profesional}
+          label="Registrado por"
+          value={autorRol ? `${autor} · ${autorRol}` : autor}
         />
         <DetalleDato
           icon={<CalendarDays size={13} />}
