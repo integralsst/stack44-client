@@ -29,6 +29,7 @@ import type {
 } from "../../../types/domain";
 import AppModal from "../../../components/ui/AppModal";
 import AppSelect from "../../../components/ui/AppSelect";
+import AssignmentCategoriesButton from "../components/AssignmentCategoriesButton";
 
 interface ProfessionalForm {
   identificationType: IdentificationType;
@@ -1054,27 +1055,42 @@ function AssignmentChips({
     );
   }
 
+  const professionalName = `${professional.firstNames} ${professional.lastNames}`;
+
   return (
-    <div className="flex max-w-md flex-wrap gap-2">
+    <div className="flex max-w-lg flex-wrap gap-2">
       {activeAssignments.map((assignment) => (
-        <button
+        <div
           key={assignment.id}
-          type="button"
-          onClick={() =>
-            void onRemove(
-              professional,
-              assignment
-            )
-          }
-          title="Retirar asignación"
-          className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 px-2.5 py-1 text-[10px] font-medium text-blue-400 transition-colors hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-400"
+          className="flex max-w-full items-center gap-1 rounded-xl border border-blue-500/20 bg-blue-500/10 p-1 text-blue-300"
         >
-          <Building2 size={11} className="shrink-0" />
-          <span className="truncate">
-            {assignment.company.name}
-          </span>
-          <Unlink size={10} className="shrink-0" />
-        </button>
+          <div className="flex min-w-0 items-center gap-1.5 px-2 py-1 text-[10px] font-medium">
+            <Building2 size={11} className="shrink-0" />
+            <span className="truncate">
+              {assignment.company.name}
+            </span>
+          </div>
+
+          <AssignmentCategoriesButton
+            professionalId={professional.id}
+            professionalName={professionalName}
+            assignment={assignment}
+          />
+
+          <button
+            type="button"
+            onClick={() =>
+              void onRemove(
+                professional,
+                assignment
+              )
+            }
+            title={`Retirar asignación de ${assignment.company.name}`}
+            className="rounded-lg p-1.5 text-blue-400 transition-colors hover:bg-red-500/10 hover:text-red-400"
+          >
+            <Unlink size={11} />
+          </button>
+        </div>
       ))}
     </div>
   );
