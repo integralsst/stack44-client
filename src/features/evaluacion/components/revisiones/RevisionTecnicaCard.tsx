@@ -137,7 +137,7 @@ export default function RevisionTecnicaCard({
               {estadoLabel(evaluacion.estadoCumplimiento)} · Nota {evaluacion.calificacionAdministrativa.toFixed(2)}
             </p>
             <p className="mt-1 text-[10px] text-slate-500">
-              {evaluacion.gestion.profesional} · {formatDateTime(evaluacion.gestion.fechaGestion)}
+              {evaluacion.gestion.profesional} · {formatDateTime(evaluacion.creadaEn ?? revision.solicitadaEn)}
             </p>
           </div>
 
@@ -200,8 +200,10 @@ export default function RevisionTecnicaCard({
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <Fact
               icon={CalendarDays}
-              label="Gestión original"
-              value={`${formatDate(evaluacion.gestion.fechaGestion)} · ${evaluacion.gestion.tipoActividad}`}
+              label="Evaluación revisada"
+              value={formatDateTime(
+                evaluacion.creadaEn ?? revision.solicitadaEn
+              )}
             />
             <Fact
               icon={UserRound}
@@ -244,7 +246,10 @@ export default function RevisionTecnicaCard({
                 {revision.gestionCorreccion.tipoActividad}
               </p>
               <p className="mt-1 text-xs leading-5 text-slate-600">
-                {formatDate(revision.gestionCorreccion.fechaGestion)} · {revision.gestionCorreccion.profesional}
+                {formatDateTime(
+                  revision.evaluacionCorrectiva?.creadaEn ??
+                    revision.gestionCorreccion.fechaGestion
+                )} · {revision.gestionCorreccion.profesional}
               </p>
               {revision.evaluacionCorrectiva && (
                 <p className="mt-2 text-xs text-slate-700">
@@ -362,15 +367,6 @@ function estadoLabel(value: string): string {
     .toLowerCase()
     .replaceAll("_", " ")
     .replace(/^./, (letter) => letter.toUpperCase());
-}
-
-function formatDate(value: string): string {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? "Fecha no disponible"
-    : new Intl.DateTimeFormat("es-CO", {
-        dateStyle: "medium",
-      }).format(date);
 }
 
 function formatDateTime(value: string): string {

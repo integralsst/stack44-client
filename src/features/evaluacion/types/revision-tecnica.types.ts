@@ -80,6 +80,7 @@ export interface RevisionTecnicaEvaluacionItem {
   evaluacionCorrectiva: RevisionTecnicaEvaluacionCorrectiva | null;
   evaluacion: {
     id: string;
+    creadaEn?: string | null;
     estadoCumplimiento: EstadoCumplimientoAspecto;
     calificacionAdministrativa: number;
     observacion: string | null;
