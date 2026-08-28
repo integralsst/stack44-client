@@ -123,7 +123,8 @@ export default function MatrizEvaluacionDirecta({
   const [estandarId, setEstandarId] = useState("");
   const [vigencia, setVigencia] = useState("");
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
-  const [visibles, setVisibles] = useState(100);
+  const [visibles, setVisibles] = useState(40);
+  const [evidenciasAbiertas, setEvidenciasAbiertas] = useState(false);
   const [registros, setRegistros] = useState<
     Record<number, BorradorEvaluacionAspecto>
   >({});
@@ -165,6 +166,10 @@ export default function MatrizEvaluacionDirecta({
     [filas]
   );
 
+  useEffect(() => {
+    setEvidenciasAbiertas(evidenciasPendientes.length > 0 && evidenciasPendientes.length <= 3);
+  }, [evidenciasPendientes.length]);
+
   const filasFiltradas = useMemo(() => {
     const term = busqueda.trim().toLocaleLowerCase("es");
 
@@ -198,7 +203,7 @@ export default function MatrizEvaluacionDirecta({
   }, [busqueda, estandarId, filas, procesoId, vigencia]);
 
   useEffect(() => {
-    setVisibles(100);
+    setVisibles(40);
   }, [busqueda, estandarId, procesoId, vigencia]);
 
   useEffect(() => {
@@ -209,11 +214,11 @@ export default function MatrizEvaluacionDirecta({
       (entries) => {
         if (entries[0]?.isIntersecting) {
           setVisibles((actual) =>
-            Math.min(actual + 100, filasFiltradas.length)
+            Math.min(actual + 40, filasFiltradas.length)
           );
         }
       },
-      { rootMargin: "400px" }
+      { rootMargin: "500px" }
     );
 
     observer.observe(sentinel);
@@ -370,8 +375,13 @@ export default function MatrizEvaluacionDirecta({
   return (
     <section className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 border-t-2 border-t-cyan-500 bg-white shadow-sm">
       {evidenciasPendientes.length > 0 && (
-        <div className="border-b border-amber-200 bg-gradient-to-r from-amber-50 via-white to-amber-50/40 px-4 py-4 sm:px-5">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="border-b border-amber-200 bg-gradient-to-r from-amber-50 via-white to-amber-50/40">
+          <button
+            type="button"
+            onClick={() => setEvidenciasAbiertas((actual) => !actual)}
+            className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition hover:bg-amber-50/70 sm:px-5"
+            aria-expanded={evidenciasAbiertas}
+          >
             <div className="flex min-w-0 items-start gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-200 bg-white text-amber-600 shadow-sm">
                 <FileWarning size={19} />
@@ -385,37 +395,49 @@ export default function MatrizEvaluacionDirecta({
                     {evidenciasPendientes.length} pendiente{evidenciasPendientes.length === 1 ? "" : "s"}
                   </span>
                 </div>
-                <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-600">
-                  Estos aspectos conservan su calificación, pero todavía requieren un soporte documental válido. Puedes completar cada evidencia sin crear una nueva evaluación.
+                <p className="mt-1 text-xs leading-5 text-slate-600">
+                  Aspectos con calificación 5 que todavía requieren un soporte documental válido.
                 </p>
               </div>
             </div>
-          </div>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-200 bg-white text-amber-700 shadow-sm">
+              <ChevronDown
+                size={17}
+                className={`transition-transform ${evidenciasAbiertas ? "rotate-180" : ""}`}
+              />
+            </span>
+          </button>
 
-          <div className="mt-3 grid gap-2 xl:grid-cols-2">
-            {evidenciasPendientes.map((fila) => (
-              <button
-                key={`evidencia-${fila.tareaId}`}
-                type="button"
-                onClick={() => abrirDetalle(fila, "EVIDENCIAS")}
-                className="group flex min-w-0 items-center justify-between gap-3 rounded-xl border border-amber-200 bg-white px-3.5 py-3 text-left shadow-sm transition hover:border-amber-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-100"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-xs font-bold text-slate-800">
-                    {fila.aspecto.codigo ? `${fila.aspecto.codigo} · ` : ""}
-                    {fila.aspecto.nombre}
-                  </p>
-                  <p className="mt-1 truncate text-[10px] text-slate-500">
-                    {fila.estandar.nombre}
-                  </p>
+          {evidenciasAbiertas && (
+            <div className="border-t border-amber-100 px-4 pb-4 pt-3 sm:px-5">
+              <div className="max-h-72 overflow-y-auto pr-1 [scrollbar-gutter:stable]">
+                <div className="grid gap-2 xl:grid-cols-2">
+                  {evidenciasPendientes.map((fila) => (
+                    <button
+                      key={`evidencia-${fila.tareaId}`}
+                      type="button"
+                      onClick={() => abrirDetalle(fila, "EVIDENCIAS")}
+                      className="group flex min-w-0 items-center justify-between gap-3 rounded-xl border border-amber-200 bg-white px-3.5 py-3 text-left shadow-sm transition hover:border-amber-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber-100"
+                    >
+                      <div className="min-w-0">
+                        <p className="line-clamp-2 text-xs font-bold leading-5 text-slate-800">
+                          {fila.aspecto.codigo ? `${fila.aspecto.codigo} · ` : ""}
+                          {fila.aspecto.nombre}
+                        </p>
+                        <p className="mt-1 truncate text-[10px] text-slate-500">
+                          {fila.estandar.nombre}
+                        </p>
+                      </div>
+                      <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[10px] font-bold text-amber-700 transition group-hover:bg-amber-100">
+                        Completar soporte
+                        <ArrowUpRight size={12} />
+                      </span>
+                    </button>
+                  ))}
                 </div>
-                <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[10px] font-bold text-amber-700 transition group-hover:bg-amber-100">
-                  Completar soporte
-                  <ArrowUpRight size={12} />
-                </span>
-              </button>
-            ))}
-          </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -536,68 +558,72 @@ export default function MatrizEvaluacionDirecta({
         )}
       </div>
 
-      <div className="max-h-[72vh] min-h-[420px] overflow-auto overscroll-contain bg-white [scrollbar-gutter:stable]">
-        <table className="min-w-[1960px] border-separate border-spacing-0 text-left text-[11px] text-slate-700">
-          <thead className="sticky top-0 z-40 bg-slate-50 text-[9px] uppercase tracking-wider text-slate-500">
-            <tr>
-              <Header sticky className="left-0 w-[54px] min-w-[54px] text-center">
-                Orden
-              </Header>
-              <Header sticky className="left-[54px] w-[330px] min-w-[330px] border-r border-slate-200">
-                Aspecto
-              </Header>
-              <Header className="w-[180px] min-w-[180px]">Proceso</Header>
-              <Header className="w-[210px] min-w-[210px]">Último estado</Header>
-              <Header className="w-[170px] min-w-[170px]">Nueva evaluación</Header>
-              <Header className="w-[72px] min-w-[72px] text-center">Nota</Header>
-              <Header className="w-[260px] min-w-[260px]">Observación nueva</Header>
-              <Header className="w-[150px] min-w-[150px]">Fecha soporte</Header>
-              <Header className="w-[175px] min-w-[175px]">Vigencia</Header>
-              <Header className="w-[220px] min-w-[220px]">No aplica / revisión</Header>
-              <Header className="w-[100px] min-w-[100px] text-center">Detalle</Header>
-            </tr>
-          </thead>
+      <div className="bg-slate-50/60 p-3 sm:p-4">
+        <div className="space-y-3">
+          {rows.map((fila) => {
+            const registro =
+              registros[fila.aspecto.id] ?? nuevoRegistro(fila);
+            const cambio = modificados.has(fila.aspecto.id);
+            const ultima = fila.ultimaEvaluacion;
+            const revisionObligatoria =
+              fila.aspecto.configuracionRevision?.requiereRevisionTecnica === true;
+            const permiteNoAplica =
+              puedeProponerNoAplica &&
+              fila.aspecto.configuracion?.permiteNoAplica !== false;
 
-          <tbody>
-            {rows.map((fila) => {
-              const registro =
-                registros[fila.aspecto.id] ?? nuevoRegistro(fila);
-              const cambio = modificados.has(fila.aspecto.id);
-              const ultima = fila.ultimaEvaluacion;
-              const revisionObligatoria =
-                fila.aspecto.configuracionRevision?.requiereRevisionTecnica === true;
-              const permiteNoAplica =
-                puedeProponerNoAplica &&
-                fila.aspecto.configuracion?.permiteNoAplica !== false;
-              const stickyBg = cambio ? "bg-cyan-50" : "bg-white";
+            return (
+              <article
+                key={fila.tareaId}
+                className={`overflow-hidden rounded-2xl border bg-white shadow-sm transition ${
+                  cambio
+                    ? "border-cyan-300 ring-2 ring-cyan-100"
+                    : "border-slate-200 hover:border-slate-300 hover:shadow-md"
+                }`}
+              >
+                <div className={`border-b px-4 py-3.5 sm:px-5 ${cambio ? "border-cyan-200 bg-cyan-50/70" : "border-slate-200 bg-white"}`}>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-mono text-[10px] font-bold text-slate-500">
+                          #{fila.orden}
+                        </span>
+                        {fila.aspecto.codigo && (
+                          <span className="rounded-lg bg-cyan-50 px-2 py-1 text-[10px] font-bold text-cyan-800">
+                            {fila.aspecto.codigo}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="mt-2 text-sm font-bold leading-6 text-slate-900 sm:text-[15px]">
+                        {fila.aspecto.nombre}
+                      </h3>
+                      <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] leading-4 text-slate-500 sm:text-[11px]">
+                        <span>{fila.proceso.nombre}</span>
+                        <span className="hidden text-slate-300 sm:inline">•</span>
+                        <span>{fila.estandar.nombre}</span>
+                      </div>
+                    </div>
 
-              return (
-                <tr
-                  key={fila.tareaId}
-                  className={cambio ? "bg-cyan-50/60" : "bg-white hover:bg-slate-50/70"}
-                >
-                  <Cell sticky className={`left-0 text-center font-mono text-slate-400 ${stickyBg}`}>
-                    {fila.orden}
-                  </Cell>
-                  <Cell sticky className={`left-[54px] border-r border-slate-200 ${stickyBg}`}>
-                    <p className="font-semibold leading-5 text-slate-900">
-                      {fila.aspecto.codigo ? `${fila.aspecto.codigo} · ` : ""}
-                      {fila.aspecto.nombre}
-                    </p>
-                    <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-slate-500">
-                      {fila.estandar.nombre}
-                    </p>
-                  </Cell>
-                  <Cell>
-                    <p className="leading-5 text-slate-600">{fila.proceso.nombre}</p>
-                  </Cell>
-                  <Cell>
+                    <button
+                      type="button"
+                      onClick={() => abrirDetalle(fila, "HISTORIAL")}
+                      className="inline-flex shrink-0 items-center justify-center gap-1.5 self-start rounded-xl border border-slate-300 bg-white px-3 py-2 text-[11px] font-semibold text-slate-600 shadow-sm transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
+                      title={`Abrir detalle de ${fila.aspecto.nombre}`}
+                    >
+                      <History size={14} />
+                      Historial
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid gap-0 lg:grid-cols-12">
+                  <section className="border-b border-slate-200 p-4 lg:col-span-3 lg:border-b-0 lg:border-r sm:p-5">
+                    <FieldLabel>Estado actual</FieldLabel>
                     {ultima ? (
-                      <div className="space-y-1.5">
-                        <span className={`inline-flex rounded-full border px-2 py-1 text-[9px] font-bold uppercase ${estadoClass(ultima.estadoCumplimiento)}`}>
+                      <div className="mt-2 space-y-2">
+                        <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase ${estadoClass(ultima.estadoCumplimiento)}`}>
                           {ESTADO_LABEL[ultima.estadoCumplimiento]} · {ultima.calificacionEfectiva}
                         </span>
-                        <p className="text-[10px] text-slate-500">
+                        <p className="text-[11px] text-slate-500">
                           {fechaCorta(ultima.gestion.fechaGestion)}
                           {ultima.resultadoProvisional ? " · provisional" : ""}
                         </p>
@@ -605,17 +631,21 @@ export default function MatrizEvaluacionDirecta({
                           <button
                             type="button"
                             onClick={() => abrirDetalle(fila, "EVIDENCIAS")}
-                            className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[9px] font-bold text-amber-700 transition hover:bg-amber-100"
+                            className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-700 transition hover:bg-amber-100"
                           >
                             Evidencia pendiente
                           </button>
                         )}
                       </div>
                     ) : (
-                      <span className="text-slate-400">Sin revisión</span>
+                      <p className="mt-2 text-sm font-medium text-slate-400">
+                        Sin revisión
+                      </p>
                     )}
-                  </Cell>
-                  <Cell>
+                  </section>
+
+                  <section className="border-b border-slate-200 p-4 lg:col-span-3 lg:border-b-0 lg:border-r sm:p-5">
+                    <FieldLabel>Nueva evaluación</FieldLabel>
                     <select
                       value={registro.estadoCumplimiento}
                       disabled={!editable || procesando}
@@ -625,7 +655,7 @@ export default function MatrizEvaluacionDirecta({
                             event.target.value as EstadoCumplimientoAspecto | "",
                         })
                       }
-                      className={controlClass}
+                      className={`${controlClass} mt-2`}
                     >
                       <option value="">Sin nueva evaluación</option>
                       <option value="CUMPLIDO">Cumplido</option>
@@ -635,46 +665,70 @@ export default function MatrizEvaluacionDirecta({
                         <option value="NO_APLICA">No aplica</option>
                       )}
                     </select>
-                  </Cell>
-                  <Cell className="text-center">
-                    <span className="text-base font-bold text-slate-900">
-                      {registro.calificacionAdministrativa ?? "—"}
-                    </span>
-                  </Cell>
-                  <Cell>
+                    <div className="mt-3 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        Nota
+                      </span>
+                      <span className="text-lg font-bold text-slate-900">
+                        {registro.calificacionAdministrativa ?? "—"}
+                      </span>
+                    </div>
+                  </section>
+
+                  <section className="border-b border-slate-200 p-4 lg:col-span-6 lg:border-b-0 sm:p-5">
+                    <FieldLabel>Observación nueva</FieldLabel>
                     <textarea
-                      rows={3}
+                      rows={4}
                       value={registro.observacion}
                       disabled={!editable || procesando}
                       onChange={(event) =>
                         actualizar(fila, { observacion: event.target.value })
                       }
-                      placeholder="Qué se verificó o qué cambió..."
-                      className={`${controlClass} resize-y`}
+                      placeholder="Describe qué se verificó o qué cambió..."
+                      className={`${controlClass} mt-2 min-h-24 resize-y`}
                     />
-                  </Cell>
-                  <Cell>
-                    <AppDateField
-                      value={registro.fechaDocumento}
-                      onChange={(value) =>
-                        actualizar(fila, { fechaDocumento: value })
-                      }
-                      disabled={
-                        !editable ||
-                        procesando ||
-                        registro.estadoCumplimiento === "NO_APLICA" ||
-                        fila.aspecto.configuracionVigencia?.permiteFechaManual === false
-                      }
-                      inputClassName={controlClass}
-                    />
-                  </Cell>
-                  <Cell>
-                    <VigenciaBadge
-                      estado={fila.estadoVigenciaOficial}
-                      detalle={fila.detalleVigencia}
-                    />
-                  </Cell>
-                  <Cell>
+                  </section>
+                </div>
+
+                <div className="grid border-t border-slate-200 bg-slate-50/50 lg:grid-cols-12">
+                  <section className="p-4 lg:col-span-6 lg:border-r lg:border-slate-200 sm:p-5">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <FieldLabel>Fecha soporte</FieldLabel>
+                        <div className="mt-2">
+                          <AppDateField
+                            value={registro.fechaDocumento}
+                            onChange={(value) =>
+                              actualizar(fila, { fechaDocumento: value })
+                            }
+                            disabled={
+                              !editable ||
+                              procesando ||
+                              registro.estadoCumplimiento === "NO_APLICA" ||
+                              fila.aspecto.configuracionVigencia?.permiteFechaManual === false
+                            }
+                            inputClassName={controlClass}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <FieldLabel>Vigencia</FieldLabel>
+                        <div className="mt-2">
+                          <VigenciaBadge
+                            estado={fila.estadoVigenciaOficial}
+                            detalle={fila.detalleVigencia}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="border-t border-slate-200 p-4 lg:col-span-6 lg:border-t-0 sm:p-5">
+                    <FieldLabel>
+                      {registro.estadoCumplimiento === "NO_APLICA"
+                        ? "Justificación de No aplica"
+                        : "Revisión técnica"}
+                    </FieldLabel>
                     {registro.estadoCumplimiento === "NO_APLICA" ? (
                       <textarea
                         rows={3}
@@ -686,11 +740,11 @@ export default function MatrizEvaluacionDirecta({
                           })
                         }
                         placeholder="Justificación obligatoria"
-                        className={`${controlClass} resize-y`}
+                        className={`${controlClass} mt-2 min-h-20 resize-y`}
                       />
                     ) : (
-                      <div className="space-y-2">
-                        <label className="flex items-center gap-2 text-[10px] text-slate-600">
+                      <div className="mt-2 space-y-2">
+                        <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-600">
                           <input
                             type="checkbox"
                             checked={registro.marcadaRevisionTecnica}
@@ -717,48 +771,38 @@ export default function MatrizEvaluacionDirecta({
                               })
                             }
                             placeholder="Motivo de la revisión"
-                            className={`${controlClass} resize-y`}
+                            className={`${controlClass} min-h-20 resize-y`}
                           />
                         )}
                       </div>
                     )}
-                  </Cell>
-                  <Cell className="text-center">
-                    <button
-                      type="button"
-                      onClick={() => abrirDetalle(fila, "HISTORIAL")}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-[10px] font-semibold text-slate-600 shadow-sm transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
-                      title={`Abrir detalle de ${fila.aspecto.nombre}`}
-                    >
-                      <History size={13} />
-                      Historial
-                    </button>
-                  </Cell>
-                </tr>
-              );
-            })}
+                  </section>
+                </div>
+              </article>
+            );
+          })}
 
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={11} className="px-6 py-16 text-center text-sm text-slate-500">
-                  No hay aspectos que coincidan con los filtros.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+          {rows.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center text-sm text-slate-500">
+              No hay aspectos que coincidan con los filtros.
+            </div>
+          )}
+        </div>
 
         {visibles < filasFiltradas.length && (
-          <div ref={sentinelRef} className="flex items-center justify-center py-5 text-xs text-slate-500">
+          <div
+            ref={sentinelRef}
+            className="flex items-center justify-center py-6 text-xs text-slate-500"
+          >
             Cargando más aspectos...
           </div>
         )}
       </div>
 
-      <div className="border-t border-slate-200 bg-slate-50/70 px-4 py-3 text-[10px] text-slate-500">
+      <div className="border-t border-slate-200 bg-white px-4 py-3 text-[10px] text-slate-500 sm:px-5">
         <span className="inline-flex items-center gap-1.5">
           <CheckCircle2 size={12} className="text-emerald-600" />
-          {Math.min(visibles, filasFiltradas.length)} de {filasFiltradas.length} filas visibles
+          {Math.min(visibles, filasFiltradas.length)} de {filasFiltradas.length} aspectos visibles
         </span>
       </div>
 
@@ -774,42 +818,10 @@ export default function MatrizEvaluacionDirecta({
   );
 }
 
-function Header({
-  children,
-  sticky = false,
-  className = "",
-}: {
-  children: React.ReactNode;
-  sticky?: boolean;
-  className?: string;
-}) {
+function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <th
-      className={`border-b border-slate-200 bg-slate-50 px-3 py-3 align-middle ${
-        sticky ? "sticky z-50" : ""
-      } ${className}`}
-    >
+    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
       {children}
-    </th>
-  );
-}
-
-function Cell({
-  children,
-  sticky = false,
-  className = "",
-}: {
-  children: React.ReactNode;
-  sticky?: boolean;
-  className?: string;
-}) {
-  return (
-    <td
-      className={`border-b border-slate-200 px-3 py-3 align-top ${
-        sticky ? "sticky z-20" : ""
-      } ${className}`}
-    >
-      {children}
-    </td>
+    </p>
   );
 }
