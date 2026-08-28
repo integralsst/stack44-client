@@ -134,6 +134,7 @@ export default function MatrizEvaluacionDirecta({
     description?: string;
   } | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const aspectoEnfocado = searchParams.get("aspecto")?.trim() || "";
 
   useEffect(() => {
     const siguientes: Record<number, BorradorEvaluacionAspecto> = {};
@@ -144,6 +145,15 @@ export default function MatrizEvaluacionDirecta({
     }
     setRegistros(siguientes);
   }, [filas]);
+
+  useEffect(() => {
+    if (!aspectoEnfocado) return;
+
+    setBusqueda(aspectoEnfocado);
+    setProcesoId("");
+    setEstandarId("");
+    setVigencia("");
+  }, [aspectoEnfocado]);
 
   const evaluacionesSeleccionadas = useMemo(() => {
     const ids = new Set<number>();
