@@ -7,6 +7,9 @@ import type {
   DetalleAspectoRevisionResponse,
 } from "../types/detalle-aspecto.types";
 
+const GESTION_ID_MODO_EVALUACION_DIRECTA =
+  "__EVALUACION_DIRECTA_SIN_BORRADOR__";
+
 function detallePath(
   empresaId: string,
   tareaId: number,
@@ -26,6 +29,13 @@ function detallePath(
 
   if (gestionId) {
     params.set("gestionId", gestionId);
+  } else {
+    // La pantalla nueva consulta siempre el estado oficial. Este marcador
+    // impide que un borrador legado todavía existente sea auto-seleccionado.
+    params.set(
+      "gestionId",
+      GESTION_ID_MODO_EVALUACION_DIRECTA
+    );
   }
 
   return `/api/evaluacion/empresas/${empresaId}/tareas/${tareaId}/detalle/${seccion}?${params.toString()}${extras}`;
