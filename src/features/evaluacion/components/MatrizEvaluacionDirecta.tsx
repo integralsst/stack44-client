@@ -128,9 +128,6 @@ export default function MatrizEvaluacionDirecta({
   const [registros, setRegistros] = useState<
     Record<number, BorradorEvaluacionAspecto>
   >({});
-  const [modificados, setModificados] = useState<Set<number>>(
-    new Set()
-  );
   const [toast, setToast] = useState<{
     tone: ToastTone;
     title: string;
@@ -146,8 +143,19 @@ export default function MatrizEvaluacionDirecta({
       }
     }
     setRegistros(siguientes);
-    setModificados(new Set());
   }, [filas]);
+
+  const evaluacionesSeleccionadas = useMemo(() => {
+    const ids = new Set<number>();
+
+    for (const registro of Object.values(registros)) {
+      if (registro.estadoCumplimiento) {
+        ids.add(registro.aspectoId);
+      }
+    }
+
+    return ids;
+  }, [registros]);
 
   const procesos = useMemo(() => {
     const map = new Map<number, string>();
@@ -256,27 +264,19 @@ export default function MatrizEvaluacionDirecta({
         [fila.aspecto.id]: siguiente,
       };
     });
-
-    setModificados((actuales) => {
-      const siguiente = new Set(actuales);
-      siguiente.add(fila.aspecto.id);
-      return siguiente;
-    });
   };
 
   const construirPayload = (): GuardarEvaluacionInput[] => {
     const payload: GuardarEvaluacionInput[] = [];
 
-    for (const aspectoId of modificados) {
+    for (const aspectoId of evaluacionesSeleccionadas) {
       const fila = filas.find((item) => item.aspecto.id === aspectoId);
       const registro = registros[aspectoId];
 
       if (!fila || !registro) continue;
 
       if (!registro.estadoCumplimiento) {
-        throw new Error(
-          `Selecciona una nueva evaluación para “${fila.aspecto.nombre}”.`
-        );
+        continue;
       }
 
       if (registro.calificacionAdministrativa == null) {
@@ -475,14 +475,16 @@ export default function MatrizEvaluacionDirecta({
             <button
               type="button"
               onClick={() => void guardar()}
-              disabled={procesando || modificados.size === 0}
+              disabled={
+                procesando || evaluacionesSeleccionadas.size === 0
+              }
               className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-cyan-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
             >
               <Save size={16} />
               {procesando
                 ? "Guardando..."
-                : modificados.size > 0
-                  ? `Guardar evaluaciones (${modificados.size})`
+                : evaluacionesSeleccionadas.size > 0
+                  ? `Guardar evaluaciones (${evaluacionesSeleccionadas.size})`
                   : "Guardar evaluaciones"}
             </button>
           )}
@@ -626,7 +628,9 @@ export default function MatrizEvaluacionDirecta({
             {rows.map((fila) => {
               const registro =
                 registros[fila.aspecto.id] ?? nuevoRegistro(fila);
-              const cambio = modificados.has(fila.aspecto.id);
+              const cambio = evaluacionesSeleccionadas.has(
+                fila.aspecto.id
+              );
               const ultima = fila.ultimaEvaluacion;
               const revisionObligatoria =
                 fila.aspecto.configuracionRevision?.requiereRevisionTecnica ===
