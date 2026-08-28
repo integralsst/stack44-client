@@ -91,6 +91,10 @@ export default function EvidenciasAspectoTab({
     data.tarea.aspecto.configuracionEvidencia
       ?.visibleClienteDefault
   );
+  const motivoEvidenciasVisible =
+    data.estadoEvidencia === "COMPLETA"
+      ? "La evaluación finalizada conserva su calificación y el requisito documental ya se encuentra completo."
+      : data.permisos.motivoEvidencias;
 
   const closeForm = () => {
     if (busy) return;
@@ -204,10 +208,10 @@ export default function EvidenciasAspectoTab({
             </div>
           )}
 
-        {!canCreate && data.permisos.motivoEvidencias && (
+        {!canCreate && motivoEvidenciasVisible && (
           <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-xs leading-5 text-amber-900">
             <Info size={15} className="mt-0.5 shrink-0" />
-            <span>{data.permisos.motivoEvidencias}</span>
+            <span>{motivoEvidenciasVisible}</span>
           </div>
         )}
       </div>

@@ -133,6 +133,7 @@ function DetalleEvaluacion({
   const registrada =
     item.calificacionRegistrada ??
     evaluacion.calificacionAdministrativa;
+  const esEventoEvidencia = tipo === "EVIDENCIA";
   const esSolicitudNoAplica =
     tipo === "NO_APLICA" &&
     evento.id.startsWith("NO_APLICA_SOLICITUD:");
@@ -162,12 +163,23 @@ function DetalleEvaluacion({
   return (
     <div className="space-y-3">
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        {esEventoEvidencia && (
+          <MiniDato
+            label="Registró la evidencia"
+            value={evento.usuario?.nombre ?? "Usuario no disponible"}
+            icon={<UserRound size={12} />}
+          />
+        )}
         <MiniDato
-          label="Gestión"
+          label={esEventoEvidencia ? "Evaluación de origen" : "Gestión"}
           value={evaluacion.gestion.tipoActividad}
         />
         <MiniDato
-          label="Profesional"
+          label={
+            esEventoEvidencia
+              ? "Profesional de la evaluación original"
+              : "Profesional"
+          }
           value={evaluacion.gestion.profesional}
           icon={<UserRound size={12} />}
         />
@@ -275,7 +287,8 @@ function DetalleEvaluacion({
       <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] text-slate-500">
         <span className="inline-flex items-center gap-1.5">
           <CalendarClock size={12} />
-          Gestión {formatCalendarDate(evaluacion.gestion.fechaGestion)}
+          {esEventoEvidencia ? "Evaluación original" : "Gestión"}{" "}
+          {formatCalendarDate(evaluacion.gestion.fechaGestion)}
         </span>
         <span className="inline-flex items-center gap-1.5">
           <FileCheck2 size={12} />
