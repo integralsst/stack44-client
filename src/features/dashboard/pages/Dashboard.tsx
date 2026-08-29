@@ -449,14 +449,14 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-[1500px] space-y-5 pb-8 sm:space-y-6">
+    <div className="mx-auto w-full max-w-[1220px] space-y-4 pb-6 sm:space-y-5">
       <motion.section
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-sm"
+        className="relative overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm"
       >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(6,182,212,0.12),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(139,92,246,0.08),transparent_28%)]" />
-        <div className="relative grid gap-6 p-5 sm:p-7 lg:grid-cols-[1.45fr_0.75fr] lg:items-center lg:p-8">
+        <div className="relative grid gap-5 p-5 sm:p-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(300px,0.7fr)] xl:items-center">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-cyan-800">
@@ -468,17 +468,17 @@ export default function Dashboard() {
               </span>
             </div>
 
-            <h1 className="mt-4 max-w-3xl text-2xl font-black tracking-tight text-slate-950 sm:text-3xl lg:text-[2.15rem] lg:leading-tight">
+            <h1 className="mt-3 max-w-2xl text-2xl font-black tracking-tight text-slate-950 sm:text-[1.75rem] lg:text-[1.9rem] lg:leading-[1.16]">
               Hola, {firstName}. Tu operación SG-SST empieza aquí.
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-[15px]">
+            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
               Revisa lo prioritario, entra al trabajo de cada empresa y consulta los resultados sin recorrer módulos innecesarios.
             </p>
 
-            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
               <Link
                 to={primaryAction.to}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-cyan-700 bg-cyan-700 px-4 py-2 text-sm font-extrabold text-white shadow-sm transition hover:border-cyan-800 hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2"
               >
                 {primaryAction.label}
                 <ArrowRight size={16} />
@@ -486,7 +486,7 @@ export default function Dashboard() {
               {canViewActions && (
                 <Link
                   to="/dashboard/acciones"
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
                 >
                   Ver Centro de acciones
                 </Link>
@@ -495,23 +495,23 @@ export default function Dashboard() {
           </div>
 
           <div
-            className={`rounded-2xl border p-4 sm:p-5 ${TONES[operationTone].surface} ${TONES[operationTone].border}`}
+            className={`rounded-2xl border p-4 ${TONES[operationTone].surface} ${TONES[operationTone].border}`}
           >
             <div className="flex items-start gap-3">
               <div
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${TONES[operationTone].icon}`}
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${TONES[operationTone].icon}`}
               >
                 {urgentCount > 0 ? (
-                  <AlertTriangle size={20} />
+                  <AlertTriangle size={18} />
                 ) : (
-                  <CheckCircle2 size={20} />
+                  <CheckCircle2 size={18} />
                 )}
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
                   Estado operativo
                 </p>
-                <p className="mt-1 text-lg font-black text-slate-950">
+                <p className="mt-1 text-base font-black text-slate-950 sm:text-lg">
                   {loading ? "Actualizando…" : operationTitle}
                 </p>
                 <p className="mt-1 text-xs leading-5 text-slate-600">
@@ -520,7 +520,7 @@ export default function Dashboard() {
               </div>
             </div>
             {actions && (
-              <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="mt-3 grid grid-cols-2 gap-2">
                 <MiniFact label="Empresas al día" value={String(actions.empresasAlDia)} />
                 <MiniFact
                   label="Con acciones"
@@ -538,7 +538,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         {metrics.map((metric, index) => {
           const Icon = metric.icon;
           const tone = TONES[metric.tone];
@@ -549,23 +549,23 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5"
+              className="min-w-0 rounded-[1.25rem] border border-slate-200 bg-white p-3.5 shadow-sm sm:p-4"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${tone.icon}`}>
-                  <Icon size={18} />
+              <div className="flex items-start justify-between gap-2">
+                <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${tone.icon}`}>
+                  <Icon size={17} />
                 </div>
-                <span className={`rounded-full px-2 py-1 text-[9px] font-extrabold uppercase tracking-wide ${tone.soft}`}>
+                <span className={`rounded-full px-2 py-1 text-[8px] font-extrabold uppercase tracking-wide ${tone.soft}`}>
                   {metric.tone === "red" ? "Atención" : "Actual"}
                 </span>
               </div>
-              <p className="mt-4 text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
+              <p className="mt-3 text-2xl font-black tracking-tight text-slate-950">
                 {metric.value}
               </p>
-              <p className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.14em] text-slate-500 sm:text-[11px]">
+              <p className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.13em] text-slate-500">
                 {metric.label}
               </p>
-              <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+              <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-500 sm:text-xs sm:leading-5">
                 {metric.caption}
               </p>
             </motion.article>
@@ -573,24 +573,24 @@ export default function Dashboard() {
         })}
       </section>
 
-      <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
-        <section className="rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+      <div className="grid gap-4 xl:grid-cols-[1.12fr_0.88fr]">
+        <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-cyan-700">
                 Continuar trabajo
               </p>
-              <h2 className="mt-1 text-xl font-black text-slate-950">
+              <h2 className="mt-1 text-lg font-black text-slate-950">
                 Accesos rápidos para tu perfil
               </h2>
-              <p className="mt-1 text-sm leading-6 text-slate-500">
+              <p className="mt-1 text-sm leading-5 text-slate-500">
                 Solo mostramos rutas que tienen sentido para tu rol actual.
               </p>
             </div>
           </div>
 
           {quickActions.length > 0 ? (
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
               {quickActions.map((action) => {
                 const Icon = action.icon;
                 const tone = TONES[action.tone];
@@ -599,14 +599,14 @@ export default function Dashboard() {
                   <Link
                     key={`${action.to}:${action.label}`}
                     to={action.to}
-                    className="group flex min-h-[112px] items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-4 transition hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-white hover:shadow-md"
+                    className="group flex min-h-[88px] items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-3.5 transition hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-white hover:shadow-md"
                   >
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tone.icon}`}>
-                      <Icon size={18} />
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${tone.icon}`}>
+                      <Icon size={17} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="font-extrabold text-slate-950">
+                        <p className="text-sm font-extrabold text-slate-950">
                           {action.label}
                         </p>
                         <ArrowRight
@@ -614,7 +614,7 @@ export default function Dashboard() {
                           className="shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-cyan-700"
                         />
                       </div>
-                      <p className="mt-1 text-xs leading-5 text-slate-500">
+                      <p className="mt-1 text-[11px] leading-4 text-slate-500 sm:text-xs sm:leading-5">
                         {action.description}
                       </p>
                     </div>
@@ -623,22 +623,22 @@ export default function Dashboard() {
               })}
             </div>
           ) : (
-            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600">
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
               Tu perfil no tiene accesos operativos adicionales configurados.
             </div>
           )}
         </section>
 
-        <section className="rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+        <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-violet-700">
                 Contexto
               </p>
-              <h2 className="mt-1 text-xl font-black text-slate-950">
+              <h2 className="mt-1 text-lg font-black text-slate-950">
                 Empresas en alcance
               </h2>
-              <p className="mt-1 text-sm leading-6 text-slate-500">
+              <p className="mt-1 text-sm leading-5 text-slate-500">
                 Punto de entrada directo al trabajo disponible.
               </p>
             </div>
@@ -647,9 +647,9 @@ export default function Dashboard() {
             </span>
           </div>
 
-          <div className="mt-5 space-y-2.5">
+          <div className="mt-4 space-y-2">
             {!loading && visibleCompanies.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-500">
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
                 No hay empresas activas visibles para este perfil.
               </div>
             )}
@@ -663,16 +663,16 @@ export default function Dashboard() {
                 <Link
                   key={company.id}
                   to={destination}
-                  className="group flex items-center gap-3 rounded-2xl border border-slate-200 px-3.5 py-3 transition hover:border-cyan-300 hover:bg-cyan-50/50"
+                  className="group flex items-center gap-3 rounded-2xl border border-slate-200 px-3 py-2.5 transition hover:border-cyan-300 hover:bg-cyan-50/50"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-                    <Building2 size={17} />
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
+                    <Building2 size={16} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-extrabold text-slate-950">
                       {company.name}
                     </p>
-                    <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[11px] text-slate-500">
+                    <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px] text-slate-500">
                       <MapPin size={12} className="shrink-0" />
                       <span className="truncate">
                         {company.mainCity || "Ciudad no registrada"}
@@ -703,7 +703,7 @@ export default function Dashboard() {
         </section>
       </div>
 
-      <section className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <section className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-cyan-700 shadow-sm ring-1 ring-slate-200">
             <ShieldCheck size={17} />
@@ -730,11 +730,11 @@ export default function Dashboard() {
 
 function MiniFact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-white/70 bg-white/70 px-3 py-2.5">
+    <div className="rounded-xl border border-white/70 bg-white/70 px-3 py-2">
       <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-slate-500">
         {label}
       </p>
-      <p className="mt-1 text-lg font-black text-slate-950">{value}</p>
+      <p className="mt-0.5 text-base font-black text-slate-950">{value}</p>
     </div>
   );
 }
