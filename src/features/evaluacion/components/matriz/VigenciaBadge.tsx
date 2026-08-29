@@ -75,8 +75,11 @@ const config: Record<
 function formatDate(
   value: string
 ): string {
+  // fechaVencimiento representa una fecha calendario en UTC y no debe
+  // desplazarse al día anterior por la zona horaria del navegador.
   return new Date(value).toLocaleDateString(
-    "es-CO"
+    "es-CO",
+    { timeZone: "UTC" }
   );
 }
 
