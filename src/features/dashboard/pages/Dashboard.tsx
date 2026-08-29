@@ -10,7 +10,6 @@ import {
   MapPin,
   Settings2,
   ShieldCheck,
-  Sparkles,
   Table2,
   Users,
 } from "lucide-react";
@@ -364,7 +363,10 @@ export default function Dashboard() {
   if (!user) return null;
 
   const roleLabel = ROLE_LABELS[user.role];
-  const firstName = user.name.trim().split(/\s+/)[0] || "Usuario";
+  const displayName =
+    user.professional?.firstNames?.trim() ||
+    user.name.trim();
+  const firstName = displayName.split(/\s+/)[0] || "Usuario";
   const actions = stats.actions;
   const urgentCount = actions?.urgentes ?? 0;
   const pendingCount = actions?.total ?? 0;
@@ -458,17 +460,7 @@ export default function Dashboard() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(6,182,212,0.12),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(139,92,246,0.08),transparent_28%)]" />
         <div className="relative grid gap-5 p-5 sm:p-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(300px,0.7fr)] xl:items-center">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-cyan-800">
-                <Sparkles size={13} />
-                Inicio operativo
-              </span>
-              <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-500">
-                {roleLabel}
-              </span>
-            </div>
-
-            <h1 className="mt-3 max-w-2xl text-2xl font-black tracking-tight text-slate-950 sm:text-[1.75rem] lg:text-[1.9rem] lg:leading-[1.16]">
+            <h1 className="max-w-2xl text-2xl font-black tracking-tight text-slate-950 sm:text-[1.75rem] lg:text-[1.9rem] lg:leading-[1.16]">
               Hola, {firstName}. Tu operación SG-SST empieza aquí.
             </h1>
             <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
