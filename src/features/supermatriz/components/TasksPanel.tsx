@@ -62,7 +62,11 @@ interface Props {
   onSaveCycle: (current: PhvaCycle | null, payload: CyclePayload) => Promise<unknown>;
   onSaveCategory: (current: StandardCategory | null, payload: StandardCategoryPayload) => Promise<unknown>;
   onSaveStandard: (current: Standard | null, payload: StandardPayload) => Promise<unknown>;
-  onSaveAspect: (current: AspectCatalog | null, payload: AspectPayload) => Promise<unknown>;
+  onSaveAspect: (
+    current: AspectCatalog | null,
+    payload: AspectPayload,
+    logicaEvaluacion: string | null
+  ) => Promise<unknown>;
   onSaveProcess: (current: ProcessCatalog | null, payload: ProcessPayload) => Promise<unknown>;
   onDeactivateCycle: (id: number) => Promise<unknown>;
   onDeactivateCategory: (id: number) => Promise<unknown>;
