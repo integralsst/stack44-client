@@ -4,6 +4,7 @@ import {
   Building2,
   ChevronLeft,
   ChevronRight,
+  ClipboardList,
   FileSearch,
   FileText,
   LayoutDashboard,
@@ -113,6 +114,11 @@ export default function DashboardLayout() {
     user.role === "PROFESSIONAL" ||
     user.role === "COORDINATOR";
 
+  const canViewBitacora =
+    isInternal ||
+    user.role === "PROFESSIONAL" ||
+    user.role === "COORDINATOR";
+
   const canViewInformes = user.role !== "USER";
 
   const canViewCentroAcciones =
@@ -182,6 +188,13 @@ export default function DashboardLayout() {
     {
       label: "Operación",
       items: [
+        {
+          to: "/dashboard/bitacora",
+          label: "Bitácora",
+          icon: ClipboardList,
+          visible: canViewBitacora,
+          exact: false,
+        },
         {
           to: "/dashboard/auditorias",
           label: "Auditorías",
