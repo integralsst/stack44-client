@@ -43,7 +43,8 @@ interface Props {
   onDeactivate?: () => Promise<unknown>;
   onSave: (
     current: AspectCatalog | null,
-    payload: AspectPayload
+    payload: AspectPayload,
+    logicaEvaluacion: string | null
   ) => Promise<unknown>;
 }
 
@@ -98,6 +99,7 @@ interface AspectFormState {
   dailyUnit: PeriodicityUnit;
   dailyDescription: string;
 
+  evaluationLogic: string;
   keywords: string;
   requirementsText: string;
   rulesText: string;
@@ -133,7 +135,7 @@ const sections: Array<{
   {
     id: "avanzado",
     label: "4. Información avanzada",
-    description: "Palabras clave, normativa y aprobaciones.",
+    description: "Lógica, palabras clave, normativa y aprobaciones.",
     icon: Settings2,
   },
 ];
@@ -181,6 +183,7 @@ function defaultForm(
     dailyUnit: "MES",
     dailyDescription: "",
 
+    evaluationLogic: "",
     keywords: "",
     requirementsText: "",
     rulesText: "",
@@ -192,6 +195,9 @@ function formFromAspect(
   suggestedOrder: number
 ): AspectFormState {
   const base = defaultForm(suggestedOrder, aspect.estandarId);
+  const aspectWithEvaluationLogic = aspect as AspectCatalog & {
+    logicaEvaluacion?: string | null;
+  };
 
   return {
     ...base,
@@ -271,6 +277,8 @@ function formFromAspect(
     dailyDescription:
       aspect.configuracionTareaCotidiana?.descripcion ?? "",
 
+    evaluationLogic:
+      aspectWithEvaluationLogic.logicaEvaluacion ?? "",
     keywords:
       aspect.palabrasClave
         ?.map((item) => item.palabraClave.nombre)
@@ -459,76 +467,80 @@ export default function AspectEditorModal({
     setError(null);
 
     try {
-      await onSave(current, {
-        versionSupermatrizId,
-        estandarId: Number(form.standardId),
-        codigo: form.code.trim() || null,
-        nombre: form.name.trim(),
-        descripcion: form.description.trim() || null,
-        orden: Number(form.order),
-        estado: form.status,
-        planAccionEspecifico: form.actionPlan.trim(),
-        configuracion: {
-          esEvergreen: form.isEvergreen,
-          bloqueEvergreen:
-            form.isEvergreen && form.evergreenBlock
-              ? form.evergreenBlock
+      await onSave(
+        current,
+        {
+          versionSupermatrizId,
+          estandarId: Number(form.standardId),
+          codigo: form.code.trim() || null,
+          nombre: form.name.trim(),
+          descripcion: form.description.trim() || null,
+          orden: Number(form.order),
+          estado: form.status,
+          planAccionEspecifico: form.actionPlan.trim(),
+          configuracion: {
+            esEvergreen: form.isEvergreen,
+            bloqueEvergreen:
+              form.isEvergreen && form.evergreenBlock
+                ? form.evergreenBlock
+                : null,
+            documentoActualizacionPeriodica:
+              form.periodicDocument,
+            tareaEjecucionCotidiana: form.dailyTask,
+            incluirInformeEstadoTareas:
+              form.includeTaskReport,
+            permiteNoAplica: form.allowsNotApplicable,
+          },
+          configuracionVigencia: {
+            tipoFechaBase: form.baseDateType,
+            fuentePeriodicidad: form.periodicitySource,
+            cantidad:
+              form.periodicityUnit && form.periodicityAmount
+                ? Number(form.periodicityAmount)
+                : null,
+            unidad: form.periodicityUnit || null,
+            diasAlertaPrevia: Number(form.alertDays || 0),
+            permiteFechaManual: form.allowsManualDate,
+            mesFechaFija: form.fixedMonth
+              ? Number(form.fixedMonth)
               : null,
-          documentoActualizacionPeriodica:
-            form.periodicDocument,
-          tareaEjecucionCotidiana: form.dailyTask,
-          incluirInformeEstadoTareas:
-            form.includeTaskReport,
-          permiteNoAplica: form.allowsNotApplicable,
-        },
-        configuracionVigencia: {
-          tipoFechaBase: form.baseDateType,
-          fuentePeriodicidad: form.periodicitySource,
-          cantidad:
-            form.periodicityUnit && form.periodicityAmount
-              ? Number(form.periodicityAmount)
+            diaFechaFija: form.fixedDay
+              ? Number(form.fixedDay)
               : null,
-          unidad: form.periodicityUnit || null,
-          diasAlertaPrevia: Number(form.alertDays || 0),
-          permiteFechaManual: form.allowsManualDate,
-          mesFechaFija: form.fixedMonth
-            ? Number(form.fixedMonth)
+            descripcionRegla:
+              form.validityRule.trim() || null,
+          },
+          configuracionEvidencia: {
+            requiereEvidencia: form.requiresEvidence,
+            descripcionEvidencia:
+              form.evidenceDescription.trim() || null,
+            visibleClienteDefault: form.visibleToClient,
+          },
+          configuracionRevision: {
+            requiereRevisionTecnica:
+              form.requiresTechnicalReview,
+            observaciones:
+              form.reviewObservations.trim() || null,
+          },
+          configuracionTareaCotidiana: form.dailyTask
+            ? {
+                cantidadObjetivo: Number(form.dailyTarget),
+                unidad: form.dailyUnit,
+                descripcion:
+                  form.dailyDescription.trim() || null,
+              }
             : null,
-          diaFechaFija: form.fixedDay
-            ? Number(form.fixedDay)
-            : null,
-          descripcionRegla:
-            form.validityRule.trim() || null,
+          palabrasClave: form.keywords
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean),
+          requisitosNormativos: parseRequirements(
+            form.requirementsText
+          ),
+          reglasAprobacion: parseRules(form.rulesText),
         },
-        configuracionEvidencia: {
-          requiereEvidencia: form.requiresEvidence,
-          descripcionEvidencia:
-            form.evidenceDescription.trim() || null,
-          visibleClienteDefault: form.visibleToClient,
-        },
-        configuracionRevision: {
-          requiereRevisionTecnica:
-            form.requiresTechnicalReview,
-          observaciones:
-            form.reviewObservations.trim() || null,
-        },
-        configuracionTareaCotidiana: form.dailyTask
-          ? {
-              cantidadObjetivo: Number(form.dailyTarget),
-              unidad: form.dailyUnit,
-              descripcion:
-                form.dailyDescription.trim() || null,
-            }
-          : null,
-        palabrasClave: form.keywords
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean),
-        requisitosNormativos: parseRequirements(
-          form.requirementsText
-        ),
-        reglasAprobacion: parseRules(form.rulesText),
-      });
+        form.evaluationLogic.trim() || null
+      );
 
       onClose();
     } catch (requestError) {
@@ -1293,10 +1305,29 @@ function AdvancedSection({
   return (
     <SectionCard
       title="Información avanzada"
-      description="No es obligatoria para crear el aspecto. Se usa para búsqueda, trazabilidad normativa y controles especiales."
+      description="Configura la lógica específica del aspecto y la información de apoyo para búsqueda y trazabilidad."
       icon={Settings2}
     >
       <div className="space-y-5">
+        <Field
+          label="Lógica de evaluación"
+          help="Regla específica del aspecto que utiliza la Bitácora IA para interpretar 0, 3 o 5. Si se deja vacía, Stack44 conserva el criterio general 0/3/5. La lógica se versiona junto con la Supermatriz."
+        >
+          <textarea
+            rows={7}
+            value={form.evaluationLogic}
+            onChange={(event) =>
+              patch({ evaluationLogic: event.target.value })
+            }
+            placeholder={"5 - Cumple cuando se evidencia la totalidad del criterio requerido.\n3 - Cumple parcialmente cuando existe avance verificable pero faltan elementos del criterio.\n0 - No cumple cuando no existe evidencia suficiente del criterio."}
+            className={`${inputClass} resize-y font-mono text-xs leading-5`}
+          />
+        </Field>
+
+        <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 px-4 py-3 text-xs leading-5 text-neutral-400">
+          Esta regla no reemplaza el motor de evaluación de Stack44. Orienta la interpretación del aspecto y queda asociada a esta versión de la Supermatriz.
+        </div>
+
         <Field
           label="Palabras clave"
           help="Sepáralas por comas. Ayudan a encontrar el aspecto aunque el usuario no escriba el nombre exacto."
