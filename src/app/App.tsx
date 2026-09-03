@@ -125,6 +125,13 @@ const InformesGlobalesPage = lazy(
     )
 );
 
+const BitacoraPage = lazy(
+  () =>
+    import(
+      "../features/bitacora/pages/BitacoraPage"
+    )
+);
+
 const BitacoraShadowPage = lazy(
   () =>
     import(
@@ -318,6 +325,15 @@ function AppRoutes() {
 
             <Route
               path="bitacora"
+              element={
+                <RoleGuard allowedRoles={BITACORA_ROLES}>
+                  <BitacoraPage />
+                </RoleGuard>
+              }
+            />
+
+            <Route
+              path="bitacora/shadow"
               element={
                 <RoleGuard allowedRoles={BITACORA_ROLES}>
                   <BitacoraShadowPage />
