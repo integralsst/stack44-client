@@ -125,6 +125,13 @@ const InformesGlobalesPage = lazy(
     )
 );
 
+const BitacoraShadowPage = lazy(
+  () =>
+    import(
+      "../features/bitacora/pages/BitacoraShadowPage"
+    )
+);
+
 /* ======================================================
    PERMISOS
 ====================================================== */
@@ -161,6 +168,14 @@ const EVALUACION_ROLES: UserRole[] = [
 const EVALUACION_LECTURA_ROLES: UserRole[] = [
   "CLIENT_ADMIN",
   ...EVALUACION_ROLES,
+];
+
+const BITACORA_ROLES: UserRole[] = [
+  "PROFESSIONAL",
+  "COORDINATOR",
+  "ADMIN",
+  "OWNER",
+  "SUPERADMIN",
 ];
 
 const INFORMES_ROLES: UserRole[] = [
@@ -297,6 +312,15 @@ function AppRoutes() {
               element={
                 <RoleGuard allowedRoles={CENTRO_ACCIONES_ROLES}>
                   <CentroAccionesPage />
+                </RoleGuard>
+              }
+            />
+
+            <Route
+              path="bitacora"
+              element={
+                <RoleGuard allowedRoles={BITACORA_ROLES}>
+                  <BitacoraShadowPage />
                 </RoleGuard>
               }
             />
