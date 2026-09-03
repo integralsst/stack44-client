@@ -7,6 +7,9 @@ import {
 } from "react";
 
 import {
+  apiRequest,
+} from "../../../lib/api";
+import {
   buildMatrixRow,
   cloneMatrixVersion,
   closeMatrixVersion,
@@ -114,6 +117,25 @@ function initialFilters(
     pagina: 1,
     limite: TASKS_PAGE_SIZE,
   };
+}
+
+function updateAspectEvaluationLogic(
+  token: string,
+  aspectId: number,
+  versionSupermatrizId: number,
+  logicaEvaluacion: string | null
+) {
+  return apiRequest<AspectCatalog>(
+    `/api/supermatriz/aspectos/${aspectId}/logica-evaluacion`,
+    {
+      method: "PUT",
+      body: JSON.stringify({
+        versionSupermatrizId,
+        logicaEvaluacion,
+      }),
+    },
+    token
+  );
 }
 
 export function useSupermatrizAdmin(
@@ -1031,20 +1053,31 @@ export function useSupermatrizAdmin(
 
     saveAspect: (
       current: AspectCatalog | null,
-      payload: AspectPayload
+      payload: AspectPayload,
+      logicaEvaluacion: string | null
     ) =>
       mutation(
-        () =>
-          current
-            ? updateAspect(
+        async () => {
+          const aspecto = current
+            ? await updateAspect(
                 token!,
                 current.id,
                 payload
               )
-            : createAspect(
+            : await createAspect(
                 token!,
                 payload
-              ),
+              );
+
+          await updateAspectEvaluationLogic(
+            token!,
+            aspecto.id,
+            payload.versionSupermatrizId,
+            logicaEvaluacion
+          );
+
+          return aspecto;
+        },
         {
           versions: true,
           catalogs: true,
