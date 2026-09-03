@@ -66,11 +66,14 @@ export interface PropuestaAspectoBitacora {
 
 export interface ResumenBitacora {
   totalAspectosAnalizados: number;
+  totalAspectosReconocidos?: number;
   totalEvaluacionesPropuestas: number;
   totalRequierenRevision: number;
   totalSinCambio: number;
   totalEvidenciasDetectadas: number;
   evaluaciones: PropuestaAspectoBitacora[];
+  aspectosReconocidos?: PropuestaAspectoBitacora[];
+  sinCambio?: PropuestaAspectoBitacora[];
   requierenRevision: PropuestaAspectoBitacora[];
   evidenciasUrls: string[];
 }
@@ -169,4 +172,43 @@ export interface RegistroBitacoraListado {
   resumen: ResumenBitacora | null;
   aplicada: boolean;
   aplicacion: AplicacionBitacora | null;
+}
+
+export type FuenteHistorialBitacora =
+  | "BITACORA_IA"
+  | "EVALUACION_MANUAL";
+
+export interface RegistroHistorialBitacoraUnificado {
+  id: string;
+  fuente: FuenteHistorialBitacora;
+  fechaEfectiva: string;
+  contenidoOriginal: string;
+  modalidad: string | null;
+  tipoActividad: string | null;
+  autor: {
+    id: string;
+    nombre: string;
+    rol: string;
+  } | null;
+  creadoEn: string;
+  estadoProcesamiento: string;
+  aplicada: boolean;
+  resultado: {
+    estadoCumplimiento: string;
+    calificacionAdministrativa: number;
+  } | null;
+  aspectos: Array<{
+    id: number;
+    codigo: string | null;
+    nombre: string;
+  }>;
+  evidenciasUrls: string[];
+}
+
+export interface HistorialBitacoraUnificado {
+  empresa: {
+    id: string;
+    nombre: string;
+  };
+  registros: RegistroHistorialBitacoraUnificado[];
 }
