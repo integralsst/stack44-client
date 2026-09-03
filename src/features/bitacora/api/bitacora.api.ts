@@ -1,8 +1,13 @@
-import { apiRequest } from "../../../lib/api";
+import {
+  apiDownloadFile,
+  apiRequest,
+  type ApiDownloadResult,
+} from "../../../lib/api";
 import type {
   AnalizarBitacoraShadowInput,
   AplicarRegistroBitacoraInput,
   CrearRegistroBitacoraInput,
+  HistorialBitacoraUnificado,
   RegistroBitacoraListado,
   ResultadoAplicarBitacora,
   ResultadoBitacoraAsistida,
@@ -46,6 +51,27 @@ export async function listarBitacorasEmpresa(
   return apiRequest<RegistroBitacoraListado[]>(
     `/api/bitacora/empresas/${encodeURIComponent(empresaId)}/registros`,
     {},
+    token
+  );
+}
+
+export async function listarHistorialBitacoraUnificado(
+  empresaId: string,
+  token: string
+): Promise<HistorialBitacoraUnificado> {
+  return apiRequest<HistorialBitacoraUnificado>(
+    `/api/bitacora/empresas/${encodeURIComponent(empresaId)}/historial`,
+    {},
+    token
+  );
+}
+
+export async function descargarHistorialBitacoraPdf(
+  empresaId: string,
+  token: string
+): Promise<ApiDownloadResult> {
+  return apiDownloadFile(
+    `/api/bitacora/empresas/${encodeURIComponent(empresaId)}/historial.pdf`,
     token
   );
 }
