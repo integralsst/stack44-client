@@ -1,5 +1,6 @@
 import {
   CalendarDays,
+  ClipboardList,
   ExternalLink,
   Eye,
   EyeOff,
@@ -9,6 +10,13 @@ import {
 
 import type { EvidenciaEvaluacion } from "../../types/evidencia-evaluacion.types";
 import { formatDate } from "../detalle/DetalleAspectoUi";
+
+function esEvidenciaDesdeBitacora(evidence: EvidenciaEvaluacion): boolean {
+  return (
+    evidence.nombre === "Evidencia vinculada desde Bitácora" ||
+    evidence.nombre.startsWith("Evidencia ·")
+  );
+}
 
 export default function EvidenciaEvaluacionCard({
   evidence,
@@ -21,6 +29,8 @@ export default function EvidenciaEvaluacionCard({
   onEdit: () => void;
   onRemove: () => void;
 }) {
+  const evidenciaDesdeBitacora = esEvidenciaDesdeBitacora(evidence);
+
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -29,6 +39,12 @@ export default function EvidenciaEvaluacionCard({
             <h4 className="break-words text-sm font-semibold text-slate-950">
               {evidence.nombre}
             </h4>
+            {evidenciaDesdeBitacora && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-cyan-50 px-2 py-1 text-[8px] font-bold uppercase tracking-wider text-cyan-800">
+                <ClipboardList size={10} />
+                Origen: Bitácora
+              </span>
+            )}
             <span
               className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[8px] font-bold uppercase tracking-wider ${
                 evidence.visibleCliente
@@ -81,7 +97,9 @@ export default function EvidenciaEvaluacionCard({
         <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] text-slate-500">
           <span className="flex items-center gap-1.5">
             <CalendarDays size={12} />
-            Documento: {formatDate(evidence.fechaDocumento)}
+            Fecha del documento: {evidence.fechaDocumento
+              ? formatDate(evidence.fechaDocumento)
+              : "No informada"}
           </span>
           <span>Agregada: {formatDate(evidence.createdAt, true)}</span>
           <span>Por: {evidence.creadoPor.nombre}</span>
