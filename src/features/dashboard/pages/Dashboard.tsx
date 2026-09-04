@@ -1,56 +1,23 @@
 import {
   AlertTriangle,
   ArrowRight,
-  BriefcaseBusiness,
   Building2,
   CheckCircle2,
-  FileSearch,
-  FileText,
   ListChecks,
   MapPin,
-  Settings2,
   ShieldCheck,
-  Table2,
-  Users,
 } from "lucide-react";
-import { motion } from "framer-motion";
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type ComponentType,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { apiRequest } from "../../../lib/api";
-import type {
-  Company,
-  ManagedUser,
-  Professional,
-} from "../../../types/domain";
+import type { Company } from "../../../types/domain";
+import { obtenerResumenCentroAcciones } from "../../acciones/api/centro-acciones.api";
+import type { ResumenCentroAcciones } from "../../acciones/types/centro-acciones.types";
 import {
   useAuth,
   type UserRole,
 } from "../../auth/context/AuthContext";
-import { obtenerResumenCentroAcciones } from "../../acciones/api/centro-acciones.api";
-import type { ResumenCentroAcciones } from "../../acciones/types/centro-acciones.types";
-
-type Tone = "cyan" | "emerald" | "amber" | "red" | "violet";
-
-type DashboardStats = {
-  companies: Company[];
-  users: ManagedUser[];
-  professionals: Professional[];
-  actions: ResumenCentroAcciones | null;
-};
-
-type QuickAction = {
-  label: string;
-  description: string;
-  to: string;
-  icon: ComponentType<{ size?: number; className?: string }>;
-  tone: Tone;
-};
 
 const INTERNAL_ROLES = new Set<UserRole>([
   "ADMIN",
@@ -88,207 +55,29 @@ const ROLE_LABELS: Record<UserRole, string> = {
   SUPERADMIN: "Superadministración",
 };
 
-const TONES: Record<
-  Tone,
-  {
-    icon: string;
-    surface: string;
-    border: string;
-    text: string;
-    soft: string;
-  }
-> = {
-  cyan: {
-    icon: "bg-cyan-100 text-cyan-700",
-    surface: "bg-cyan-50/70",
-    border: "border-cyan-200",
-    text: "text-cyan-800",
-    soft: "bg-cyan-100 text-cyan-800",
-  },
-  emerald: {
-    icon: "bg-emerald-100 text-emerald-700",
-    surface: "bg-emerald-50/70",
-    border: "border-emerald-200",
-    text: "text-emerald-800",
-    soft: "bg-emerald-100 text-emerald-800",
-  },
-  amber: {
-    icon: "bg-amber-100 text-amber-700",
-    surface: "bg-amber-50/70",
-    border: "border-amber-200",
-    text: "text-amber-800",
-    soft: "bg-amber-100 text-amber-800",
-  },
-  red: {
-    icon: "bg-red-100 text-red-700",
-    surface: "bg-red-50/70",
-    border: "border-red-200",
-    text: "text-red-800",
-    soft: "bg-red-100 text-red-800",
-  },
-  violet: {
-    icon: "bg-violet-100 text-violet-700",
-    surface: "bg-violet-50/70",
-    border: "border-violet-200",
-    text: "text-violet-800",
-    soft: "bg-violet-100 text-violet-800",
-  },
-};
+function fechaActualBogota(): string {
+  return new Intl.DateTimeFormat("es-CO", {
+    timeZone: "America/Bogota",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(new Date());
+}
 
-function quickActionsForRole(
-  role: UserRole,
-  companyId: string | null,
-  year: number
-): QuickAction[] {
-  if (INTERNAL_ROLES.has(role)) {
-    return [
-      {
-        label: "Administración",
-        description: "Empresas, accesos y profesionales.",
-        to: "/dashboard/administracion",
-        icon: Settings2,
-        tone: "violet",
-      },
-      {
-        label: "Centro de acciones",
-        description: "Prioriza pendientes y alertas.",
-        to: "/dashboard/acciones",
-        icon: ListChecks,
-        tone: "amber",
-      },
-      {
-        label: "Informes",
-        description: "Consulta cortes y snapshots.",
-        to: "/dashboard/informes",
-        icon: FileText,
-        tone: "cyan",
-      },
-      {
-        label: "Supermatriz",
-        description: "Administra la configuración maestra.",
-        to: "/dashboard/supermatriz",
-        icon: Table2,
-        tone: "emerald",
-      },
-    ];
-  }
-
-  if (role === "PROFESSIONAL" || role === "COORDINATOR") {
-    return [
-      {
-        label: "Empresas",
-        description: "Continúa el trabajo SG-SST asignado.",
-        to: "/dashboard/empresas",
-        icon: Building2,
-        tone: "cyan",
-      },
-      {
-        label: "Centro de acciones",
-        description: "Atiende lo que requiere intervención.",
-        to: "/dashboard/acciones",
-        icon: ListChecks,
-        tone: "amber",
-      },
-      {
-        label: "Informes",
-        description: "Revisa el estado consolidado.",
-        to: "/dashboard/informes",
-        icon: FileText,
-        tone: "violet",
-      },
-      {
-        label: "Supermatriz",
-        description: "Consulta criterios y configuración.",
-        to: "/dashboard/supermatriz",
-        icon: Table2,
-        tone: "emerald",
-      },
-    ];
-  }
-
-  if (role === "CLIENT_ADMIN") {
-    return [
-      ...(companyId
-        ? [
-            {
-              label: "Evaluación SG-SST",
-              description: "Consulta el estado actual de tu empresa.",
-              to: `/dashboard/empresas/${companyId}/evaluacion?anio=${year}`,
-              icon: ShieldCheck,
-              tone: "cyan" as Tone,
-            },
-          ]
-        : []),
-      {
-        label: "Centro de acciones",
-        description: "Revisa pendientes de tu organización.",
-        to: "/dashboard/acciones",
-        icon: ListChecks,
-        tone: "amber",
-      },
-      {
-        label: "Informes",
-        description: "Consulta resultados e históricos.",
-        to: "/dashboard/informes",
-        icon: FileText,
-        tone: "violet",
-      },
-      {
-        label: "Usuarios",
-        description: "Administra los accesos de tu empresa.",
-        to: "/dashboard/usuarios",
-        icon: Users,
-        tone: "emerald",
-      },
-    ];
-  }
-
-  if (role === "CLIENT_USER") {
-    return [
-      {
-        label: "Centro de acciones",
-        description: "Consulta los pendientes visibles para tu rol.",
-        to: "/dashboard/acciones",
-        icon: ListChecks,
-        tone: "amber",
-      },
-      {
-        label: "Informes",
-        description: "Consulta la información consolidada disponible.",
-        to: "/dashboard/informes",
-        icon: FileText,
-        tone: "cyan",
-      },
-      {
-        label: "Auditorías",
-        description: "Revisa los registros de auditoría disponibles.",
-        to: "/dashboard/auditorias",
-        icon: FileSearch,
-        tone: "violet",
-      },
-    ];
-  }
-
-  return [];
+function capitalizar(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 export default function Dashboard() {
   const { user, token } = useAuth();
-  const [stats, setStats] = useState<DashboardStats>({
-    companies: [],
-    users: [],
-    professionals: [],
-    actions: null,
-  });
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [actions, setActions] = useState<ResumenCentroAcciones | null>(null);
   const [loading, setLoading] = useState(true);
   const [partialWarning, setPartialWarning] = useState(false);
 
-  const year = new Date().getFullYear();
-  const isInternal = Boolean(user && INTERNAL_ROLES.has(user.role));
-  const canManageUsers = Boolean(
-    user && (isInternal || user.role === "CLIENT_ADMIN")
-  );
   const canViewActions = Boolean(user && ACTION_ROLES.has(user.role));
+  const canEvaluate = Boolean(user && EVALUATION_ROLES.has(user.role));
+  const year = new Date().getFullYear();
 
   useEffect(() => {
     if (!user || !token) {
@@ -302,431 +91,283 @@ export default function Dashboard() {
       setLoading(true);
       setPartialWarning(false);
 
-      const companyRequest = apiRequest<Company[]>("/api/companies", {}, token);
-      const userRequest = canManageUsers
-        ? apiRequest<ManagedUser[]>("/api/users", {}, token)
-        : Promise.resolve([] as ManagedUser[]);
-      const professionalRequest = isInternal
-        ? apiRequest<Professional[]>("/api/professionals", {}, token)
-        : Promise.resolve([] as Professional[]);
-      const actionsRequest = canViewActions
-        ? obtenerResumenCentroAcciones(token)
-        : Promise.resolve(null);
-
-      const [companies, users, professionals, actions] =
-        await Promise.allSettled([
-          companyRequest,
-          userRequest,
-          professionalRequest,
-          actionsRequest,
-        ]);
+      const [companiesResult, actionsResult] = await Promise.allSettled([
+        apiRequest<Company[]>("/api/companies", {}, token),
+        canViewActions
+          ? obtenerResumenCentroAcciones(token)
+          : Promise.resolve(null),
+      ]);
 
       if (!active) return;
 
-      setStats({
-        companies:
-          companies.status === "fulfilled" ? companies.value : [],
-        users: users.status === "fulfilled" ? users.value : [],
-        professionals:
-          professionals.status === "fulfilled" ? professionals.value : [],
-        actions: actions.status === "fulfilled" ? actions.value : null,
-      });
-
+      setCompanies(
+        companiesResult.status === "fulfilled" ? companiesResult.value : []
+      );
+      setActions(
+        actionsResult.status === "fulfilled" ? actionsResult.value : null
+      );
       setPartialWarning(
-        [companies, users, professionals, actions].some(
-          (result) => result.status === "rejected"
-        )
+        companiesResult.status === "rejected" ||
+          actionsResult.status === "rejected"
       );
       setLoading(false);
     };
 
     void load();
-
     return () => {
       active = false;
     };
-  }, [canManageUsers, canViewActions, isInternal, token, user]);
+  }, [canViewActions, token, user]);
 
   const activeCompanies = useMemo(
-    () => stats.companies.filter((company) => company.isActive),
-    [stats.companies]
-  );
-  const activeUsers = useMemo(
-    () => stats.users.filter((item) => item.isActive),
-    [stats.users]
-  );
-  const activeProfessionals = useMemo(
-    () => stats.professionals.filter((item) => item.isActive),
-    [stats.professionals]
+    () => companies.filter((company) => company.isActive),
+    [companies]
   );
 
   if (!user) return null;
 
-  const roleLabel = ROLE_LABELS[user.role];
   const displayName =
-    user.professional?.firstNames?.trim() ||
-    user.name.trim();
+    user.professional?.firstNames?.trim() || user.name.trim();
   const firstName = displayName.split(/\s+/)[0] || "Usuario";
-  const actions = stats.actions;
-  const urgentCount = actions?.urgentes ?? 0;
   const pendingCount = actions?.total ?? 0;
-  const operationTone: Tone =
-    urgentCount > 0 ? "red" : pendingCount > 0 ? "amber" : "emerald";
+  const urgentCount = actions?.urgentes ?? 0;
+  const accessibleCompanies =
+    actions?.empresasAccesibles ?? activeCompanies.length;
+  const companiesUpToDate =
+    actions?.empresasAlDia ?? activeCompanies.length;
+  const companiesWithActions = actions?.empresasConAcciones ?? 0;
+  const progress =
+    accessibleCompanies > 0
+      ? Math.round((companiesUpToDate / accessibleCompanies) * 100)
+      : 100;
+  const visibleCompanies = activeCompanies.slice(0, 5);
+  const isInternal = INTERNAL_ROLES.has(user.role);
+
   const operationTitle =
     urgentCount > 0
-      ? `${urgentCount} ${urgentCount === 1 ? "acción urgente" : "acciones urgentes"}`
+      ? `${urgentCount} ${urgentCount === 1 ? "urgente" : "urgentes"}`
       : pendingCount > 0
-        ? `${pendingCount} ${pendingCount === 1 ? "acción pendiente" : "acciones pendientes"}`
+        ? `${pendingCount} ${pendingCount === 1 ? "pendiente" : "pendientes"}`
         : "Operación al día";
-  const operationDescription =
-    urgentCount > 0
-      ? "Hay asuntos que conviene revisar primero desde el Centro de acciones."
-      : pendingCount > 0
-        ? "Tienes trabajo identificado y priorizado para continuar."
-        : "No hay acciones operativas pendientes visibles para tu perfil.";
-
-  const primaryAction = INTERNAL_ROLES.has(user.role)
-    ? { label: "Abrir administración", to: "/dashboard/administracion" }
-    : user.role === "PROFESSIONAL" || user.role === "COORDINATOR"
-      ? { label: "Abrir empresas", to: "/dashboard/empresas" }
-      : user.role === "CLIENT_ADMIN" && user.companyId
-        ? {
-            label: "Abrir evaluación",
-            to: `/dashboard/empresas/${user.companyId}/evaluacion?anio=${year}`,
-          }
-        : { label: "Abrir informes", to: "/dashboard/informes" };
-
-  const quickActions = quickActionsForRole(user.role, user.companyId, year);
-  const canEvaluate = EVALUATION_ROLES.has(user.role);
-  const visibleCompanies = activeCompanies.slice(0, 4);
-
-  const metrics = [
-    {
-      label: isInternal ? "Empresas activas" : "Empresas en alcance",
-      value: loading ? "—" : String(activeCompanies.length),
-      caption:
-        activeCompanies.length === 1
-          ? "Organización disponible"
-          : "Organizaciones disponibles",
-      icon: Building2,
-      tone: "cyan" as Tone,
-    },
-    {
-      label: "Acciones pendientes",
-      value: loading || !canViewActions ? "—" : String(pendingCount),
-      caption: canViewActions ? "Trabajo identificado" : "No aplica a tu rol",
-      icon: ListChecks,
-      tone: pendingCount > 0 ? ("amber" as Tone) : ("emerald" as Tone),
-    },
-    {
-      label: "Urgentes",
-      value: loading || !canViewActions ? "—" : String(urgentCount),
-      caption: urgentCount > 0 ? "Requieren atención" : "Sin urgencias visibles",
-      icon: AlertTriangle,
-      tone: urgentCount > 0 ? ("red" as Tone) : ("emerald" as Tone),
-    },
-    isInternal
-      ? {
-          label: "Profesionales activos",
-          value: loading ? "—" : String(activeProfessionals.length),
-          caption: "Prestadores habilitados",
-          icon: BriefcaseBusiness,
-          tone: "violet" as Tone,
-        }
-      : canManageUsers
-        ? {
-            label: "Usuarios activos",
-            value: loading ? "—" : String(activeUsers.length),
-            caption: "Accesos habilitados",
-            icon: Users,
-            tone: "violet" as Tone,
-          }
-        : {
-            label: "Periodo de trabajo",
-            value: String(year),
-            caption: "Contexto operativo actual",
-            icon: ShieldCheck,
-            tone: "violet" as Tone,
-          },
-  ];
 
   return (
-    <div className="mx-auto w-full max-w-[1220px] space-y-4 pb-6 sm:space-y-5">
-      <motion.section
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm"
-      >
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(6,182,212,0.12),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(139,92,246,0.08),transparent_28%)]" />
-        <div className="relative grid gap-5 p-5 sm:p-6 xl:grid-cols-[minmax(0,1.3fr)_minmax(300px,0.7fr)] xl:items-center">
-          <div className="min-w-0">
-            <h1 className="max-w-2xl text-2xl font-black tracking-tight text-slate-950 sm:text-[1.75rem] lg:text-[1.9rem] lg:leading-[1.16]">
-              Hola, {firstName}. Tu operación SG-SST empieza aquí.
-            </h1>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-              Revisa lo prioritario, entra al trabajo de cada empresa y consulta los resultados sin recorrer módulos innecesarios.
-            </p>
-
-            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Link
-                to={primaryAction.to}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-cyan-700 bg-cyan-700 px-4 py-2 text-sm font-extrabold text-white shadow-sm transition hover:border-cyan-800 hover:bg-cyan-800 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2"
-              >
-                {primaryAction.label}
-                <ArrowRight size={16} />
-              </Link>
-              {canViewActions && (
-                <Link
-                  to="/dashboard/acciones"
-                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
-                >
-                  Ver Centro de acciones
-                </Link>
-              )}
-            </div>
-          </div>
-
-          <div
-            className={`rounded-2xl border p-4 ${TONES[operationTone].surface} ${TONES[operationTone].border}`}
-          >
-            <div className="flex items-start gap-3">
-              <div
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${TONES[operationTone].icon}`}
-              >
-                {urgentCount > 0 ? (
-                  <AlertTriangle size={18} />
-                ) : (
-                  <CheckCircle2 size={18} />
-                )}
-              </div>
-              <div className="min-w-0">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-slate-500">
-                  Estado operativo
-                </p>
-                <p className="mt-1 text-base font-black text-slate-950 sm:text-lg">
-                  {loading ? "Actualizando…" : operationTitle}
-                </p>
-                <p className="mt-1 text-xs leading-5 text-slate-600">
-                  {operationDescription}
-                </p>
-              </div>
-            </div>
-            {actions && (
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <MiniFact label="Empresas al día" value={String(actions.empresasAlDia)} />
-                <MiniFact
-                  label="Con acciones"
-                  value={String(actions.empresasConAcciones)}
-                />
-              </div>
-            )}
-          </div>
+    <div className="mx-auto w-full max-w-[1180px] space-y-5 pb-8">
+      <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-slate-500">
+            {capitalizar(fechaActualBogota())}
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950 sm:text-[1.8rem]">
+            Hola, {firstName}.
+          </h1>
+          <p className="mt-1 text-sm leading-6 text-slate-500">
+            Resumen de la operación SG-SST visible para tu perfil.
+          </p>
         </div>
-      </motion.section>
+
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <ShieldCheck size={15} className="text-cyan-700" />
+          <span>{ROLE_LABELS[user.role]}</span>
+          <span className="text-slate-300">·</span>
+          <span>{year}</span>
+        </div>
+      </header>
 
       {partialWarning && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">
-          Parte del resumen no pudo actualizarse. Los accesos siguen disponibles y los datos se volverán a consultar al recargar la página.
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Parte del resumen no pudo actualizarse. Puedes continuar usando el sistema con normalidad.
         </div>
       )}
 
-      <section className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-        {metrics.map((metric, index) => {
-          const Icon = metric.icon;
-          const tone = TONES[metric.tone];
-
-          return (
-            <motion.article
-              key={metric.label}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="min-w-0 rounded-[1.25rem] border border-slate-200 bg-white p-3.5 shadow-sm sm:p-4"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${tone.icon}`}>
-                  <Icon size={17} />
-                </div>
-                <span className={`rounded-full px-2 py-1 text-[8px] font-extrabold uppercase tracking-wide ${tone.soft}`}>
-                  {metric.tone === "red" ? "Atención" : "Actual"}
-                </span>
-              </div>
-              <p className="mt-3 text-2xl font-black tracking-tight text-slate-950">
-                {metric.value}
-              </p>
-              <p className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.13em] text-slate-500">
-                {metric.label}
-              </p>
-              <p className="mt-1 line-clamp-2 text-[11px] leading-4 text-slate-500 sm:text-xs sm:leading-5">
-                {metric.caption}
-              </p>
-            </motion.article>
-          );
-        })}
+      <section className="grid gap-3 sm:grid-cols-3">
+        <Kpi
+          label={isInternal ? "Empresas activas" : "Empresas en alcance"}
+          value={loading ? "—" : String(activeCompanies.length)}
+          icon={<Building2 size={17} />}
+        />
+        <Kpi
+          label="Pendientes"
+          value={loading || !canViewActions ? "—" : String(pendingCount)}
+          icon={<ListChecks size={17} />}
+          attention={pendingCount > 0}
+        />
+        <Kpi
+          label="Urgentes"
+          value={loading || !canViewActions ? "—" : String(urgentCount)}
+          icon={<AlertTriangle size={17} />}
+          attention={urgentCount > 0}
+          danger={urgentCount > 0}
+        />
       </section>
 
-      <div className="grid gap-4 xl:grid-cols-[1.12fr_0.88fr]">
-        <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-cyan-700">
-                Continuar trabajo
-              </p>
-              <h2 className="mt-1 text-lg font-black text-slate-950">
-                Accesos rápidos para tu perfil
-              </h2>
-              <p className="mt-1 text-sm leading-5 text-slate-500">
-                Solo mostramos rutas que tienen sentido para tu rol actual.
-              </p>
-            </div>
-          </div>
-
-          {quickActions.length > 0 ? (
-            <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
-              {quickActions.map((action) => {
-                const Icon = action.icon;
-                const tone = TONES[action.tone];
-
-                return (
-                  <Link
-                    key={`${action.to}:${action.label}`}
-                    to={action.to}
-                    className="group flex min-h-[88px] items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/60 p-3.5 transition hover:-translate-y-0.5 hover:border-cyan-300 hover:bg-white hover:shadow-md"
-                  >
-                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${tone.icon}`}>
-                      <Icon size={17} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-extrabold text-slate-950">
-                          {action.label}
-                        </p>
-                        <ArrowRight
-                          size={15}
-                          className="shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-cyan-700"
-                        />
-                      </div>
-                      <p className="mt-1 text-[11px] leading-4 text-slate-500 sm:text-xs sm:leading-5">
-                        {action.description}
-                      </p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
-              Tu perfil no tiene accesos operativos adicionales configurados.
-            </div>
-          )}
-        </section>
-
-        <section className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-violet-700">
-                Contexto
-              </p>
-              <h2 className="mt-1 text-lg font-black text-slate-950">
-                Empresas en alcance
-              </h2>
-              <p className="mt-1 text-sm leading-5 text-slate-500">
-                Punto de entrada directo al trabajo disponible.
-              </p>
-            </div>
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-extrabold text-slate-600">
-              {loading ? "…" : activeCompanies.length}
-            </span>
-          </div>
-
-          <div className="mt-4 space-y-2">
-            {!loading && visibleCompanies.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-                No hay empresas activas visibles para este perfil.
+      <section className="rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-3">
+              <div
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+                  urgentCount > 0
+                    ? "bg-red-50 text-red-700"
+                    : pendingCount > 0
+                      ? "bg-amber-50 text-amber-700"
+                      : "bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                {urgentCount > 0 ? (
+                  <AlertTriangle size={19} />
+                ) : (
+                  <CheckCircle2 size={19} />
+                )}
               </div>
-            )}
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-400">
+                  Estado operativo
+                </p>
+                <h2 className="mt-0.5 text-lg font-semibold text-slate-950">
+                  {loading ? "Actualizando…" : operationTitle}
+                </h2>
+              </div>
+            </div>
 
-            {visibleCompanies.map((company) => {
-              const destination = canEvaluate
-                ? `/dashboard/empresas/${company.id}/evaluacion?anio=${year}`
-                : "/dashboard/informes";
-
-              return (
-                <Link
-                  key={company.id}
-                  to={destination}
-                  className="group flex items-center gap-3 rounded-2xl border border-slate-200 px-3 py-2.5 transition hover:border-cyan-300 hover:bg-cyan-50/50"
-                >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700">
-                    <Building2 size={16} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-extrabold text-slate-950">
-                      {company.name}
-                    </p>
-                    <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px] text-slate-500">
-                      <MapPin size={12} className="shrink-0" />
-                      <span className="truncate">
-                        {company.mainCity || "Ciudad no registrada"}
-                      </span>
-                      {company.mainRiskClass && (
-                        <span className="shrink-0">· Riesgo {company.mainRiskClass}</span>
-                      )}
-                    </div>
-                  </div>
-                  <ArrowRight
-                    size={15}
-                    className="shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-cyan-700"
-                  />
-                </Link>
-              );
-            })}
+            <div className="mt-5">
+              <div className="mb-2 flex items-center justify-between gap-3 text-xs text-slate-500">
+                <span>Empresas al día</span>
+                <span className="font-medium text-slate-700">{progress}%</span>
+              </div>
+              <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    urgentCount > 0
+                      ? "bg-red-500"
+                      : pendingCount > 0
+                        ? "bg-amber-500"
+                        : "bg-emerald-500"
+                  }`}
+                  style={{ width: `${Math.max(0, Math.min(progress, 100))}%` }}
+                />
+              </div>
+              <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-500">
+                <span><strong className="font-medium text-slate-800">{companiesUpToDate}</strong> al día</span>
+                <span><strong className="font-medium text-slate-800">{companiesWithActions}</strong> con acciones</span>
+              </div>
+            </div>
           </div>
 
-          {activeCompanies.length > visibleCompanies.length && (
+          {canViewActions && pendingCount > 0 && (
             <Link
-              to={isInternal ? "/dashboard/administracion" : "/dashboard/empresas"}
-              className="mt-3 inline-flex items-center gap-2 text-xs font-extrabold text-cyan-700 hover:text-cyan-900"
+              to="/dashboard/acciones"
+              className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 text-sm font-medium text-white transition hover:bg-slate-800"
             >
-              Ver todas las empresas
-              <ArrowRight size={14} />
+              Revisar pendientes <ArrowRight size={15} />
             </Link>
           )}
-        </section>
-      </div>
-
-      <section className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-cyan-700 shadow-sm ring-1 ring-slate-200">
-            <ShieldCheck size={17} />
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-xs font-extrabold text-slate-800">
-              {user.company?.name ??
-                (user.professional
-                  ? `${user.professional.firstNames} ${user.professional.lastNames}`
-                  : "Administración global")}
-            </p>
-            <p className="truncate text-[11px] text-slate-500">
-              {roleLabel} · Periodo {year} · {user.email}
-            </p>
-          </div>
         </div>
-        <span className="shrink-0 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
-          Stack44 · SG-SST
-        </span>
+      </section>
+
+      <section className="rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold text-slate-950">
+              Empresas
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Continúa directamente en la evaluación de una organización.
+            </p>
+          </div>
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+            {loading ? "…" : activeCompanies.length}
+          </span>
+        </div>
+
+        <div className="mt-4 divide-y divide-slate-100">
+          {!loading && visibleCompanies.length === 0 && (
+            <div className="rounded-xl border border-dashed border-slate-200 p-5 text-sm text-slate-500">
+              No hay empresas activas visibles para este perfil.
+            </div>
+          )}
+
+          {visibleCompanies.map((company) => {
+            const destination = canEvaluate
+              ? `/dashboard/empresas/${company.id}/evaluacion?anio=${year}`
+              : "/dashboard/informes";
+
+            return (
+              <Link
+                key={company.id}
+                to={destination}
+                className="group flex items-center gap-3 py-3.5 first:pt-0 last:pb-0"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition group-hover:bg-cyan-50 group-hover:text-cyan-700">
+                  <Building2 size={16} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-slate-900">
+                    {company.name}
+                  </p>
+                  <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
+                    <MapPin size={12} className="shrink-0" />
+                    <span className="truncate">
+                      {company.mainCity || "Ciudad no registrada"}
+                    </span>
+                    {company.mainRiskClass && (
+                      <span className="shrink-0">· Riesgo {company.mainRiskClass}</span>
+                    )}
+                  </div>
+                </div>
+                <ArrowRight
+                  size={15}
+                  className="shrink-0 text-slate-300 transition group-hover:translate-x-0.5 group-hover:text-cyan-700"
+                />
+              </Link>
+            );
+          })}
+        </div>
+
+        {activeCompanies.length > visibleCompanies.length && (
+          <Link
+            to={isInternal ? "/dashboard/administracion" : "/dashboard/empresas"}
+            className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-cyan-700 hover:text-cyan-900"
+          >
+            Ver todas las empresas <ArrowRight size={14} />
+          </Link>
+        )}
       </section>
     </div>
   );
 }
 
-function MiniFact({ label, value }: { label: string; value: string }) {
+function Kpi({
+  label,
+  value,
+  icon,
+  attention = false,
+  danger = false,
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  attention?: boolean;
+  danger?: boolean;
+}) {
   return (
-    <div className="rounded-xl border border-white/70 bg-white/70 px-3 py-2">
-      <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-slate-500">
-        {label}
+    <article className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-sm text-slate-500">{label}</span>
+        <span
+          className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+            danger
+              ? "bg-red-50 text-red-700"
+              : attention
+                ? "bg-amber-50 text-amber-700"
+                : "bg-slate-100 text-slate-600"
+          }`}
+        >
+          {icon}
+        </span>
+      </div>
+      <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">
+        {value}
       </p>
-      <p className="mt-0.5 text-base font-black text-slate-950">{value}</p>
-    </div>
+    </article>
   );
 }
