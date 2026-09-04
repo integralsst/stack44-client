@@ -1,6 +1,7 @@
 import {
   BarChart3,
   ClipboardCheck,
+  ClipboardList,
   FileText,
   Plus,
   Settings2,
@@ -20,6 +21,7 @@ import {
 import AppModal from "../../../components/ui/AppModal";
 import type { GuardarEvaluacionInput } from "../../../types/evaluacion.types";
 import { useAuth } from "../../auth/context/AuthContext";
+import BitacoraEvaluacionPanel from "../components/BitacoraEvaluacionPanel";
 import DetalleAspectoDrawer from "../components/detalle/DetalleAspectoDrawer";
 import EvaluacionEmpresaHeader from "../components/EvaluacionEmpresaHeader";
 import AppAlert from "../components/feedback/AppAlert";
@@ -125,6 +127,7 @@ export default function EvaluacionEmpresaPage() {
   const [resultadosModalOpen, setResultadosModalOpen] = useState(false);
   const [informesModalOpen, setInformesModalOpen] = useState(false);
   const [revisionesModalOpen, setRevisionesModalOpen] = useState(false);
+  const [bitacoraAbierta, setBitacoraAbierta] = useState(false);
   const [tareaDetalleId, setTareaDetalleId] = useState<number | null>(
     () =>
       Number.isInteger(tareaDetalleSolicitada) &&
@@ -340,107 +343,144 @@ export default function EvaluacionEmpresaPage() {
               />
             )}
             {puedeEvaluar && (
-              <ActionButton
-                icon={<Settings2 size={15} />}
-                label="Controles"
-                onClick={() =>
-                  navigate(
-                    `/dashboard/empresas/${contexto.empresa.id}/evaluacion/controles?anio=${anio}`
-                  )
-                }
-              />
+              <>
+                <ActionButton
+                  icon={<ClipboardList size={15} />}
+                  label={bitacoraAbierta ? "Colapsar Bitácora" : "Abrir Bitácora"}
+                  active={bitacoraAbierta}
+                  onClick={() => setBitacoraAbierta((actual) => !actual)}
+                />
+                <ActionButton
+                  icon={<Settings2 size={15} />}
+                  label="Controles"
+                  onClick={() =>
+                    navigate(
+                      `/dashboard/empresas/${contexto.empresa.id}/evaluacion/controles?anio=${anio}`
+                    )
+                  }
+                />
+              </>
             )}
           </div>
         </section>
       )}
 
-      {aspectoSolicitado && compromisoParaRecalificar && puedeEvaluar && (
-        <AppAlert
-          tone="warning"
-          title={`Recalificación pendiente: ${aspectoSolicitado}`}
-          description="Ubica el aspecto resaltado, registra la nueva calificación y guarda. No necesitas crear ni finalizar una gestión."
-        />
-      )}
-
-      {(contexto.resumen.pendientesVigencia ?? 0) > 0 && (
-        <AppAlert
-          tone="warning"
-          title="Hay información pendiente para calcular vigencias"
-          description={`${contexto.resumen.pendientesVigencia} aspecto(s) requieren fecha del documento o completar su periodicidad en la Supermatriz.`}
-        />
-      )}
-
-      {!contexto.periodo ? (
-        <section className="rounded-2xl border border-neutral-800 bg-[#101112] p-5 text-center shadow-xl sm:p-6">
-          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-300">
-            <ClipboardCheck size={21} />
-          </div>
-          <h2 className="mt-4 text-lg font-bold text-white">
-            El periodo {anio} todavía no está abierto
-          </h2>
-          <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-neutral-400">
-            Al abrir el periodo podrás registrar evaluaciones. La versión de la Supermatriz se resolverá según la fecha efectiva de cada evaluación.
-          </p>
-
-          {contexto.versionDisponible ? (
-            <div className="mt-5">
-              <p className="mb-3 text-xs text-neutral-500">
-                Versión disponible hoy:{" "}
-                <strong className="text-neutral-300">
-                  {contexto.versionDisponible.nombre}
-                </strong>
-              </p>
-              {puedeEvaluar && (
-                <button
-                  type="button"
-                  onClick={() => void abrirPeriodo()}
-                  disabled={procesando}
-                  className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-black transition hover:bg-neutral-200 disabled:opacity-50"
-                >
-                  {procesando ? (
-                    <AppSpinner size="sm" className="text-black" />
-                  ) : (
-                    <Plus size={17} />
-                  )}
-                  Abrir periodo {anio}
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className="mx-auto mt-5 max-w-xl rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
-              No existe una versión vigente de la Supermatriz aplicable. Publícala primero desde Supermatriz.
-            </div>
-          )}
-        </section>
-      ) : (
-        <>
-          {ajustesActivos > 0 && (
+      <div
+        className={
+          contexto.periodo && puedeEvaluar
+            ? `grid min-w-0 gap-3 ${
+                bitacoraAbierta
+                  ? "xl:grid-cols-[minmax(0,1.35fr)_minmax(420px,0.85fr)]"
+                  : "grid-cols-1"
+              }`
+            : "min-w-0"
+        }
+      >
+        <main className="min-w-0 space-y-3">
+          {aspectoSolicitado && compromisoParaRecalificar && puedeEvaluar && (
             <AppAlert
               tone="warning"
-              title={`${ajustesActivos} evaluación(es) requieren corrección técnica`}
-              description="Abre Revisiones, consulta el concepto y registra directamente una nueva evaluación del aspecto. La evaluación anterior permanecerá intacta."
-            >
-              <button
-                type="button"
-                onClick={() => setRevisionesModalOpen(true)}
-                className="rounded-xl bg-amber-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-amber-800"
-              >
-                Ver revisiones
-              </button>
-            </AppAlert>
+              title={`Recalificación pendiente: ${aspectoSolicitado}`}
+              description="Ubica el aspecto resaltado, registra la nueva calificación y guarda. No necesitas crear ni finalizar una gestión."
+            />
           )}
 
-          <MatrizEvaluacionDirecta
-            filas={contexto.filas}
-            editable={puedeEvaluar && contexto.periodo.estado === "ABIERTO"}
-            procesando={procesando}
-            onGuardar={guardarYActualizar}
-            onAbrirDetalle={(fila) =>
-              setTareaDetalleId(fila.tareaId)
-            }
-          />
-        </>
-      )}
+          {(contexto.resumen.pendientesVigencia ?? 0) > 0 && (
+            <AppAlert
+              tone="warning"
+              title="Hay información pendiente para calcular vigencias"
+              description={`${contexto.resumen.pendientesVigencia} aspecto(s) requieren fecha del documento o completar su periodicidad en la Supermatriz.`}
+            />
+          )}
+
+          {!contexto.periodo ? (
+            <section className="rounded-2xl border border-neutral-800 bg-[#101112] p-5 text-center shadow-xl sm:p-6">
+              <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-300">
+                <ClipboardCheck size={21} />
+              </div>
+              <h2 className="mt-4 text-lg font-bold text-white">
+                El periodo {anio} todavía no está abierto
+              </h2>
+              <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-neutral-400">
+                Al abrir el periodo podrás registrar evaluaciones. La versión de la Supermatriz se resolverá según la fecha efectiva de cada evaluación.
+              </p>
+
+              {contexto.versionDisponible ? (
+                <div className="mt-5">
+                  <p className="mb-3 text-xs text-neutral-500">
+                    Versión disponible hoy:{" "}
+                    <strong className="text-neutral-300">
+                      {contexto.versionDisponible.nombre}
+                    </strong>
+                  </p>
+                  {puedeEvaluar && (
+                    <button
+                      type="button"
+                      onClick={() => void abrirPeriodo()}
+                      disabled={procesando}
+                      className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-black transition hover:bg-neutral-200 disabled:opacity-50"
+                    >
+                      {procesando ? (
+                        <AppSpinner size="sm" className="text-black" />
+                      ) : (
+                        <Plus size={17} />
+                      )}
+                      Abrir periodo {anio}
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="mx-auto mt-5 max-w-xl rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+                  No existe una versión vigente de la Supermatriz aplicable. Publícala primero desde Supermatriz.
+                </div>
+              )}
+            </section>
+          ) : (
+            <>
+              {ajustesActivos > 0 && (
+                <AppAlert
+                  tone="warning"
+                  title={`${ajustesActivos} evaluación(es) requieren corrección técnica`}
+                  description="Abre Revisiones, consulta el concepto y registra directamente una nueva evaluación del aspecto. La evaluación anterior permanecerá intacta."
+                >
+                  <button
+                    type="button"
+                    onClick={() => setRevisionesModalOpen(true)}
+                    className="rounded-xl bg-amber-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-amber-800"
+                  >
+                    Ver revisiones
+                  </button>
+                </AppAlert>
+              )}
+
+              <MatrizEvaluacionDirecta
+                filas={contexto.filas}
+                editable={puedeEvaluar && contexto.periodo.estado === "ABIERTO"}
+                procesando={procesando}
+                onGuardar={guardarYActualizar}
+                onAbrirDetalle={(fila) =>
+                  setTareaDetalleId(fila.tareaId)
+                }
+              />
+            </>
+          )}
+        </main>
+
+        {contexto.periodo && puedeEvaluar && (
+          <div
+            className={`${bitacoraAbierta ? "block" : "hidden"} min-w-0 xl:sticky xl:top-3 xl:self-start`}
+          >
+            <BitacoraEvaluacionPanel
+              empresaId={contexto.empresa.id}
+              empresaNombre={contexto.empresa.nombre}
+              onClose={() => setBitacoraAbierta(false)}
+              onEvaluacionesAplicadas={async () => {
+                await recargar(false);
+              }}
+            />
+          </div>
+        )}
+      </div>
 
       {contexto.periodo && (
         <AppModal
@@ -553,16 +593,23 @@ function ActionButton({
   icon,
   label,
   onClick,
+  active = false,
 }: {
   icon: React.ReactNode;
   label: string;
   onClick: () => void;
+  active?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-2 rounded-xl border border-neutral-700 bg-[#0a0b0c] px-3.5 py-2.5 text-xs font-semibold text-neutral-200 transition hover:border-cyan-500/40 hover:text-cyan-200"
+      aria-pressed={active || undefined}
+      className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-semibold transition ${
+        active
+          ? "border-cyan-500/50 bg-cyan-500/10 text-cyan-200"
+          : "border-neutral-700 bg-[#0a0b0c] text-neutral-200 hover:border-cyan-500/40 hover:text-cyan-200"
+      }`}
     >
       {icon}
       {label}
