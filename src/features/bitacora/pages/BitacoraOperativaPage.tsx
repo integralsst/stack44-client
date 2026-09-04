@@ -1,11 +1,9 @@
 import {
   ArrowRight,
-  BrainCircuit,
   Building2,
   CalendarDays,
   CheckCircle2,
   ChevronDown,
-  ChevronUp,
   ClipboardList,
   Download,
   ExternalLink,
@@ -37,6 +35,7 @@ import {
   guardarYAnalizarBitacora,
   listarHistorialBitacoraUnificado,
 } from "../api/bitacora.api";
+import BitacoraDropdown from "../components/BitacoraDropdown";
 import type {
   ModalidadBitacora,
   PropuestaAspectoBitacora,
@@ -48,11 +47,31 @@ import type {
 const INPUT_CLASS =
   "w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100 disabled:bg-slate-50 disabled:text-slate-500";
 
-const MODALIDADES: Array<{ value: ModalidadBitacora; label: string }> = [
-  { value: "PRESENCIAL", label: "Presencial" },
-  { value: "REMOTA", label: "Remota" },
-  { value: "OFICINA", label: "Oficina" },
-  { value: "SEGUIMIENTO_PUNTUAL", label: "Seguimiento puntual" },
+const MODALIDADES: Array<{
+  value: ModalidadBitacora;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: "PRESENCIAL",
+    label: "Presencial",
+    description: "Visita o actividad realizada en sitio.",
+  },
+  {
+    value: "REMOTA",
+    label: "Remota",
+    description: "Seguimiento realizado de forma virtual.",
+  },
+  {
+    value: "OFICINA",
+    label: "Oficina",
+    description: "Trabajo técnico realizado desde oficina.",
+  },
+  {
+    value: "SEGUIMIENTO_PUNTUAL",
+    label: "Seguimiento puntual",
+    description: "Revisión específica sobre un asunto concreto.",
+  },
 ];
 
 function fechaHoyBogota(): string {
@@ -130,12 +149,19 @@ export default function BitacoraOperativaPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [empresaId, setEmpresaId] = useState("");
   const [fechaEfectiva, setFechaEfectiva] = useState(fechaHoyBogota);
-  const [modalidad, setModalidad] = useState<ModalidadBitacora>("PRESENCIAL");
-  const [tipoActividad, setTipoActividad] = useState("Visita de seguimiento SG-SST");
+  const [modalidad, setModalidad] =
+    useState<ModalidadBitacora>("PRESENCIAL");
+  const [tipoActividad, setTipoActividad] = useState(
+    "Visita de seguimiento SG-SST"
+  );
   const [contenido, setContenido] = useState("");
-  const [resultado, setResultado] = useState<ResultadoBitacoraAsistida | null>(null);
-  const [aplicacion, setAplicacion] = useState<ResultadoAplicarBitacora | null>(null);
-  const [historial, setHistorial] = useState<RegistroHistorialBitacoraUnificado[]>([]);
+  const [resultado, setResultado] =
+    useState<ResultadoBitacoraAsistida | null>(null);
+  const [aplicacion, setAplicacion] =
+    useState<ResultadoAplicarBitacora | null>(null);
+  const [historial, setHistorial] = useState<
+    RegistroHistorialBitacoraUnificado[]
+  >([]);
   const [excluidos, setExcluidos] = useState<Set<number>>(new Set());
   const [detalleAbierto, setDetalleAbierto] = useState(false);
   const [loadingCompanies, setLoadingCompanies] = useState(true);
@@ -159,7 +185,11 @@ export default function BitacoraOperativaPage() {
         setEmpresaId((actual) => actual || disponibles[0]?.id || "");
       } catch (loadError) {
         if (!activo) return;
-        setError(loadError instanceof Error ? loadError.message : "No fue posible cargar las empresas.");
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : "No fue posible cargar las empresas."
+        );
       } finally {
         if (activo) setLoadingCompanies(false);
       }
@@ -197,6 +227,32 @@ export default function BitacoraOperativaPage() {
     [companies, empresaId]
   );
 
+  const companyOptions = useMemo(
+    () =>
+      companies.map((company) => ({
+        value: company.id,
+        label: company.name,
+        description: [
+          company.taxId ? `NIT ${company.taxId}` : null,
+          company.mainCity,
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        icon: <Building2 size={15} />,
+      })),
+    [companies]
+  );
+
+  const modalidadOptions = useMemo(
+    () =>
+      MODALIDADES.map((item) => ({
+        value: item.value,
+        label: item.label,
+        description: item.description,
+      })),
+    []
+  );
+
   const aplicables = resultado?.resumen.evaluaciones ?? [];
   const seleccionadas = aplicables.filter(
     (propuesta) => !excluidos.has(propuesta.aspectoId)
@@ -210,7 +266,9 @@ export default function BitacoraOperativaPage() {
           propuesta.accion === "PROPONER_EVALUACION" ||
           Boolean(propuesta.evidenciaBitacora)
       );
-    return [...new Map(base.map((item) => [item.aspectoId, item])).values()];
+    return [
+      ...new Map(base.map((item) => [item.aspectoId, item])).values(),
+    ];
   }, [resultado]);
 
   const guardar = async (event: FormEvent<HTMLFormElement>) => {
@@ -310,70 +368,73 @@ export default function BitacoraOperativaPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1240px] space-y-5 pb-8">
-      <section className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 bg-gradient-to-r from-cyan-50 via-white to-violet-50 p-5 sm:p-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div>
-              <div className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-cyan-700">
-                <BrainCircuit size={16} /> Bitácora SG-SST · IA
-              </div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">Registro técnico asistido</h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                Stack44 reconoce los aspectos relacionados, conserva el histórico y solo propone cambios cuando existe soporte suficiente.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => navigate(rutaEvaluacion(empresaId))}
-                disabled={!empresaId}
-                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm hover:bg-slate-50 disabled:opacity-50"
-              >
-                <Building2 size={16} /> Ver evaluación
-              </button>
-              <button
-                type="button"
-                onClick={exportarPdf}
-                disabled={!empresaId || descargando}
-                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-4 text-sm font-bold text-cyan-800 hover:bg-cyan-100 disabled:opacity-50"
-              >
-                {descargando ? <Loader2 className="animate-spin" size={16} /> : <Download size={16} />}
-                Exportar histórico PDF
-              </button>
-            </div>
+    <div className="mx-auto w-full max-w-[1180px] space-y-5 pb-8">
+      <section className="rounded-[1.4rem] border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-4 border-b border-slate-100 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-[0.12em] text-cyan-700">
+              Bitácora SG-SST · IA
+            </p>
+            <h1 className="mt-1 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">
+              Registro técnico asistido
+            </h1>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
+              Registra la actividad. Stack44 identifica los aspectos relacionados y conserva el histórico.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+            <button
+              type="button"
+              onClick={() => navigate(rutaEvaluacion(empresaId))}
+              disabled={!empresaId}
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50 sm:px-4"
+            >
+              <Building2 size={15} />
+              <span>Ver evaluación</span>
+            </button>
+            <button
+              type="button"
+              onClick={exportarPdf}
+              disabled={!empresaId || descargando}
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-100 disabled:opacity-50 sm:px-4"
+            >
+              {descargando ? (
+                <Loader2 className="animate-spin" size={15} />
+              ) : (
+                <Download size={15} />
+              )}
+              <span className="truncate">Exportar PDF</span>
+            </button>
           </div>
         </div>
 
-        <form onSubmit={guardar} className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.6fr)]">
-          <div className="space-y-4">
-            <label className="block">
-              <span className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-                <Building2 size={15} /> Empresa
-              </span>
-              <select
-                className={INPUT_CLASS}
-                value={empresaId}
-                onChange={(event) => setEmpresaId(event.target.value)}
-                disabled={loadingCompanies || guardando || aplicando}
-                required
-              >
-                {loadingCompanies && <option value="">Cargando...</option>}
-                {companies.map((company) => (
-                  <option key={company.id} value={company.id}>{company.name}</option>
-                ))}
-              </select>
-              {empresa && (
-                <p className="mt-1.5 text-xs text-slate-500">
-                  NIT {empresa.taxId}{empresa.mainCity ? ` · ${empresa.mainCity}` : ""}
-                </p>
-              )}
-            </label>
+        <form onSubmit={guardar} className="space-y-5 p-4 sm:p-5">
+          <div>
+            <FieldLabel icon={<Building2 size={14} />}>Empresa</FieldLabel>
+            <BitacoraDropdown
+              value={empresaId}
+              options={companyOptions}
+              onChange={setEmpresaId}
+              ariaLabel="Seleccionar empresa"
+              placeholder="Selecciona una empresa"
+              loading={loadingCompanies}
+              disabled={guardando || aplicando}
+            />
+            {empresa && (
+              <p className="mt-1.5 text-xs text-slate-500">
+                {[empresa.taxId ? `NIT ${empresa.taxId}` : null, empresa.mainCity]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            )}
+          </div>
 
-            <label className="block">
-              <span className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-                <CalendarDays size={15} /> Fecha efectiva
-              </span>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <label className="block min-w-0">
+              <FieldLabel icon={<CalendarDays size={14} />}>
+                Fecha efectiva
+              </FieldLabel>
               <input
                 type="date"
                 className={INPUT_CLASS}
@@ -383,25 +444,21 @@ export default function BitacoraOperativaPage() {
                 disabled={guardando || aplicando}
                 required
               />
-              <p className="mt-1.5 text-xs leading-5 text-slate-500">Fecha real de la visita o revisión; no sustituye la fecha propia del documento.</p>
             </label>
 
-            <label className="block">
-              <span className="mb-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">Modalidad</span>
-              <select
-                className={INPUT_CLASS}
+            <div className="min-w-0">
+              <FieldLabel>Modalidad</FieldLabel>
+              <BitacoraDropdown
                 value={modalidad}
-                onChange={(event) => setModalidad(event.target.value as ModalidadBitacora)}
+                options={modalidadOptions}
+                onChange={(value) => setModalidad(value as ModalidadBitacora)}
+                ariaLabel="Seleccionar modalidad"
                 disabled={guardando || aplicando}
-              >
-                {MODALIDADES.map((item) => (
-                  <option key={item.value} value={item.value}>{item.label}</option>
-                ))}
-              </select>
-            </label>
+              />
+            </div>
 
-            <label className="block">
-              <span className="mb-1.5 text-xs font-bold uppercase tracking-wide text-slate-500">Tipo de actividad</span>
+            <label className="block min-w-0 sm:col-span-2 lg:col-span-1">
+              <FieldLabel>Tipo de actividad</FieldLabel>
               <input
                 className={INPUT_CLASS}
                 value={tipoActividad}
@@ -412,43 +469,57 @@ export default function BitacoraOperativaPage() {
             </label>
           </div>
 
-          <div className="flex min-h-[360px] flex-col">
-            <label className="flex flex-1 flex-col">
-              <span className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-                <ClipboardList size={15} /> Registro de Bitácora
-              </span>
-              <textarea
-                className={`${INPUT_CLASS} min-h-[300px] flex-1 resize-y leading-6`}
-                value={contenido}
-                onChange={(event) => setContenido(event.target.value)}
-                disabled={guardando || aplicando || Boolean(aplicacion)}
-                minLength={10}
-                maxLength={20000}
-                placeholder="Describe lo revisado, fecha exacta del documento cuando la conozcas y pega aquí los enlaces de evidencia."
-                required
-              />
-            </label>
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-slate-500">{contenido.length.toLocaleString("es-CO")} / 20.000 caracteres</p>
-              <button
-                type="submit"
-                disabled={guardando || aplicando || Boolean(aplicacion) || !empresaId || contenido.trim().length < 10}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-5 text-sm font-black text-white shadow-sm hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {guardando ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
-                {guardando ? "Guardando y analizando..." : "Guardar y analizar"}
-              </button>
+          <label className="block">
+            <FieldLabel icon={<ClipboardList size={14} />}>
+              Registro de Bitácora
+            </FieldLabel>
+            <textarea
+              className={`${INPUT_CLASS} min-h-[220px] resize-y leading-6 sm:min-h-[260px]`}
+              value={contenido}
+              onChange={(event) => setContenido(event.target.value)}
+              disabled={guardando || aplicando || Boolean(aplicacion)}
+              minLength={10}
+              maxLength={20000}
+              placeholder="Describe lo revisado, incluye la fecha exacta del documento cuando la conozcas y pega aquí los enlaces de evidencia."
+              required
+            />
+          </label>
+
+          <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-xs leading-5 text-slate-500">
+              <p>{contenido.length.toLocaleString("es-CO")} / 20.000 caracteres</p>
+              <p className="hidden sm:block">
+                La fecha efectiva corresponde a la visita o revisión, no a la fecha documental.
+              </p>
             </div>
+            <button
+              type="submit"
+              disabled={
+                guardando ||
+                aplicando ||
+                Boolean(aplicacion) ||
+                !empresaId ||
+                contenido.trim().length < 10
+              }
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-cyan-700 px-5 text-sm font-medium text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            >
+              {guardando ? (
+                <Loader2 className="animate-spin" size={17} />
+              ) : (
+                <Save size={17} />
+              )}
+              {guardando ? "Analizando…" : "Guardar y analizar"}
+            </button>
           </div>
         </form>
       </section>
 
       {error && (
-        <section className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800 shadow-sm">
+        <section className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
           <div className="flex gap-2">
-            <TriangleAlert className="mt-0.5 shrink-0" size={18} />
+            <TriangleAlert className="mt-0.5 shrink-0" size={17} />
             <div>
-              <p className="font-bold">No fue posible completar la operación</p>
+              <p className="font-medium">No fue posible completar la operación</p>
               <p className="mt-1 leading-6">{error}</p>
             </div>
           </div>
@@ -456,26 +527,44 @@ export default function BitacoraOperativaPage() {
       )}
 
       {resultado && (
-        <section className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 p-5 sm:p-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700"><FileCheck2 size={20} /></div>
-                <div>
-                  <h2 className="text-lg font-black text-slate-950">Bitácora guardada y analizada</h2>
-                  <p className="mt-1 text-sm text-slate-600">Los aspectos reconocidos permanecen visibles aunque su calificación no cambie.</p>
-                </div>
+        <section className="rounded-[1.4rem] border border-slate-200 bg-white shadow-sm">
+          <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+                <FileCheck2 size={18} />
               </div>
-              <span className="text-xs text-slate-500">Registro {resultado.registro.id.slice(0, 8)} · {fechaLegible(resultado.registro.fechaEfectiva)}</span>
+              <div>
+                <h2 className="text-base font-semibold text-slate-950">
+                  Bitácora guardada y analizada
+                </h2>
+                <p className="mt-0.5 text-sm text-slate-500">
+                  Revisa únicamente lo que Stack44 relacionó directamente.
+                </p>
+              </div>
             </div>
+            <span className="text-xs text-slate-400">
+              {resultado.registro.id.slice(0, 8)} · {fechaLegible(resultado.registro.fechaEfectiva)}
+            </span>
           </div>
 
-          <div className="space-y-5 p-5 sm:p-6">
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <Metric label="Aspectos reconocidos" value={resultado.resumen.totalAspectosReconocidos ?? reconocidos.length} caption="Relacionados directamente" />
-              <Metric label="Cambios / soporte" value={resultado.resumen.totalEvaluacionesPropuestas} caption="Listos para aplicar" />
-              <Metric label="Evidencias detectadas" value={resultado.resumen.totalEvidenciasDetectadas} caption="URLs asociadas" />
-              <Metric label="Requieren revisión" value={resultado.resumen.totalRequierenRevision} caption="No se aplican solos" />
+          <div className="space-y-5 p-4 sm:p-5">
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+              <Metric
+                label="Reconocidos"
+                value={resultado.resumen.totalAspectosReconocidos ?? reconocidos.length}
+              />
+              <Metric
+                label="Cambios / soporte"
+                value={resultado.resumen.totalEvaluacionesPropuestas}
+              />
+              <Metric
+                label="Evidencias"
+                value={resultado.resumen.totalEvidenciasDetectadas}
+              />
+              <Metric
+                label="Revisión"
+                value={resultado.resumen.totalRequierenRevision}
+              />
             </div>
 
             {reconocidos.length === 0 ? (
@@ -483,44 +572,104 @@ export default function BitacoraOperativaPage() {
                 La IA no encontró un aspecto con soporte directo suficiente en este registro.
               </div>
             ) : (
-              <div className="overflow-hidden rounded-2xl border border-slate-200">
-                {reconocidos.map((propuesta, index) => {
+              <div className="space-y-3">
+                {reconocidos.map((propuesta) => {
                   const aspecto = aspectoDe(propuesta, resultado);
                   const soporteNuevo = esSoporteNuevo(propuesta);
-                  const cambia = propuesta.accion === "PROPONER_EVALUACION" && propuesta.estadoActual !== propuesta.estadoPropuesto;
-                  const etiqueta = cambia ? "Cambio propuesto" : soporteNuevo ? "Soporte nuevo" : propuesta.accion === "SIN_CAMBIO" ? "Sin cambio" : "Reconocido";
+                  const cambia =
+                    propuesta.accion === "PROPONER_EVALUACION" &&
+                    propuesta.estadoActual !== propuesta.estadoPropuesto;
+                  const etiqueta = cambia
+                    ? "Cambio propuesto"
+                    : soporteNuevo
+                      ? "Soporte nuevo"
+                      : propuesta.accion === "SIN_CAMBIO"
+                        ? "Sin cambio"
+                        : "Reconocido";
 
                   return (
-                    <article key={propuesta.aspectoId} className={`p-4 ${index > 0 ? "border-t border-slate-200" : ""}`}>
+                    <article
+                      key={propuesta.aspectoId}
+                      className="rounded-2xl border border-slate-200 bg-white p-4"
+                    >
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                         <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-xs font-black text-cyan-700">{aspecto.codigo}</span>
-                            <span className="text-xs text-slate-300">·</span>
-                            <span className="text-xs font-bold text-slate-500">Confianza {Math.round(propuesta.confianza * 100)}%</span>
-                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${
-                              cambia ? "bg-emerald-50 text-emerald-700" : soporteNuevo ? "bg-violet-50 text-violet-700" : "bg-slate-100 text-slate-600"
-                            }`}>{etiqueta}</span>
+                          <div className="flex flex-wrap items-center gap-2 text-xs">
+                            <span className="font-semibold text-cyan-700">{aspecto.codigo}</span>
+                            <span className="text-slate-300">·</span>
+                            <span className="text-slate-500">
+                              {Math.round(propuesta.confianza * 100)}% confianza
+                            </span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
+                                cambia
+                                  ? "bg-emerald-50 text-emerald-700"
+                                  : soporteNuevo
+                                    ? "bg-violet-50 text-violet-700"
+                                    : "bg-slate-100 text-slate-600"
+                              }`}
+                            >
+                              {etiqueta}
+                            </span>
                           </div>
-                          <p className="mt-1 text-sm font-bold text-slate-950">{aspecto.nombre}</p>
-                          <p className="mt-2 text-sm leading-6 text-slate-600">{propuesta.justificacionTecnica}</p>
+                          <h3 className="mt-1 text-sm font-semibold leading-5 text-slate-950">
+                            {aspecto.nombre}
+                          </h3>
+                          <p className="mt-2 text-sm leading-6 text-slate-600">
+                            {recortar(
+                              propuesta.evidenciaBitacora || propuesta.justificacionTecnica,
+                              180
+                            )}
+                          </p>
+
                           <div className="mt-3 flex flex-wrap gap-2 text-xs">
                             {propuesta.fechaDocumento && (
-                              <span className="rounded-lg bg-slate-50 px-2.5 py-1.5 font-semibold text-slate-600 ring-1 ring-slate-200">Fecha documental: {fechaLegible(propuesta.fechaDocumento)}</span>
+                              <span className="rounded-lg bg-slate-50 px-2.5 py-1.5 text-slate-600 ring-1 ring-slate-200">
+                                Fecha documental: {fechaLegible(propuesta.fechaDocumento)}
+                              </span>
                             )}
                             {propuesta.evidenciasUrls.map((url) => (
-                              <a key={url} href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-50 px-2.5 py-1.5 font-bold text-cyan-700 ring-1 ring-cyan-200 hover:bg-cyan-100">
-                                <Link2 size={13} /> Evidencia detectada <ExternalLink size={12} />
+                              <a
+                                key={url}
+                                href={url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-50 px-2.5 py-1.5 font-medium text-cyan-700 ring-1 ring-cyan-200 hover:bg-cyan-100"
+                              >
+                                <Link2 size={13} /> Evidencia <ExternalLink size={12} />
                               </a>
                             ))}
                           </div>
+
+                          <details className="group mt-3">
+                            <summary className="inline-flex cursor-pointer list-none items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-800">
+                              Ver detalle técnico
+                              <ChevronDown
+                                size={14}
+                                className="transition group-open:rotate-180"
+                              />
+                            </summary>
+                            <div className="mt-2 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-600">
+                              <p>{propuesta.justificacionTecnica}</p>
+                              {propuesta.reglaAplicada && (
+                                <p className="mt-2 text-slate-500">
+                                  Regla: {propuesta.reglaAplicada}
+                                </p>
+                              )}
+                            </div>
+                          </details>
                         </div>
-                        <div className="flex shrink-0 items-center gap-2 text-sm">
-                          <span className="rounded-lg bg-slate-100 px-2.5 py-1.5 font-semibold text-slate-600">{estadoLegible(propuesta.estadoActual)} · {notaEstado(propuesta.estadoActual)}</span>
+
+                        <div className="flex shrink-0 flex-wrap items-center gap-2 text-xs lg:justify-end">
+                          <span className="rounded-lg bg-slate-100 px-2.5 py-1.5 text-slate-600">
+                            {estadoLegible(propuesta.estadoActual)} · {notaEstado(propuesta.estadoActual)}
+                          </span>
                           {propuesta.accion === "PROPONER_EVALUACION" && (
                             <>
-                              <ArrowRight size={14} className="text-slate-400" />
-                              <span className="rounded-lg bg-emerald-50 px-2.5 py-1.5 font-black text-emerald-700">{estadoLegible(propuesta.estadoPropuesto)} · {propuesta.calificacionAdministrativaPropuesta ?? "—"}</span>
+                              <ArrowRight size={13} className="text-slate-400" />
+                              <span className="rounded-lg bg-emerald-50 px-2.5 py-1.5 font-medium text-emerald-700">
+                                {estadoLegible(propuesta.estadoPropuesto)} · {propuesta.calificacionAdministrativaPropuesta ?? "—"}
+                              </span>
                             </>
                           )}
                         </div>
@@ -533,26 +682,51 @@ export default function BitacoraOperativaPage() {
 
             {resultado.resumen.totalRequierenRevision > 0 && (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                <div className="flex gap-2"><TriangleAlert className="mt-0.5 shrink-0" size={18} /><span>{resultado.resumen.totalRequierenRevision} aspecto(s) necesitan información adicional o revisión humana.</span></div>
+                <div className="flex gap-2">
+                  <TriangleAlert className="mt-0.5 shrink-0" size={17} />
+                  <span>
+                    {resultado.resumen.totalRequierenRevision} aspecto(s) necesitan información adicional o revisión humana.
+                  </span>
+                </div>
               </div>
             )}
 
             {aplicables.length > 0 && !aplicacion && (
               <div>
-                <button type="button" onClick={() => setDetalleAbierto((actual) => !actual)} className="inline-flex items-center gap-2 text-sm font-bold text-cyan-700 hover:text-cyan-800">
-                  {detalleAbierto ? <ChevronUp size={17} /> : <ChevronDown size={17} />}
+                <button
+                  type="button"
+                  onClick={() => setDetalleAbierto((actual) => !actual)}
+                  className="inline-flex items-center gap-2 text-sm font-medium text-cyan-700 hover:text-cyan-900"
+                >
+                  <ChevronDown
+                    size={16}
+                    className={`transition ${detalleAbierto ? "rotate-180" : ""}`}
+                  />
                   {detalleAbierto ? "Ocultar selección" : "Ver detalle y excluir algo"}
                 </button>
+
                 {detalleAbierto && (
                   <div className="mt-3 space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
                     {aplicables.map((propuesta) => {
                       const aspecto = aspectoDe(propuesta, resultado);
                       return (
-                        <label key={propuesta.aspectoId} className="flex cursor-pointer items-start gap-3 rounded-xl bg-white p-3 ring-1 ring-slate-200">
-                          <input type="checkbox" checked={!excluidos.has(propuesta.aspectoId)} onChange={() => alternar(propuesta.aspectoId)} className="mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" />
-                          <div>
-                            <p className="text-sm font-bold text-slate-900">{aspecto.codigo} · {aspecto.nombre}</p>
-                            <p className="mt-1 text-xs leading-5 text-slate-500">{propuesta.justificacionTecnica}</p>
+                        <label
+                          key={propuesta.aspectoId}
+                          className="flex cursor-pointer items-start gap-3 rounded-xl bg-white p-3 ring-1 ring-slate-200"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={!excluidos.has(propuesta.aspectoId)}
+                            onChange={() => alternar(propuesta.aspectoId)}
+                            className="mt-1 h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+                          />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-slate-900">
+                              {aspecto.codigo} · {aspecto.nombre}
+                            </p>
+                            <p className="mt-1 text-xs leading-5 text-slate-500">
+                              {recortar(propuesta.justificacionTecnica, 180)}
+                            </p>
                           </div>
                         </label>
                       );
@@ -563,26 +737,60 @@ export default function BitacoraOperativaPage() {
             )}
 
             {!aplicacion ? (
-              <div className="flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs leading-5 text-slate-500">Si solo hubo reconocimiento sin cambio ni soporte nuevo, el registro queda guardado y no requiere aplicación.</p>
-                <button type="button" onClick={aplicar} disabled={aplicando || seleccionadas.length === 0} className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-black text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">
-                  {aplicando ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
-                  {aplicando ? "Aplicando..." : excluidos.size > 0 ? "Aprobar y aplicar selección" : "Aprobar y aplicar todo"}
+              <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs leading-5 text-slate-500">
+                  Si solo hubo reconocimiento sin cambio ni soporte nuevo, el registro queda guardado y no requiere aplicación.
+                </p>
+                <button
+                  type="button"
+                  onClick={aplicar}
+                  disabled={aplicando || seleccionadas.length === 0}
+                  className="inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 text-sm font-medium text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                >
+                  {aplicando ? (
+                    <Loader2 className="animate-spin" size={17} />
+                  ) : (
+                    <Sparkles size={17} />
+                  )}
+                  {aplicando
+                    ? "Aplicando…"
+                    : excluidos.size > 0
+                      ? "Aprobar y aplicar selección"
+                      : "Aprobar y aplicar todo"}
                 </button>
               </div>
             ) : (
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 sm:p-5">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex gap-3">
-                    <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-700" size={22} />
+                    <CheckCircle2
+                      className="mt-0.5 shrink-0 text-emerald-700"
+                      size={20}
+                    />
                     <div>
-                      <p className="font-black text-emerald-950">Bitácora aplicada correctamente</p>
-                      <p className="mt-1 text-sm text-emerald-800">{aplicacion.evaluaciones.length} evaluación(es) registradas · {aplicacion.totalEvidenciasVinculadas} evidencia(s) vinculadas.</p>
+                      <p className="font-semibold text-emerald-950">
+                        Bitácora aplicada correctamente
+                      </p>
+                      <p className="mt-1 text-sm text-emerald-800">
+                        {aplicacion.evaluaciones.length} evaluación(es) registradas · {aplicacion.totalEvidenciasVinculadas} evidencia(s) vinculadas.
+                      </p>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button type="button" onClick={() => navigate(rutaEvaluacion(empresaId))} className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-black text-white hover:bg-emerald-800">Ver cambios en evaluación <ArrowRight size={15} /></button>
-                    <button type="button" onClick={nuevaBitacora} className="inline-flex min-h-10 items-center rounded-xl border border-emerald-300 bg-white px-4 text-sm font-bold text-emerald-800 hover:bg-emerald-100">Nueva Bitácora</button>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() => navigate(rutaEvaluacion(empresaId))}
+                      className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-medium text-white hover:bg-emerald-800"
+                    >
+                      Ver cambios <ArrowRight size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={nuevaBitacora}
+                      className="inline-flex min-h-10 items-center justify-center rounded-xl border border-emerald-300 bg-white px-4 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
+                    >
+                      Nueva Bitácora
+                    </button>
                   </div>
                 </div>
               </div>
@@ -591,53 +799,102 @@ export default function BitacoraOperativaPage() {
         </section>
       )}
 
-      <section className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <section className="rounded-[1.4rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700"><History size={19} /></div>
+          <div className="flex items-start gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+              <History size={17} />
+            </div>
             <div>
-              <h2 className="text-lg font-black text-slate-950">Histórico de actividades, revisiones y hallazgos</h2>
-              <p className="text-xs text-slate-500">Incluye Bitácora asistida y evaluaciones manuales de la empresa.</p>
+              <h2 className="text-base font-semibold text-slate-950">
+                Histórico
+              </h2>
+              <p className="mt-0.5 text-sm text-slate-500">
+                Bitácora asistida y evaluaciones manuales de la empresa.
+              </p>
             </div>
           </div>
-          {loadingHistorial && <Loader2 className="animate-spin text-slate-400" size={18} />}
+          {loadingHistorial && (
+            <Loader2 className="animate-spin text-slate-400" size={17} />
+          )}
         </div>
 
-        <div className="mt-5">
+        <div className="mt-4 divide-y divide-slate-100">
           {!loadingHistorial && historial.length === 0 && (
-            <div className="rounded-xl border border-dashed border-slate-200 p-5 text-center text-sm text-slate-500">Aún no hay registros para esta empresa.</div>
+            <div className="rounded-xl border border-dashed border-slate-200 p-5 text-center text-sm text-slate-500">
+              Aún no hay registros para esta empresa.
+            </div>
           )}
-          {historial.slice(0, 8).map((registro, index) => (
-            <article key={registro.id} className={`py-4 ${index > 0 ? "border-t border-slate-200" : ""}`}>
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-black text-slate-950">{fechaLegible(registro.fechaEfectiva)}</span>
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${registro.fuente === "BITACORA_IA" ? "bg-cyan-50 text-cyan-700" : "bg-violet-50 text-violet-700"}`}>
-                      {registro.fuente === "BITACORA_IA" ? "Bitácora" : "Evaluación manual"}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-slate-700">{recortar(registro.contenidoOriginal)}</p>
-                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                    <span>{registro.autor?.nombre ?? "Usuario"}</span>
-                    {registro.resultado && <span className="font-bold text-slate-700">Resultado: {estadoLegible(registro.resultado.estadoCumplimiento)} · {registro.resultado.calificacionAdministrativa}</span>}
-                    {registro.evidenciasUrls.length > 0 && <span className="font-bold text-cyan-700">{registro.evidenciasUrls.length} evidencia(s)</span>}
-                  </div>
+
+          {historial.slice(0, 8).map((registro) => (
+            <article
+              key={registro.id}
+              className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 lg:flex-row lg:items-start lg:justify-between"
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium text-slate-900">
+                    {fechaLegible(registro.fechaEfectiva)}
+                  </span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${
+                      registro.fuente === "BITACORA_IA"
+                        ? "bg-cyan-50 text-cyan-700"
+                        : "bg-violet-50 text-violet-700"
+                    }`}
+                  >
+                    {registro.fuente === "BITACORA_IA"
+                      ? "Bitácora"
+                      : "Evaluación manual"}
+                  </span>
                 </div>
-                {registro.aspectos[0] && (
-                  <button type="button" onClick={() => navigate(rutaEvaluacion(empresaId, registro.aspectos[0].nombre))} className="inline-flex min-h-9 shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 hover:bg-slate-50">
-                    <SearchCheck size={14} /> Ver en evaluación
-                  </button>
-                )}
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {recortar(registro.contenidoOriginal)}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                  <span>{registro.autor?.nombre ?? "Usuario"}</span>
+                  {registro.resultado && (
+                    <span className="font-medium text-slate-700">
+                      Resultado: {estadoLegible(registro.resultado.estadoCumplimiento)} · {registro.resultado.calificacionAdministrativa}
+                    </span>
+                  )}
+                  {registro.evidenciasUrls.length > 0 && (
+                    <span className="font-medium text-cyan-700">
+                      {registro.evidenciasUrls.length} evidencia(s)
+                    </span>
+                  )}
+                </div>
               </div>
+
+              {registro.aspectos[0] && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate(
+                      rutaEvaluacion(empresaId, registro.aspectos[0].nombre)
+                    )
+                  }
+                  className="inline-flex min-h-9 w-full shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 sm:w-auto"
+                >
+                  <SearchCheck size={14} /> Ver en evaluación
+                </button>
+              )}
             </article>
           ))}
         </div>
 
         {historial.length > 8 && (
-          <div className="mt-3 flex items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-xs text-slate-600">
-            <span>Se muestran los 8 registros más recientes de {historial.length} cargados.</span>
-            <button type="button" onClick={exportarPdf} className="inline-flex items-center gap-1.5 font-bold text-cyan-700 hover:text-cyan-800"><FileText size={14} /> Exportar histórico completo</button>
+          <div className="mt-4 flex flex-col gap-2 rounded-xl bg-slate-50 px-4 py-3 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+            <span>
+              Se muestran los 8 registros más recientes de {historial.length} cargados.
+            </span>
+            <button
+              type="button"
+              onClick={exportarPdf}
+              className="inline-flex items-center gap-1.5 font-medium text-cyan-700 hover:text-cyan-900"
+            >
+              <FileText size={14} /> Exportar histórico completo
+            </button>
           </div>
         )}
       </section>
@@ -645,20 +902,28 @@ export default function BitacoraOperativaPage() {
   );
 }
 
-function Metric({
-  label,
-  value,
-  caption,
+function FieldLabel({
+  children,
+  icon,
 }: {
-  label: string;
-  value: number;
-  caption: string;
+  children: React.ReactNode;
+  icon?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-      <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">{label}</p>
-      <p className="mt-1 text-2xl font-black text-slate-950">{value}</p>
-      <p className="mt-1 text-xs text-slate-500">{caption}</p>
+    <span className="mb-1.5 flex items-center gap-2 text-xs font-medium text-slate-500">
+      {icon}
+      {children}
+    </span>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+      <p className="text-[11px] text-slate-500">{label}</p>
+      <p className="mt-1 text-xl font-semibold tracking-tight text-slate-950">
+        {value}
+      </p>
     </div>
   );
 }
