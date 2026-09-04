@@ -494,6 +494,7 @@ export default function BitacoraOperativaPage() {
             </div>
             <button
               type="submit"
+              aria-busy={guardando}
               disabled={
                 guardando ||
                 aplicando ||
@@ -501,7 +502,11 @@ export default function BitacoraOperativaPage() {
                 !empresaId ||
                 contenido.trim().length < 10
               }
-              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-cyan-700 px-5 text-sm font-medium text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              className={`inline-flex min-h-11 w-full items-center justify-center gap-2 overflow-hidden whitespace-nowrap rounded-xl bg-cyan-700 px-5 text-sm font-medium text-white transition-colors hover:bg-cyan-800 sm:w-[190px] ${
+                guardando
+                  ? "cursor-wait opacity-100"
+                  : "disabled:cursor-not-allowed disabled:opacity-50"
+              }`}
             >
               {guardando ? (
                 <Loader2 className="animate-spin" size={17} />
