@@ -143,6 +143,53 @@ function esSoporteNuevo(propuesta: PropuestaAspectoBitacora): boolean {
   );
 }
 
+function calificacionReferencia(
+  propuesta: PropuestaAspectoBitacora
+): 0 | 3 | 5 | null {
+  if (propuesta.calificacionAdministrativaPropuesta !== null) {
+    return propuesta.calificacionAdministrativaPropuesta;
+  }
+
+  if (propuesta.estadoActual === "CUMPLIDO" || propuesta.estadoActual === "NO_APLICA") {
+    return 5;
+  }
+  if (propuesta.estadoActual === "PARCIAL") return 3;
+  if (propuesta.estadoActual === "NO_CUMPLIDO") return 0;
+  return null;
+}
+
+function listaUnicaLimpia(valores: Array<string[] | undefined>): string[] {
+  return [
+    ...new Set(
+      valores
+        .flatMap((valor) => valor ?? [])
+        .map((valor) => valor.trim())
+        .filter(Boolean)
+    ),
+  ];
+}
+
+function brechasCumplimientoParaCinco(
+  propuesta: PropuestaAspectoBitacora
+): string[] {
+  if (
+    calificacionReferencia(propuesta) === 5 ||
+    propuesta.relacionSemantica === "CONTEXTUAL"
+  ) {
+    return [];
+  }
+
+  const elementosNoEvaluados = listaUnicaLimpia([
+    propuesta.elementosNoEvaluados,
+  ]);
+
+  if (elementosNoEvaluados.length > 0) {
+    return elementosNoEvaluados;
+  }
+
+  return listaUnicaLimpia([propuesta.informacionFaltante]);
+}
+
 export default function BitacoraOperativaPage() {
   const { token } = useAuth();
   const navigate = useNavigate();
@@ -581,6 +628,11 @@ export default function BitacoraOperativaPage() {
                 {reconocidos.map((propuesta) => {
                   const aspecto = aspectoDe(propuesta, resultado);
                   const soporteNuevo = esSoporteNuevo(propuesta);
+                  const brechasCumplimiento =
+                    brechasCumplimientoParaCinco(propuesta);
+                  const mostrarBrechaCinco =
+                    calificacionReferencia(propuesta) !== 5 &&
+                    propuesta.relacionSemantica !== "CONTEXTUAL";
                   const cambia =
                     propuesta.accion === "PROPONER_EVALUACION" &&
                     propuesta.estadoActual !== propuesta.estadoPropuesto;
@@ -660,6 +712,28 @@ export default function BitacoraOperativaPage() {
                                 <p className="mt-2 text-slate-500">
                                   Regla: {propuesta.reglaAplicada}
                                 </p>
+                              )}
+
+                              {mostrarBrechaCinco && (
+                                <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-amber-950">
+                                  <p className="font-semibold">
+                                    Para llegar a 5 en cumplimiento SG-SST
+                                  </p>
+                                  {brechasCumplimiento.length > 0 ? (
+                                    <ul className="mt-1.5 list-disc space-y-1 pl-4 text-amber-900">
+                                      {brechasCumplimiento.map((brecha) => (
+                                        <li key={brecha}>{brecha}</li>
+                                      ))}
+                                    </ul>
+                                  ) : (
+                                    <p className="mt-1.5 text-amber-900">
+                                      La evidencia analizada todavía no acredita todas las condiciones materiales exigidas para cumplimiento total de este aspecto. Completa la verificación del requisito conforme a la regla técnica mostrada arriba.
+                                    </p>
+                                  )}
+                                  <p className="mt-2 text-[11px] text-amber-800">
+                                    Esta brecha describe cumplimiento del requisito SG-SST; no corresponde al porcentaje de confianza de la IA.
+                                  </p>
+                                </div>
                               )}
                             </div>
                           </details>
