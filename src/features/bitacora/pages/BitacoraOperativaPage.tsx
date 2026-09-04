@@ -749,19 +749,28 @@ export default function BitacoraOperativaPage() {
                 <button
                   type="button"
                   onClick={aplicar}
+                  aria-busy={aplicando}
                   disabled={aplicando || seleccionadas.length === 0}
-                  className="inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 text-sm font-medium text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                  className={`inline-flex min-h-11 w-full shrink-0 items-center justify-center overflow-hidden whitespace-nowrap rounded-xl bg-emerald-700 px-5 text-sm font-medium text-white transition-colors hover:bg-emerald-800 sm:w-[240px] ${
+                    aplicando
+                      ? "cursor-wait opacity-100"
+                      : "disabled:cursor-not-allowed disabled:opacity-50"
+                  }`}
                 >
-                  {aplicando ? (
-                    <Loader2 className="animate-spin" size={17} />
-                  ) : (
-                    <Sparkles size={17} />
-                  )}
-                  {aplicando
-                    ? "Aplicando…"
-                    : excluidos.size > 0
-                      ? "Aprobar y aplicar selección"
-                      : "Aprobar y aplicar todo"}
+                  <span className="inline-flex min-w-0 items-center justify-center gap-2">
+                    {aplicando ? (
+                      <Loader2 className="shrink-0 animate-spin" size={17} />
+                    ) : (
+                      <Sparkles className="shrink-0" size={17} />
+                    )}
+                    <span>
+                      {aplicando
+                        ? "Aplicando…"
+                        : excluidos.size > 0
+                          ? "Aprobar y aplicar selección"
+                          : "Aprobar y aplicar todo"}
+                    </span>
+                  </span>
                 </button>
               </div>
             ) : (
