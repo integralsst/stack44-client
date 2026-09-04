@@ -24,6 +24,16 @@ export type EstadoProcesamientoBitacora =
   | "APLICADA"
   | "ERROR";
 
+export type AlcanceEvaluacionBitacora = "EVALUADO" | "EXCLUIDO";
+
+export type RelacionSemanticaBitacora = "DIRECTA" | "CONTEXTUAL";
+
+export type CoberturaRequisitoBitacora =
+  | "COMPLETA"
+  | "PARCIAL"
+  | "INDETERMINADA"
+  | "NO_APLICA";
+
 export interface AnalizarBitacoraShadowInput {
   fechaEfectiva: string;
   contenido: string;
@@ -48,6 +58,12 @@ export interface AspectoCandidatoBitacora {
 export interface PropuestaAspectoBitacora {
   aspectoId: number;
   identidadHistorica: string;
+  alcanceEvaluacion?: AlcanceEvaluacionBitacora;
+  relacionSemantica?: RelacionSemanticaBitacora;
+  unidadVerificacionIds?: string[];
+  coberturaRequisito?: CoberturaRequisitoBitacora;
+  elementosEvaluados?: string[];
+  elementosNoEvaluados?: string[];
   accion: AccionAnalisisBitacora;
   estadoActual: EstadoCumplimientoBitacora | null;
   estadoPropuesto: EstadoCumplimientoBitacora | null;
