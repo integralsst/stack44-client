@@ -34,6 +34,14 @@ export type CoberturaRequisitoBitacora =
   | "INDETERMINADA"
   | "NO_APLICA";
 
+export type TipoUrlBitacora =
+  | "EVIDENCIA_DIRECTA"
+  | "RECURSO_ACCION"
+  | "REFERENCIA"
+  | "CONTACTO";
+
+export type DecisionEvidenciaBitacora = "CONFIRMAR" | "DESCARTAR";
+
 export interface AnalizarBitacoraShadowInput {
   fechaEfectiva: string;
   contenido: string;
@@ -43,8 +51,15 @@ export interface AnalizarBitacoraShadowInput {
 
 export type CrearRegistroBitacoraInput = AnalizarBitacoraShadowInput;
 
+export interface DecisionEvidenciaBitacoraInput {
+  url: string;
+  decision: DecisionEvidenciaBitacora;
+  aspectoIds?: number[];
+}
+
 export interface AplicarRegistroBitacoraInput {
   excluirAspectoIds?: number[];
+  decisionesEvidencia?: DecisionEvidenciaBitacoraInput[];
 }
 
 export interface AspectoCandidatoBitacora {
@@ -53,6 +68,21 @@ export interface AspectoCandidatoBitacora {
   codigo: string | null;
   nombre: string;
   puntajeRecuperacion: number;
+}
+
+export interface ClasificacionUrlBitacora {
+  url: string;
+  tipo: TipoUrlBitacora;
+  unidadVerificacionIds: string[];
+  descripcion: string;
+}
+
+export interface EvidenciaPendienteConfirmacionBitacora {
+  url: string;
+  tipoSugerido: TipoUrlBitacora;
+  descripcionSugerida: string;
+  aspectoIdsSugeridos: number[];
+  unidadVerificacionIds: string[];
 }
 
 export interface PropuestaAspectoBitacora {
@@ -70,6 +100,7 @@ export interface PropuestaAspectoBitacora {
   calificacionAdministrativaPropuesta: 0 | 3 | 5 | null;
   evidenciaBitacora: string | null;
   evidenciasUrls: string[];
+  clasificacionUrls?: ClasificacionUrlBitacora[];
   fechaEfectiva: string;
   fechaDocumento: string | null;
   justificacionTecnica: string;
@@ -148,6 +179,7 @@ export interface ResultadoBitacoraAsistida {
     modelo: string;
     versionPrompt: string;
     propuestas: PropuestaAspectoBitacora[];
+    evidenciasPendientesConfirmacion?: EvidenciaPendienteConfirmacionBitacora[];
   };
   resumen: ResumenBitacora;
   estadoProcesamiento: EstadoProcesamientoBitacora;
@@ -158,6 +190,7 @@ export interface AplicacionBitacora {
   aplicadaEn: string;
   aplicadaPorUsuarioId: string;
   aspectoIdsExcluidos: number[];
+  evidenciasDecididas?: DecisionEvidenciaBitacoraInput[];
   evaluaciones: Array<{
     id: string;
     aspectoId: number;
