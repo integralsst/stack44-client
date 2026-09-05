@@ -180,8 +180,14 @@ export default function GlobalSelectDropdown() {
         event.target instanceof Node &&
         !panelRef.current.contains(event.target)
       ) {
-        close(false);
+        close(true);
       }
+    };
+
+    const suppressNativeOpen = (event: MouseEvent) => {
+      const target = event.target as Element | null;
+      const select = target?.closest?.(SELECTOR) ?? null;
+      if (isEligibleSelect(select)) event.preventDefault();
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -205,9 +211,13 @@ export default function GlobalSelectDropdown() {
     };
 
     document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("mousedown", suppressNativeOpen, true);
+    document.addEventListener("click", suppressNativeOpen, true);
     document.addEventListener("keydown", onKeyDown, true);
     return () => {
       document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("mousedown", suppressNativeOpen, true);
+      document.removeEventListener("click", suppressNativeOpen, true);
       document.removeEventListener("keydown", onKeyDown, true);
     };
   }, [close, openSelect]);
@@ -242,13 +252,16 @@ export default function GlobalSelectDropdown() {
     window.requestAnimationFrame(() => (selected ?? fallback)?.focus());
   }, [open, options, mobile]);
 
-  const choose = (value: string) => {
-    const select = activeSelectRef.current;
-    if (!select) return;
-    setNativeSelectValue(select, value);
-    setSelectedValue(value);
-    close(true);
-  };
+  const choose = useCallback(
+    (value: string) => {
+      const select = activeSelectRef.current;
+      if (!select) return;
+      setNativeSelectValue(select, value);
+      setSelectedValue(value);
+      close(true);
+    },
+    [close]
+  );
 
   const optionButtons = useMemo(
     () =>
@@ -282,7 +295,7 @@ export default function GlobalSelectDropdown() {
           </button>
         );
       }),
-    [dark, options, selectedValue]
+    [choose, dark, options, selectedValue]
   );
 
   const handleMenuKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
