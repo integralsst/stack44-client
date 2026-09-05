@@ -3,8 +3,11 @@ import {
   ArrowRight,
   Building2,
   CheckCircle2,
+  ClipboardList,
+  FileText,
   ListChecks,
   MapPin,
+  Search,
   ShieldCheck,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -142,6 +145,7 @@ export default function Dashboard() {
       : 100;
   const visibleCompanies = activeCompanies.slice(0, 5);
   const isInternal = INTERNAL_ROLES.has(user.role);
+  const categoryCounts = actions?.categorias;
 
   const operationTitle =
     urgentCount > 0
@@ -149,6 +153,8 @@ export default function Dashboard() {
       : pendingCount > 0
         ? `${pendingCount} ${pendingCount === 1 ? "pendiente" : "pendientes"}`
         : "Operación al día";
+
+  const secondaryLoading = loading || !canViewActions;
 
   return (
     <div className="mx-auto w-full max-w-[1180px] space-y-5 pb-8">
@@ -197,6 +203,33 @@ export default function Dashboard() {
           icon={<AlertTriangle size={17} />}
           attention={urgentCount > 0}
           danger={urgentCount > 0}
+        />
+      </section>
+
+      <section
+        aria-label="Carga operativa por tipo"
+        className="grid gap-3 sm:grid-cols-3"
+      >
+        <Kpi
+          label="Gestiones por atender"
+          value={secondaryLoading ? "—" : String(categoryCounts?.GESTIONES ?? 0)}
+          hint="Seguimientos operativos"
+          icon={<ClipboardList size={17} />}
+          accent
+        />
+        <Kpi
+          label="Evidencias por revisar"
+          value={secondaryLoading ? "—" : String(categoryCounts?.EVIDENCIAS ?? 0)}
+          hint="Soportes pendientes"
+          icon={<FileText size={17} />}
+          accent
+        />
+        <Kpi
+          label="Revisión técnica"
+          value={secondaryLoading ? "—" : String(categoryCounts?.REVISION_TECNICA ?? 0)}
+          hint="Validaciones pendientes"
+          icon={<Search size={17} />}
+          accent
         />
       </section>
 
@@ -340,26 +373,39 @@ function Kpi({
   label,
   value,
   icon,
+  hint,
   attention = false,
   danger = false,
+  accent = false,
 }: {
   label: string;
   value: string;
   icon: React.ReactNode;
+  hint?: string;
   attention?: boolean;
   danger?: boolean;
+  accent?: boolean;
 }) {
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-sm text-slate-500">{label}</span>
+    <article className="h-full rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm transition-shadow duration-200 hover:shadow-md">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <span className="block text-sm leading-5 text-slate-500">{label}</span>
+          {hint && (
+            <span className="mt-0.5 block text-[11px] leading-4 text-slate-400">
+              {hint}
+            </span>
+          )}
+        </div>
         <span
-          className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
             danger
               ? "bg-red-50 text-red-700"
               : attention
                 ? "bg-amber-50 text-amber-700"
-                : "bg-slate-100 text-slate-600"
+                : accent
+                  ? "bg-cyan-50 text-cyan-700"
+                  : "bg-slate-100 text-slate-600"
           }`}
         >
           {icon}
