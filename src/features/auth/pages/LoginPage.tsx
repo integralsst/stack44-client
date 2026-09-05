@@ -5,12 +5,9 @@ import {
 
 import {
   ArrowLeft,
-  Building2,
-  ClipboardCheck,
   Loader2,
   Lock,
   Mail,
-  ShieldCheck,
 } from "lucide-react";
 
 import {
@@ -19,8 +16,8 @@ import {
 } from "react-router-dom";
 
 import {
-  motion,
   AnimatePresence,
+  motion,
 } from "framer-motion";
 
 import {
@@ -46,9 +43,7 @@ async function parseResponse<T>(
   const contentType =
     response.headers.get("content-type");
 
-  if (
-    contentType?.includes("application/json")
-  ) {
+  if (contentType?.includes("application/json")) {
     return (await response.json()) as T;
   }
 
@@ -60,35 +55,97 @@ async function parseResponse<T>(
   );
 }
 
-const benefits = [
-  {
-    icon: Building2,
-    title: "Operación multiempresa",
-    description: "Tu alcance, empresas y estado operativo en un solo lugar.",
-  },
-  {
-    icon: ClipboardCheck,
-    title: "Evaluación conectada",
-    description: "Matriz, evidencias, bitácora y seguimiento sin duplicar trabajo.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Acceso por perfil",
-    description: "Cada usuario ve únicamente la información que le corresponde.",
-  },
-] as const;
+function AmbientArtwork() {
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+      aria-hidden="true"
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_18%,rgba(34,211,238,0.10),transparent_30%),radial-gradient(circle_at_78%_72%,rgba(59,130,246,0.08),transparent_34%)]" />
+
+      <motion.div
+        animate={{
+          x: [0, 18, 0],
+          y: [0, -12, 0],
+          scale: [1, 1.06, 1],
+        }}
+        transition={{
+          duration: 14,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute -left-24 top-[14%] h-72 w-72 rounded-full border border-cyan-200/60"
+      />
+
+      <motion.div
+        animate={{
+          x: [0, -16, 0],
+          y: [0, 14, 0],
+          rotate: [0, 8, 0],
+        }}
+        transition={{
+          duration: 18,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute -right-24 bottom-[12%] h-80 w-80 rounded-[38%] border border-blue-200/50"
+      />
+
+      <svg
+        viewBox="0 0 1200 800"
+        className="absolute inset-0 h-full w-full opacity-60"
+        fill="none"
+      >
+        <motion.path
+          d="M70 560 C 230 430, 360 640, 530 510 S 840 350, 1130 470"
+          stroke="url(#login-line)"
+          strokeWidth="1.2"
+          strokeLinecap="round"
+          initial={{ pathLength: 0, opacity: 0 }}
+          animate={{ pathLength: 1, opacity: 1 }}
+          transition={{
+            duration: 2.2,
+            ease: [0.16, 1, 0.3, 1],
+          }}
+        />
+        <defs>
+          <linearGradient
+            id="login-line"
+            x1="70"
+            y1="560"
+            x2="1130"
+            y2="470"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stopColor="#67e8f9" stopOpacity="0" />
+            <stop offset="0.45" stopColor="#22d3ee" stopOpacity="0.42" />
+            <stop offset="0.72" stopColor="#60a5fa" stopOpacity="0.28" />
+            <stop offset="1" stopColor="#93c5fd" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <motion.div
+        animate={{
+          x: [0, 110, 0],
+          opacity: [0.15, 0.45, 0.15],
+        }}
+        transition={{
+          duration: 11,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute left-[22%] top-[68%] h-1.5 w-1.5 rounded-full bg-cyan-500 shadow-[0_0_18px_rgba(6,182,212,0.65)]"
+      />
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] =
-    useState("");
-
-  const [error, setError] = useState<
-    string | null
-  >(null);
-
-  const [isLoading, setIsLoading] =
-    useState(false);
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -173,14 +230,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-slate-50 px-4 py-6 text-slate-950 sm:px-6 sm:py-10 lg:flex lg:items-center lg:justify-center lg:px-8">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(6,182,212,0.12),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.09),_transparent_32%)]" />
-      <div className="pointer-events-none absolute inset-0 opacity-40 [background-image:linear-gradient(to_right,rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.08)_1px,transparent_1px)] [background-size:32px_32px]" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f8fafc] px-4 py-8 text-slate-950 sm:px-6">
+      <AmbientArtwork />
 
-      <motion.div
+      <motion.main
         initial={{
           opacity: 0,
-          y: 18,
+          y: 16,
           scale: 0.985,
         }}
         animate={{
@@ -189,256 +245,151 @@ export default function LoginPage() {
           scale: 1,
         }}
         transition={{
-          duration: 0.55,
+          duration: 0.6,
           ease: [0.16, 1, 0.3, 1],
         }}
-        className="relative mx-auto grid w-full max-w-[1040px] overflow-hidden rounded-[2rem] border border-slate-200/80 bg-white shadow-[0_28px_90px_rgba(15,23,42,0.12)] lg:grid-cols-[1.05fr_0.95fr]"
+        className="relative z-10 w-full max-w-[430px]"
       >
-        <section className="relative hidden min-h-[650px] overflow-hidden border-r border-slate-200/80 bg-gradient-to-br from-cyan-50 via-white to-blue-50 p-10 lg:flex lg:flex-col lg:justify-between xl:p-12">
-          <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-cyan-200/30 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-28 -right-20 h-80 w-80 rounded-full bg-blue-200/25 blur-3xl" />
-
-          <div className="relative">
+        <div className="rounded-[2rem] border border-white/90 bg-white/82 p-5 shadow-[0_28px_90px_rgba(15,23,42,0.10)] backdrop-blur-xl sm:p-7">
+          <div className="mb-7 flex items-center justify-between">
             <Link
               to="/"
-              className="inline-flex items-center gap-3"
               aria-label="Volver al inicio de Stack44"
+              className="group inline-flex items-center gap-3"
             >
-              <span className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-white bg-white shadow-sm">
+              <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm transition-transform duration-300 group-hover:-translate-y-0.5">
                 <img
                   src={Logo}
                   alt="Stack44"
-                  className="h-9 w-auto object-contain"
+                  className="h-8 w-auto object-contain"
                 />
               </span>
-              <span>
-                <span className="block text-sm font-bold tracking-[0.16em] text-slate-950">
-                  STACK4FOUR
-                </span>
-                <span className="mt-0.5 block text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500">
-                  Gestión SG-SST
-                </span>
+              <span className="text-[12px] font-bold tracking-[0.18em] text-slate-900">
+                STACK4FOUR
               </span>
             </Link>
 
-            <div className="mt-14 max-w-md">
-              <span className="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-white/80 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-cyan-800 shadow-sm">
-                <ShieldCheck size={14} />
-                Entorno de trabajo seguro
-              </span>
-              <h2 className="mt-5 text-4xl font-semibold leading-[1.08] tracking-tight text-slate-950 xl:text-[2.7rem]">
-                Todo tu SG-SST,
-                <span className="block text-cyan-700">conectado desde el acceso.</span>
-              </h2>
-              <p className="mt-5 max-w-[430px] text-sm leading-7 text-slate-600">
-                Entra a Stack44 y continúa exactamente donde tu operación necesita atención, sin perder contexto entre empresas, evaluaciones y seguimiento.
-              </p>
-            </div>
+            <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_0_5px_rgba(52,211,153,0.10)]" />
           </div>
 
-          <div className="relative space-y-3">
-            {benefits.map(({ icon: Icon, title, description }) => (
-              <div
-                key={title}
-                className="flex items-start gap-3 rounded-2xl border border-white/80 bg-white/70 p-3.5 shadow-sm backdrop-blur"
-              >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-cyan-700">
-                  <Icon size={17} />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-slate-900">{title}</p>
-                  <p className="mt-0.5 text-xs leading-5 text-slate-500">{description}</p>
-                </div>
-              </div>
-            ))}
+          <div className="mb-7">
+            <h1 className="text-[2rem] font-semibold tracking-[-0.04em] text-slate-950 sm:text-[2.2rem]">
+              Bienvenido.
+            </h1>
+            <p className="mt-1.5 text-sm text-slate-500">
+              Ingresa para continuar.
+            </p>
           </div>
-        </section>
 
-        <section className="flex min-h-[620px] items-center px-5 py-8 sm:px-8 sm:py-10 lg:min-h-[650px] lg:px-10 xl:px-12">
-          <div className="mx-auto w-full max-w-[420px]">
-            <div className="mb-8 flex items-center justify-between lg:hidden">
-              <Link
-                to="/"
-                className="flex items-center gap-2.5"
-                aria-label="Volver al inicio de Stack44"
+          <AnimatePresence mode="wait">
+            {error && (
+              <motion.div
+                key={error}
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                role="alert"
+                className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
               >
-                <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                  <img
-                    src={Logo}
-                    alt="Stack44"
-                    className="h-7 w-auto object-contain"
-                  />
-                </span>
-                <span className="text-sm font-bold tracking-[0.13em] text-slate-950">
-                  STACK4FOUR
-                </span>
-              </Link>
-              <span className="rounded-full bg-cyan-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-800">
-                SG-SST
-              </span>
-            </div>
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-            <div className="mb-8">
-              <span className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.13em] text-cyan-700">
-                <ShieldCheck size={15} />
-                Acceso seguro
-              </span>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950 sm:text-[2.15rem]">
-                Bienvenido de nuevo
-              </h1>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                Ingresa tus credenciales para continuar con tu operación.
-              </p>
-            </div>
-
-            <AnimatePresence mode="wait">
-              {error && (
-                <motion.div
-                  key={error}
-                  initial={{
-                    opacity: 0,
-                    height: 0,
-                    y: -8,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    height: "auto",
-                    y: 0,
-                  }}
-                  exit={{
-                    opacity: 0,
-                    height: 0,
-                    y: -8,
-                  }}
-                  role="alert"
-                  className="mb-5 overflow-hidden rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
-                >
-                  {error}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <form
-              className="space-y-5"
-              onSubmit={handleSubmit}
-            >
-              <div className="space-y-2">
-                <label
-                  htmlFor="login-email"
-                  className="ml-0.5 text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500"
-                >
-                  Correo electrónico
-                </label>
-
-                <div className="group relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                    <Mail className="h-5 w-5 text-slate-400 transition-colors group-focus-within:text-cyan-600" />
-                  </div>
-
-                  <input
-                    id="login-email"
-                    name="email"
-                    type="email"
-                    value={email}
-                    onChange={(event) => {
-                      setEmail(event.target.value);
-
-                      if (error) {
-                        setError(null);
-                      }
-                    }}
-                    placeholder="ejemplo@empresa.com"
-                    autoComplete="email"
-                    autoCapitalize="none"
-                    spellCheck={false}
-                    disabled={isLoading}
-                    required
-                    className="w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 text-sm text-slate-950 shadow-sm outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="ml-0.5 flex items-center justify-between gap-3">
-                  <label
-                    htmlFor="login-password"
-                    className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500"
-                  >
-                    Contraseña
-                  </label>
-
-                  <button
-                    type="button"
-                    className="text-[11px] font-semibold text-cyan-700 transition-colors hover:text-cyan-900"
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </button>
-                </div>
-
-                <div className="group relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                    <Lock className="h-5 w-5 text-slate-400 transition-colors group-focus-within:text-cyan-600" />
-                  </div>
-
-                  <input
-                    id="login-password"
-                    name="password"
-                    type="password"
-                    value={password}
-                    onChange={(event) => {
-                      setPassword(event.target.value);
-
-                      if (error) {
-                        setError(null);
-                      }
-                    }}
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                    disabled={isLoading}
-                    required
-                    className="w-full rounded-2xl border border-slate-200 bg-white py-3.5 pl-11 pr-4 text-sm tracking-widest text-slate-950 shadow-sm outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
+          <form
+            className="space-y-4"
+            onSubmit={handleSubmit}
+          >
+            <div className="group relative">
+              <Mail className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-cyan-600" />
+              <input
+                id="login-email"
+                name="email"
+                type="email"
+                value={email}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  if (error) setError(null);
+                }}
+                placeholder="Correo electrónico"
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
                 disabled={isLoading}
-                className="mt-1 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-600 to-blue-600 py-4 text-sm font-bold text-white shadow-[0_12px_30px_rgba(8,145,178,0.22)] transition-[transform,box-shadow,filter] hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(8,145,178,0.26)] hover:brightness-105 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-65 disabled:hover:translate-y-0"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>Iniciando sesión...</span>
-                  </>
-                ) : (
-                  "Iniciar sesión"
-                )}
-              </button>
-            </form>
-
-            <div className="mt-7 border-t border-slate-100 pt-6 text-center">
-              <p className="text-sm text-slate-500">
-                ¿Aún no tienes cuenta?{" "}
-                <Link
-                  to="/register"
-                  className="font-semibold text-cyan-700 transition-colors hover:text-cyan-900"
-                >
-                  Regístrate gratis
-                </Link>
-              </p>
-
-              <Link
-                to="/"
-                className="mt-5 inline-flex items-center gap-2 text-xs font-medium text-slate-400 transition-colors hover:text-slate-700"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Volver al inicio
-              </Link>
+                required
+                aria-label="Correo electrónico"
+                className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50/70 pl-11 pr-4 text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 hover:bg-white focus:border-cyan-500 focus:bg-white focus:ring-4 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+              />
             </div>
+
+            <div>
+              <div className="group relative">
+                <Lock className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-slate-400 transition-colors group-focus-within:text-cyan-600" />
+                <input
+                  id="login-password"
+                  name="password"
+                  type="password"
+                  value={password}
+                  onChange={(event) => {
+                    setPassword(event.target.value);
+                    if (error) setError(null);
+                  }}
+                  placeholder="Contraseña"
+                  autoComplete="current-password"
+                  disabled={isLoading}
+                  required
+                  aria-label="Contraseña"
+                  className="h-14 w-full rounded-2xl border border-slate-200 bg-slate-50/70 pl-11 pr-4 text-sm tracking-[0.08em] text-slate-950 outline-none transition-all placeholder:tracking-normal placeholder:text-slate-400 hover:border-slate-300 hover:bg-white focus:border-cyan-500 focus:bg-white focus:ring-4 focus:ring-cyan-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                />
+              </div>
+
+              <div className="mt-2.5 flex justify-end">
+                <button
+                  type="button"
+                  className="text-[11px] font-semibold text-slate-400 transition-colors hover:text-cyan-700"
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+            </div>
+
+            <motion.button
+              type="submit"
+              disabled={isLoading}
+              whileHover={isLoading ? undefined : { y: -1 }}
+              whileTap={isLoading ? undefined : { scale: 0.99 }}
+              className="relative mt-1 flex h-14 w-full items-center justify-center overflow-hidden rounded-2xl bg-slate-950 px-5 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(15,23,42,0.18)] transition-colors hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-65"
+            >
+              <span className="pointer-events-none absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent via-cyan-300/70 to-transparent" />
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Conectando...
+                </span>
+              ) : (
+                "Iniciar sesión"
+              )}
+            </motion.button>
+          </form>
+
+          <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-5">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 transition-colors hover:text-slate-700"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Inicio
+            </Link>
+
+            <Link
+              to="/register"
+              className="text-xs font-semibold text-cyan-700 transition-colors hover:text-cyan-900"
+            >
+              Crear cuenta
+            </Link>
           </div>
-        </section>
-      </motion.div>
+        </div>
+      </motion.main>
     </div>
   );
 }
