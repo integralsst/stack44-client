@@ -127,7 +127,7 @@ export default function EvaluacionEmpresaPage() {
   const [resultadosModalOpen, setResultadosModalOpen] = useState(false);
   const [informesModalOpen, setInformesModalOpen] = useState(false);
   const [revisionesModalOpen, setRevisionesModalOpen] = useState(false);
-  const [bitacoraAbierta, setBitacoraAbierta] = useState(false);
+  const [bitacoraAbierta, setBitacoraAbierta] = useState(true);
   const [tareaDetalleId, setTareaDetalleId] = useState<number | null>(
     () =>
       Number.isInteger(tareaDetalleSolicitada) &&
@@ -174,6 +174,12 @@ export default function EvaluacionEmpresaPage() {
     anio,
     informesModalOpen && Boolean(contexto?.periodo)
   );
+
+  useEffect(() => {
+    if (empresaId) {
+      setBitacoraAbierta(true);
+    }
+  }, [empresaId]);
 
   const cambiarAnio = (siguienteAnio: number) => {
     const siguientes = new URLSearchParams(searchParams);
@@ -368,15 +374,21 @@ export default function EvaluacionEmpresaPage() {
       <div
         className={
           contexto.periodo && puedeEvaluar
-            ? `grid min-w-0 gap-3 ${
+            ? `grid min-w-0 items-stretch gap-3 ${
                 bitacoraAbierta
-                  ? "xl:grid-cols-[minmax(0,1.35fr)_minmax(420px,0.85fr)]"
+                  ? "xl:h-[clamp(680px,72vh,860px)] xl:grid-cols-[minmax(0,1.35fr)_minmax(380px,0.85fr)]"
                   : "grid-cols-1"
               }`
             : "min-w-0"
         }
       >
-        <main className="min-w-0 space-y-3">
+        <main
+          className={`min-w-0 ${
+            bitacoraAbierta
+              ? "flex min-h-0 flex-col gap-3 xl:h-full"
+              : "space-y-3"
+          }`}
+        >
           {aspectoSolicitado && compromisoParaRecalificar && puedeEvaluar && (
             <AppAlert
               tone="warning"
@@ -453,22 +465,26 @@ export default function EvaluacionEmpresaPage() {
                 </AppAlert>
               )}
 
-              <MatrizEvaluacionDirecta
-                filas={contexto.filas}
-                editable={puedeEvaluar && contexto.periodo.estado === "ABIERTO"}
-                procesando={procesando}
-                onGuardar={guardarYActualizar}
-                onAbrirDetalle={(fila) =>
-                  setTareaDetalleId(fila.tareaId)
-                }
-              />
+              <div className={bitacoraAbierta ? "min-h-0 flex-1" : ""}>
+                <MatrizEvaluacionDirecta
+                  key={contexto.empresa.id}
+                  filas={contexto.filas}
+                  editable={puedeEvaluar && contexto.periodo.estado === "ABIERTO"}
+                  procesando={procesando}
+                  fillHeight={bitacoraAbierta}
+                  onGuardar={guardarYActualizar}
+                  onAbrirDetalle={(fila) =>
+                    setTareaDetalleId(fila.tareaId)
+                  }
+                />
+              </div>
             </>
           )}
         </main>
 
         {contexto.periodo && puedeEvaluar && (
           <div
-            className={`${bitacoraAbierta ? "block" : "hidden"} min-w-0 xl:sticky xl:top-3 xl:self-start`}
+            className={`${bitacoraAbierta ? "block" : "hidden"} order-first min-w-0 xl:order-none xl:h-full`}
           >
             <BitacoraEvaluacionPanel
               empresaId={contexto.empresa.id}

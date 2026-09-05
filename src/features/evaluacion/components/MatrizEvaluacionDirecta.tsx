@@ -36,6 +36,7 @@ interface Props {
   filas: FilaEvaluacion[];
   editable: boolean;
   procesando: boolean;
+  fillHeight?: boolean;
   onGuardar: (
     evaluaciones: GuardarEvaluacionInput[]
   ) => Promise<unknown>;
@@ -114,6 +115,7 @@ export default function MatrizEvaluacionDirecta({
   filas,
   editable,
   procesando,
+  fillHeight = false,
   onGuardar,
   onAbrirDetalle,
 }: Props) {
@@ -390,7 +392,11 @@ export default function MatrizEvaluacionDirecta({
   const filtrosActivos = [procesoId, estandarId, vigencia].filter(Boolean).length;
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 border-t-2 border-t-cyan-500 bg-white shadow-sm">
+    <section
+      className={`min-w-0 overflow-hidden rounded-2xl border border-slate-200 border-t-2 border-t-cyan-500 bg-white shadow-sm ${
+        fillHeight ? "flex h-full min-h-0 flex-col" : ""
+      }`}
+    >
       {evidenciasPendientes.length > 0 && (
         <div className="border-b border-amber-200 bg-gradient-to-r from-amber-50 via-white to-amber-50/40">
           <button
@@ -468,13 +474,13 @@ export default function MatrizEvaluacionDirecta({
       )}
 
       <div className="border-b border-slate-200 bg-gradient-to-r from-white via-cyan-50/30 to-white p-4 sm:p-5">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-col gap-3">
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-50 text-cyan-700">
+            <div className="flex items-start gap-2">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-50 text-cyan-700">
                 <ShieldCheck size={17} />
               </span>
-              <div>
+              <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-sm font-bold text-slate-900">
                     Evaluación directa de la Supermatriz
@@ -497,24 +503,26 @@ export default function MatrizEvaluacionDirecta({
           </div>
 
           {editable && (
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="flex w-full flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => setModoManual((actual) => !actual)}
                 disabled={procesando}
                 aria-pressed={modoManual}
-                className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                className={`inline-flex w-full max-w-full min-w-0 items-center justify-center gap-2 whitespace-normal rounded-xl border px-4 py-2.5 text-sm font-bold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto ${
                   modoManual
                     ? "border-slate-300 bg-white text-slate-700 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
                     : "border-cyan-200 bg-cyan-50 text-cyan-800 hover:border-cyan-300 hover:bg-cyan-100"
                 }`}
               >
-                {modoManual ? <Eye size={16} /> : <PencilLine size={16} />}
-                {modoManual
-                  ? "Volver a vista Bitácora"
-                  : evaluacionesSeleccionadas.size > 0
-                    ? `Continuar calificación manual (${evaluacionesSeleccionadas.size})`
-                    : "Activar calificación manual"}
+                {modoManual ? <Eye size={16} className="shrink-0" /> : <PencilLine size={16} className="shrink-0" />}
+                <span className="min-w-0">
+                  {modoManual
+                    ? "Volver a vista Bitácora"
+                    : evaluacionesSeleccionadas.size > 0
+                      ? `Continuar calificación manual (${evaluacionesSeleccionadas.size})`
+                      : "Activar calificación manual"}
+                </span>
               </button>
 
               {modoManual && (
@@ -524,14 +532,16 @@ export default function MatrizEvaluacionDirecta({
                   disabled={
                     procesando || evaluacionesSeleccionadas.size === 0
                   }
-                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-cyan-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
+                  className="inline-flex w-full max-w-full min-w-0 items-center justify-center gap-2 whitespace-normal rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-cyan-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none sm:w-auto"
                 >
-                  <Save size={16} />
-                  {procesando
-                    ? "Guardando..."
-                    : evaluacionesSeleccionadas.size > 0
-                      ? `Guardar evaluaciones (${evaluacionesSeleccionadas.size})`
-                      : "Guardar evaluaciones"}
+                  <Save size={16} className="shrink-0" />
+                  <span className="min-w-0">
+                    {procesando
+                      ? "Guardando..."
+                      : evaluacionesSeleccionadas.size > 0
+                        ? `Guardar evaluaciones (${evaluacionesSeleccionadas.size})`
+                        : "Guardar evaluaciones"}
+                  </span>
                 </button>
               )}
             </div>
@@ -626,7 +636,13 @@ export default function MatrizEvaluacionDirecta({
         )}
       </div>
 
-      <div className="max-h-[72vh] min-h-[420px] overflow-auto overscroll-contain bg-white [scrollbar-gutter:stable]">
+      <div
+        className={`${
+          fillHeight
+            ? "min-h-[420px] flex-1"
+            : "max-h-[72vh] min-h-[420px]"
+        } min-w-0 overflow-auto overscroll-contain bg-white [scrollbar-gutter:stable]`}
+      >
         <table
           className={`${
             modoManual ? "min-w-[1960px]" : "w-full min-w-[760px]"
