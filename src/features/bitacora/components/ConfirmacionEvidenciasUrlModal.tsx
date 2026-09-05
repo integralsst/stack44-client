@@ -6,6 +6,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 import type {
   DecisionEvidenciaBitacoraInput,
@@ -70,6 +71,7 @@ export default function ConfirmacionEvidenciasUrlModal({
       ) ?? null,
     [pendientes, decisiones, aspectoIdsDisponibles]
   );
+  const modalAbierto = Boolean(pendienteActual);
 
   const [aspectoIdSeleccionado, setAspectoIdSeleccionado] = useState<number | null>(
     null
@@ -99,7 +101,18 @@ export default function ConfirmacionEvidenciasUrlModal({
     aspectoIdsDisponibles,
   ]);
 
-  if (!pendienteActual) return null;
+  useEffect(() => {
+    if (!modalAbierto || typeof document === "undefined") return;
+
+    const overflowAnterior = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = overflowAnterior;
+    };
+  }, [modalAbierto]);
+
+  if (!pendienteActual || typeof document === "undefined") return null;
 
   const resueltas = pendientes.filter((item) =>
     decisionValida(item, decisiones, aspectoIdsDisponibles)
@@ -129,8 +142,8 @@ export default function ConfirmacionEvidenciasUrlModal({
     );
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-[1px]">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-slate-950/55 p-4 backdrop-blur-md">
       <div
         className="w-full max-w-2xl overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl"
         role="dialog"
@@ -250,6 +263,7 @@ export default function ConfirmacionEvidenciasUrlModal({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
