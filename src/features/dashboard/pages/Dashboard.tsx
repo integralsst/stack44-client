@@ -171,10 +171,17 @@ export default function Dashboard() {
 
   if (!user) return null;
 
+  const profileName =
+    user.professional?.firstNames?.trim() || user.name.trim();
+  const firstName = profileName.split(/\s+/)[0] || user.name;
+
   return (
     <div className="mx-auto w-full max-w-[1180px] space-y-5 pb-8">
       <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
+          <p className="mb-1 text-sm font-semibold text-cyan-700">
+            Hola, {firstName}.
+          </p>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-[1.8rem]">
             Resumen por empresa
           </h1>
@@ -196,7 +203,7 @@ export default function Dashboard() {
           No fue posible cargar las empresas en este momento. Intenta actualizar la página.
         </section>
       ) : companiesLoading ? (
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <section className="flex flex-wrap justify-center gap-4">
           {Array.from({ length: 3 }).map((_, index) => (
             <CompanySummarySkeleton key={index} />
           ))}
@@ -215,7 +222,7 @@ export default function Dashboard() {
         </section>
       ) : (
         <>
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <section className="flex flex-wrap justify-center gap-4">
             {visibleCompanies.map((company) => (
               <CompanySummaryCard
                 key={company.id}
@@ -269,7 +276,7 @@ function CompanySummaryCard({
   const summary = result?.resumenEmpresa ?? null;
 
   return (
-    <article className="group rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <article className="group w-full max-w-[380px] rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md md:w-[calc(50%_-_0.5rem)] xl:w-[calc(33.333%_-_0.75rem)]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="truncate text-base font-semibold text-slate-950">
@@ -433,10 +440,14 @@ function SummaryMetric({
   hint?: string;
 }) {
   return (
-    <div className="rounded-xl bg-slate-50 px-3 py-3">
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[11px] leading-4 text-slate-500">{label}</span>
-        <strong className={`text-lg font-semibold tracking-tight ${tone}`}>
+    <div className="min-h-[62px] rounded-xl bg-slate-50 px-3 py-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+        <span className="min-w-0 text-[11px] leading-4 text-slate-500">
+          {label}
+        </span>
+        <strong
+          className={`min-w-[3ch] whitespace-nowrap text-right text-base font-semibold tabular-nums tracking-tight sm:text-lg ${tone}`}
+        >
           {value}
         </strong>
       </div>
@@ -477,7 +488,7 @@ function EmptyCardMessage({ text }: { text: string }) {
 
 function CompanySummarySkeleton() {
   return (
-    <article className="rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-sm">
+    <article className="w-full max-w-[380px] rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-sm md:w-[calc(50%_-_0.5rem)] xl:w-[calc(33.333%_-_0.75rem)]">
       <div className="animate-pulse">
         <div className="h-5 w-2/3 rounded bg-slate-100" />
         <div className="mt-2 h-3 w-1/2 rounded bg-slate-100" />
