@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FormEvent,
   type InputHTMLAttributes,
@@ -9,7 +10,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import {
   Building2,
-  Calendar,
   ClipboardCheck,
   Edit2,
   Loader2,
@@ -18,7 +18,6 @@ import {
   Plus,
   Search,
   Trash2,
-  Users,
 } from "lucide-react";
 
 import { useAuth } from "../../auth/context/AuthContext";
@@ -29,6 +28,7 @@ import type {
 } from "../../../types/domain";
 import AppModal from "../../../components/ui/AppModal";
 import AppSelect from "../../../components/ui/AppSelect";
+import { obtenerResultadosEvaluacion } from "../../evaluacion/api/resultados-evaluacion.api";
 
 interface CompanyForm {
   taxId: string;
@@ -111,6 +111,7 @@ export default function Companies() {
   const navigate = useNavigate();
   const { token, isInternalUser, hasRole } = useAuth();
   const isClientAdmin = hasRole("CLIENT_ADMIN");
+  const year = new Date().getFullYear();
 
   const canOpenEvaluation = hasRole(
     "CLIENT_ADMIN",
@@ -184,6 +185,7 @@ export default function Companies() {
       [
         company.name,
         company.taxId,
+        company.mainAddress ?? "",
         company.mainCity ?? "",
         company.companyEmail ?? "",
         company.sstContactName ?? "",
@@ -314,10 +316,10 @@ export default function Companies() {
     <div className="mx-auto flex min-h-full min-w-0 max-w-7xl flex-col">
       <header className="mb-6 flex flex-col gap-4 sm:mb-8 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
             Gestión de empresas
           </h1>
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-neutral-400">
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
             {isInternalUser
               ? "Administra la información general, contractual y de riesgo de los clientes SG-SST."
               : "Consulta la información y el estado de la gestión SG-SST de tu empresa."}
@@ -328,7 +330,7 @@ export default function Companies() {
           <button
             type="button"
             onClick={openCreate}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-black shadow-lg shadow-white/5 transition-all hover:bg-neutral-200 active:scale-[0.98] sm:w-auto sm:py-2.5"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-slate-800 active:scale-[0.98] sm:w-auto sm:py-2.5"
           >
             <Plus size={18} />
             Nueva empresa
@@ -337,218 +339,129 @@ export default function Companies() {
       </header>
 
       {pageError && (
-        <div className="mb-5 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+        <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {pageError}
         </div>
       )}
 
       <div className="mb-5">
         <div className="relative w-full max-w-xl">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-500" />
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="search"
-            placeholder="Buscar por empresa, NIT, ciudad o contacto..."
+            placeholder="Buscar por empresa, NIT, dirección, ciudad o contacto..."
             value={searchTerm}
             onChange={(event) =>
               setSearchTerm(event.target.value)
             }
-            className="w-full rounded-xl border border-neutral-800 bg-[#111111] py-3 pl-10 pr-4 text-sm text-white outline-none transition-all placeholder:text-neutral-500 hover:border-neutral-700 focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/10"
+            className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm text-slate-950 outline-none transition-all placeholder:text-slate-400 hover:border-slate-300 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/10"
           />
         </div>
       </div>
 
-      <section className="min-w-0 overflow-hidden rounded-2xl border border-neutral-800/70 bg-[#111111] shadow-xl">
-        <div className="hidden overflow-x-auto lg:block">
-          <table className="w-full min-w-[980px] whitespace-nowrap text-left text-sm">
-            <thead className="border-b border-neutral-800 bg-[#0a0a0a]">
-              <tr>
-                <HeaderCell>Empresa</HeaderCell>
-                <HeaderCell>Ubicación y riesgo</HeaderCell>
-                <HeaderCell>Contacto SST</HeaderCell>
-                <HeaderCell>Visitas</HeaderCell>
-                <HeaderCell>Relaciones</HeaderCell>
-                <HeaderCell alignRight>Acciones</HeaderCell>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-neutral-800/70">
-              {loading ? (
-                <LoadingRow colSpan={6} />
-              ) : filteredCompanies.length === 0 ? (
-                <EmptyRow
-                  colSpan={6}
-                  message="No se encontraron empresas."
-                />
-              ) : (
-                filteredCompanies.map((company) => (
-                  <tr
-                    key={company.id}
-                    className="group transition-colors hover:bg-neutral-800/20"
-                  >
-                    <td className="px-6 py-4">
-                      <CompanyIdentity company={company} />
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <div className="space-y-1 text-xs">
-                        <p className="flex items-center gap-1.5 text-neutral-300">
-                          <MapPin
-                            size={13}
-                            className="text-neutral-500"
-                          />
-                          {company.mainCity ?? "Sin ciudad"}
-                        </p>
-                        <p className="text-neutral-500">
-                          Riesgo:{" "}
-                          {company.mainRiskClass ??
-                            "Sin definir"}
-                        </p>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <div className="space-y-1 text-xs">
-                        <p className="text-neutral-300">
-                          {company.sstContactName ??
-                            "Sin contacto SST"}
-                        </p>
-                        <p className="flex items-center gap-1.5 text-neutral-500">
-                          <Mail size={12} />
-                          {company.sstContactEmail ??
-                            company.companyEmail ??
-                            "Sin correo"}
-                        </p>
-                      </div>
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <VisitSummary company={company} />
-                    </td>
-
-                    <td className="px-6 py-4">
-                      <RelationSummary company={company} />
-                    </td>
-
-                    <td className="px-6 py-4 text-right">
-                      {(canOpenEvaluation || isInternalUser) && (
-                        <ActionButtons
-                          onEvaluate={
-                            canOpenEvaluation
-                              ? () => openEvaluation(company)
-                              : undefined
-                          }
-                          evaluationLabel={evaluationActionLabel}
-                          onEdit={
-                            isInternalUser
-                              ? () => openEdit(company)
-                              : undefined
-                          }
-                          onDelete={
-                            isInternalUser
-                              ? () =>
-                                  void handleDeactivate(company)
-                              : undefined
-                          }
-                        />
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      <section className="min-w-0 overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-sm">
+        <div className="hidden border-b border-slate-200 bg-slate-50/80 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500 lg:grid lg:grid-cols-[minmax(220px,1.45fr)_minmax(180px,1fr)_minmax(220px,1.1fr)_92px_auto] lg:items-center lg:gap-5 lg:px-6">
+          <span>Empresa</span>
+          <span>Contacto SST</span>
+          <span>Ubicación</span>
+          <span className="text-center">Estado</span>
+          <span className="text-right">Acción</span>
         </div>
 
-        <div className="divide-y divide-neutral-800/70 lg:hidden">
+        <div className="divide-y divide-slate-200">
           {loading ? (
-            <div className="flex justify-center px-4 py-14">
-              <Loader2 className="h-6 w-6 animate-spin text-neutral-500" />
+            <div className="flex justify-center px-4 py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
             </div>
           ) : filteredCompanies.length === 0 ? (
-            <div className="px-4 py-14 text-center text-sm text-neutral-500">
+            <div className="px-4 py-16 text-center text-sm text-slate-500">
               No se encontraron empresas.
             </div>
           ) : (
             filteredCompanies.map((company) => (
               <article
                 key={company.id}
-                className="space-y-4 p-4 sm:p-5"
+                className="group grid min-w-0 gap-4 p-4 transition-colors hover:bg-slate-50/70 sm:p-5 md:grid-cols-2 lg:grid-cols-[minmax(220px,1.45fr)_minmax(180px,1fr)_minmax(220px,1.1fr)_92px_auto] lg:items-center lg:gap-5 lg:px-6 lg:py-5"
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 md:col-span-2 lg:col-span-1">
                   <CompanyIdentity company={company} />
+                </div>
 
-                  {isInternalUser && (
+                <CompanyInfoBlock
+                  label="Contacto SST"
+                  icon={<Mail size={13} />}
+                  primary={
+                    company.sstContactName ??
+                    "Sin contacto SST"
+                  }
+                  secondary={
+                    company.sstContactEmail ??
+                    company.companyEmail ??
+                    "Sin correo"
+                  }
+                />
+
+                <CompanyInfoBlock
+                  label="Ubicación"
+                  icon={<MapPin size={13} />}
+                  primary={
+                    company.mainAddress ??
+                    "Sin dirección registrada"
+                  }
+                  secondary={`${
+                    company.mainCity ?? "Sin ciudad"
+                  } · Riesgo ${
+                    company.mainRiskClass ?? "sin definir"
+                  }`}
+                />
+
+                <div className="flex min-w-0 items-center justify-between rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5 lg:block lg:border-0 lg:bg-transparent lg:p-0">
+                  <div className="min-w-0 lg:hidden">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">
+                      Estado
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Avance de evaluación
+                    </p>
+                  </div>
+
+                  <CompanyProgressDonut
+                    companyId={company.id}
+                    token={token}
+                    year={year}
+                    enabled={canOpenEvaluation}
+                  />
+                </div>
+
+                <div className="min-w-0 md:col-span-2 lg:col-span-1 lg:justify-self-end">
+                  {(canOpenEvaluation || isInternalUser) && (
                     <ActionButtons
-                      compact
-                      onEdit={() => openEdit(company)}
-                      onDelete={() =>
-                        void handleDeactivate(company)
+                      onEvaluate={
+                        canOpenEvaluation
+                          ? () => openEvaluation(company)
+                          : undefined
+                      }
+                      evaluationLabel={evaluationActionLabel}
+                      onEdit={
+                        isInternalUser
+                          ? () => openEdit(company)
+                          : undefined
+                      }
+                      onDelete={
+                        isInternalUser
+                          ? () =>
+                              void handleDeactivate(company)
+                          : undefined
                       }
                     />
                   )}
                 </div>
-
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <InfoCard
-                    label="Ubicación"
-                    value={
-                      company.mainCity ?? "Sin ciudad"
-                    }
-                    secondary={`Riesgo: ${
-                      company.mainRiskClass ??
-                      "Sin definir"
-                    }`}
-                  />
-
-                  <InfoCard
-                    label="Contacto SST"
-                    value={
-                      company.sstContactName ??
-                      "Sin contacto"
-                    }
-                    secondary={
-                      company.sstContactEmail ??
-                      company.companyEmail ??
-                      "Sin correo"
-                    }
-                  />
-
-                  <InfoCard
-                    label="Visitas"
-                    value={`SST: ${company.agreedSstVisits}`}
-                    secondary={`Emergencias: ${company.agreedEmergencyVisits}`}
-                  />
-
-                  <InfoCard
-                    label="Relaciones"
-                    value={`${
-                      company._count?.users ?? 0
-                    } usuarios`}
-                    secondary={`${
-                      company._count
-                        ?.professionalAssignments ?? 0
-                    } profesionales`}
-                  />
-                </div>
-
-                {canOpenEvaluation && (
-                  <button
-                    type="button"
-                    onClick={() => openEvaluation(company)}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3 text-sm font-bold text-cyan-300 transition hover:bg-cyan-500/20"
-                  >
-                    <ClipboardCheck size={17} />
-                    {isClientAdmin
-                      ? "Consultar evaluación SG-SST"
-                      : "Abrir evaluación SG-SST"}
-                  </button>
-                )}
               </article>
             ))
           )}
         </div>
 
-        <div className="border-t border-neutral-800/70 px-4 py-4 text-xs text-neutral-500 sm:px-6">
+        <div className="border-t border-slate-200 bg-slate-50/60 px-4 py-4 text-xs text-slate-500 sm:px-6">
           Mostrando {filteredCompanies.length} empresas activas
         </div>
       </section>
@@ -833,60 +746,6 @@ export default function Companies() {
   );
 }
 
-function HeaderCell({
-  children,
-  alignRight = false,
-}: {
-  children: ReactNode;
-  alignRight?: boolean;
-}) {
-  return (
-    <th
-      className={`px-6 py-4 text-xs font-medium uppercase tracking-wider text-neutral-400 ${
-        alignRight ? "text-right" : ""
-      }`}
-    >
-      {children}
-    </th>
-  );
-}
-
-function LoadingRow({
-  colSpan,
-}: {
-  colSpan: number;
-}) {
-  return (
-    <tr>
-      <td
-        colSpan={colSpan}
-        className="px-6 py-14 text-center"
-      >
-        <Loader2 className="mx-auto h-6 w-6 animate-spin text-neutral-500" />
-      </td>
-    </tr>
-  );
-}
-
-function EmptyRow({
-  colSpan,
-  message,
-}: {
-  colSpan: number;
-  message: string;
-}) {
-  return (
-    <tr>
-      <td
-        colSpan={colSpan}
-        className="px-6 py-14 text-center text-neutral-500"
-      >
-        {message}
-      </td>
-    </tr>
-  );
-}
-
 function CompanyIdentity({
   company,
 }: {
@@ -894,14 +753,14 @@ function CompanyIdentity({
 }) {
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-neutral-700/50 bg-neutral-800/80 text-neutral-300">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500">
         <Building2 size={17} />
       </div>
       <div className="min-w-0">
-        <p className="truncate font-semibold text-white">
+        <p className="break-words font-semibold leading-5 text-slate-950">
           {company.name}
         </p>
-        <p className="mt-0.5 truncate font-mono text-xs text-neutral-500">
+        <p className="mt-0.5 font-mono text-xs text-slate-500">
           {company.taxId}
         </p>
       </div>
@@ -909,49 +768,174 @@ function CompanyIdentity({
   );
 }
 
-function VisitSummary({
-  company,
+function CompanyInfoBlock({
+  label,
+  icon,
+  primary,
+  secondary,
 }: {
-  company: Company;
+  label: string;
+  icon: ReactNode;
+  primary: string;
+  secondary: string;
 }) {
   return (
-    <div className="space-y-1 text-xs text-neutral-300">
-      <p>
-        SST: <strong>{company.agreedSstVisits}</strong>
+    <div className="min-w-0 rounded-xl border border-slate-200 bg-slate-50/60 p-3 lg:border-0 lg:bg-transparent lg:p-0">
+      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400 lg:hidden">
+        {label}
       </p>
-      <p>
-        Emergencias:{" "}
-        <strong>
-          {company.agreedEmergencyVisits}
-        </strong>
+      <p className="flex min-w-0 items-start gap-1.5 text-sm font-medium leading-5 text-slate-700">
+        <span className="mt-1 shrink-0 text-slate-400">
+          {icon}
+        </span>
+        <span className="min-w-0 break-words">
+          {primary}
+        </span>
+      </p>
+      <p className="mt-1 break-words pl-[19px] text-xs leading-5 text-slate-500">
+        {secondary}
       </p>
     </div>
   );
 }
 
-function RelationSummary({
-  company,
+function CompanyProgressDonut({
+  companyId,
+  token,
+  year,
+  enabled,
 }: {
-  company: Company;
+  companyId: string;
+  token: string | null;
+  year: number;
+  enabled: boolean;
 }) {
+  const anchorRef = useRef<HTMLDivElement | null>(null);
+  const [shouldLoad, setShouldLoad] = useState(false);
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "ready" | "empty" | "error"
+  >("idle");
+  const [coverage, setCoverage] = useState<number | null>(null);
+  const [detail, setDetail] = useState("Cargando resumen");
+
+  useEffect(() => {
+    if (!enabled || !token) {
+      setStatus("empty");
+      setDetail("Sin resumen disponible");
+      return;
+    }
+
+    const node = anchorRef.current;
+    if (!node) return;
+
+    if (typeof IntersectionObserver === "undefined") {
+      setShouldLoad(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setShouldLoad(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "240px" }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [enabled, token]);
+
+  useEffect(() => {
+    if (!shouldLoad || !enabled || !token) return;
+
+    let active = true;
+    setStatus("loading");
+
+    void obtenerResultadosEvaluacion(
+      companyId,
+      year,
+      "TODOS",
+      token
+    )
+      .then((response) => {
+        if (!active) return;
+
+        const summary = response.resumenEmpresa;
+        if (!response.periodo || !summary) {
+          setCoverage(null);
+          setDetail("Sin periodo de evaluación");
+          setStatus("empty");
+          return;
+        }
+
+        const nextCoverage = Math.round(
+          Math.max(
+            0,
+            Math.min(summary.coberturaPorcentaje, 100)
+          )
+        );
+
+        setCoverage(nextCoverage);
+        setDetail(
+          `${summary.evaluados} de ${summary.totalAspectos} aspectos evaluados`
+        );
+        setStatus("ready");
+      })
+      .catch(() => {
+        if (!active) return;
+        setCoverage(null);
+        setDetail("Resumen no disponible");
+        setStatus("error");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [companyId, enabled, shouldLoad, token, year]);
+
+  const isLoading = status === "idle" || status === "loading";
+  const ringBackground =
+    status === "ready" && coverage !== null
+      ? `conic-gradient(#06b6d4 0 ${coverage}%, #e2e8f0 ${coverage}% 100%)`
+      : "conic-gradient(#e2e8f0 0 100%)";
+
   return (
-    <div className="flex gap-4 text-xs text-neutral-300">
-      <span className="flex items-center gap-1.5">
-        <Users
-          size={14}
-          className="text-neutral-500"
-        />
-        {company._count?.users ?? 0} usuarios
-      </span>
-      <span className="flex items-center gap-1.5">
-        <Calendar
-          size={14}
-          className="text-neutral-500"
-        />
-        {company._count
-          ?.professionalAssignments ?? 0}{" "}
-        profesionales
-      </span>
+    <div
+      ref={anchorRef}
+      className="flex items-center gap-3 lg:flex-col lg:gap-1.5"
+      title={detail}
+    >
+      <div
+        role="img"
+        aria-label={
+          status === "ready" && coverage !== null
+            ? `Cobertura ${coverage}%. ${detail}.`
+            : detail
+        }
+        className="relative h-16 w-16 shrink-0 rounded-full"
+        style={{ background: ringBackground }}
+      >
+        <div className="absolute inset-[7px] flex items-center justify-center rounded-full bg-white shadow-inner">
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+          ) : (
+            <strong className="text-sm font-semibold tabular-nums text-slate-900">
+              {coverage === null ? "—" : `${coverage}%`}
+            </strong>
+          )}
+        </div>
+      </div>
+
+      <div className="min-w-0 lg:text-center">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">
+          Evaluado
+        </p>
+        <p className="mt-0.5 max-w-[180px] truncate text-[10px] text-slate-500 lg:max-w-[90px]">
+          {detail}
+        </p>
+      </div>
     </div>
   );
 }
@@ -961,25 +945,19 @@ function ActionButtons({
   evaluationLabel = "Evaluar",
   onEdit,
   onDelete,
-  compact = false,
 }: {
   onEvaluate?: () => void;
   evaluationLabel?: string;
   onEdit?: () => void;
   onDelete?: () => void;
-  compact?: boolean;
 }) {
   return (
-    <div
-      className={`flex items-center ${
-        compact ? "gap-1" : "justify-end gap-1"
-      }`}
-    >
+    <div className="flex flex-wrap items-center gap-1 lg:justify-end">
       {onEvaluate && (
         <button
           type="button"
           onClick={onEvaluate}
-          className="inline-flex items-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs font-bold text-cyan-300 transition-colors hover:bg-cyan-500/20"
+          className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-2 text-xs font-bold text-cyan-700 transition-colors hover:bg-cyan-100 sm:flex-none"
           title={
             evaluationLabel === "Consultar"
               ? "Consultar evaluación SG-SST"
@@ -987,7 +965,7 @@ function ActionButtons({
           }
         >
           <ClipboardCheck size={16} />
-          {!compact && <span>{evaluationLabel}</span>}
+          <span>{evaluationLabel}</span>
         </button>
       )}
 
@@ -995,7 +973,7 @@ function ActionButtons({
         <button
           type="button"
           onClick={onEdit}
-          className="rounded-lg p-2 text-neutral-500 transition-colors hover:bg-neutral-800 hover:text-white"
+          className="rounded-xl p-2.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
           title="Editar empresa"
         >
           <Edit2 size={17} />
@@ -1006,36 +984,12 @@ function ActionButtons({
         <button
           type="button"
           onClick={onDelete}
-          className="rounded-lg p-2 text-neutral-500 transition-colors hover:bg-red-500/10 hover:text-red-400"
+          className="rounded-xl p-2.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-500"
           title="Desactivar empresa"
         >
           <Trash2 size={17} />
         </button>
       )}
-    </div>
-  );
-}
-
-function InfoCard({
-  label,
-  value,
-  secondary,
-}: {
-  label: string;
-  value: string;
-  secondary: string;
-}) {
-  return (
-    <div className="min-w-0 rounded-xl border border-neutral-800 bg-[#0a0a0a] p-3">
-      <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-600">
-        {label}
-      </p>
-      <p className="mt-1 truncate text-sm text-neutral-200">
-        {value}
-      </p>
-      <p className="mt-0.5 truncate text-xs text-neutral-500">
-        {secondary}
-      </p>
     </div>
   );
 }
