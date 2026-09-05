@@ -18,6 +18,8 @@ import type { ResultadosEvaluacionResponse } from "../../evaluacion/types/result
 
 const MAX_COMPANIES = 6;
 
+type CardDensity = "featured" | "medium" | "compact";
+
 const RESULT_ROLES = new Set<UserRole>([
   "CLIENT_USER",
   "CLIENT_ADMIN",
@@ -57,6 +59,12 @@ const DONUT_COLORS = {
 
 function clampPercentage(value: number): number {
   return Math.max(0, Math.min(value, 100));
+}
+
+function densityForCompanyCount(count: number): CardDensity {
+  if (count <= 1) return "featured";
+  if (count === 2) return "medium";
+  return "compact";
 }
 
 export default function Dashboard() {
@@ -168,6 +176,7 @@ export default function Dashboard() {
     companies.length - visibleCompanies.length,
     0
   );
+  const cardDensity = densityForCompanyCount(visibleCompanies.length);
 
   if (!user) return null;
 
@@ -205,7 +214,7 @@ export default function Dashboard() {
       ) : companiesLoading ? (
         <section className="flex flex-wrap justify-center gap-4">
           {Array.from({ length: 3 }).map((_, index) => (
-            <CompanySummarySkeleton key={index} />
+            <CompanySummarySkeleton key={index} density="compact" />
           ))}
         </section>
       ) : visibleCompanies.length === 0 ? (
@@ -233,6 +242,7 @@ export default function Dashboard() {
                 year={year}
                 canEvaluate={canEvaluate}
                 canViewResults={canViewResults}
+                density={cardDensity}
               />
             ))}
           </section>
@@ -256,6 +266,7 @@ function CompanySummaryCard({
   year,
   canEvaluate,
   canViewResults,
+  density,
 }: {
   company: Company;
   result: ResultadosEvaluacionResponse | null;
@@ -264,9 +275,10 @@ function CompanySummaryCard({
   year: number;
   canEvaluate: boolean;
   canViewResults: boolean;
+  density: CardDensity;
 }) {
   if (loading) {
-    return <CompanySummarySkeleton />;
+    return <CompanySummarySkeleton density={density} />;
   }
 
   const destination = canEvaluate
@@ -274,12 +286,26 @@ function CompanySummaryCard({
     : "/dashboard/informes";
 
   const summary = result?.resumenEmpresa ?? null;
+  const cardSizeClass =
+    density === "featured"
+      ? "max-w-[560px] md:w-[560px] md:p-6"
+      : density === "medium"
+        ? "max-w-[500px] md:w-[calc(50%_-_0.5rem)] xl:w-[calc(50%_-_0.5rem)]"
+        : "max-w-[380px] md:w-[calc(50%_-_0.5rem)] xl:w-[calc(33.333%_-_0.75rem)]";
 
   return (
-    <article className="group w-full max-w-[380px] rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md md:w-[calc(50%_-_0.5rem)] xl:w-[calc(33.333%_-_0.75rem)]">
+    <article
+      className={`group w-full rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md ${cardSizeClass}`}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="truncate text-base font-semibold text-slate-950">
+          <h2
+            className={`font-semibold text-slate-950 ${
+              density === "featured"
+                ? "text-lg leading-6"
+                : "truncate text-base"
+            }`}
+          >
             {company.name}
           </h2>
           <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-slate-500">
@@ -309,7 +335,7 @@ function CompanySummaryCard({
       ) : !result?.periodo || !summary ? (
         <EmptyCardMessage text={`Aún no hay un periodo de evaluación disponible para ${year}.`} />
       ) : (
-        <CompanyDonutSummary result={result} />
+        <CompanyDonutSummary result={result} density={density} />
       )}
     </article>
   );
@@ -317,8 +343,10 @@ function CompanySummaryCard({
 
 function CompanyDonutSummary({
   result,
+  density,
 }: {
   result: ResultadosEvaluacionResponse;
+  density: CardDensity;
 }) {
   const summary = result.resumenEmpresa;
   if (!summary) return null;
@@ -356,18 +384,43 @@ function CompanyDonutSummary({
     clampPercentage(summary.coberturaPorcentaje)
   );
 
+  const summaryGridClass =
+    density === "featured"
+      ? "sm:grid-cols-[156px_minmax(0,1fr)]"
+      : density === "medium"
+        ? "sm:grid-cols-[144px_minmax(0,1fr)]"
+        : "sm:grid-cols-[132px_1fr] md:grid-cols-1 lg:grid-cols-[132px_1fr]";
+  const donutClass =
+    density === "featured"
+      ? "h-[156px] w-[156px]"
+      : density === "medium"
+        ? "h-[144px] w-[144px]"
+        : "h-[132px] w-[132px]";
+  const donutInsetClass =
+    density === "featured"
+      ? "inset-[16px]"
+      : density === "medium"
+        ? "inset-[15px]"
+        : "inset-[14px]";
+
   return (
     <div className="mt-5">
-      <div className="grid items-center gap-5 sm:grid-cols-[132px_1fr] md:grid-cols-1 lg:grid-cols-[132px_1fr]">
+      <div className={`grid items-center gap-5 ${summaryGridClass}`}>
         <div className="mx-auto">
           <div
             role="img"
             aria-label={`Cobertura ${coverage}%. ${cumplidos} cumplidos, ${porCumplir} por cumplir, ${noAplica} no aplica y ${sinEvaluar} sin evaluar.`}
-            className="relative h-[132px] w-[132px] rounded-full"
+            className={`relative rounded-full ${donutClass}`}
             style={{ background: donutBackground }}
           >
-            <div className="absolute inset-[14px] flex flex-col items-center justify-center rounded-full bg-white shadow-inner">
-              <strong className="text-2xl font-semibold tracking-tight text-slate-950">
+            <div
+              className={`absolute flex flex-col items-center justify-center rounded-full bg-white shadow-inner ${donutInsetClass}`}
+            >
+              <strong
+                className={`font-semibold tracking-tight text-slate-950 ${
+                  density === "featured" ? "text-[1.7rem]" : "text-2xl"
+                }`}
+              >
                 {coverage}%
               </strong>
               <span className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">
@@ -382,7 +435,7 @@ function CompanyDonutSummary({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2.5">
           <SummaryMetric
             label="Cumplidos"
             value={cumplidos}
@@ -440,17 +493,15 @@ function SummaryMetric({
   hint?: string;
 }) {
   return (
-    <div className="min-h-[62px] rounded-xl bg-slate-50 px-3 py-3">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-        <span className="min-w-0 text-[11px] leading-4 text-slate-500">
-          {label}
-        </span>
-        <strong
-          className={`min-w-[3ch] whitespace-nowrap text-right text-base font-semibold tabular-nums tracking-tight sm:text-lg ${tone}`}
-        >
-          {value}
-        </strong>
-      </div>
+    <div className="min-h-[84px] rounded-xl bg-slate-50 px-3 py-2.5">
+      <span className="block text-[10px] font-medium leading-4 text-slate-500">
+        {label}
+      </span>
+      <strong
+        className={`mt-1 block whitespace-nowrap text-xl font-semibold tabular-nums tracking-tight ${tone}`}
+      >
+        {value}
+      </strong>
       {hint && (
         <p className="mt-0.5 text-[9px] uppercase tracking-[0.1em] text-slate-400">
           {hint}
@@ -486,9 +537,22 @@ function EmptyCardMessage({ text }: { text: string }) {
   );
 }
 
-function CompanySummarySkeleton() {
+function CompanySummarySkeleton({
+  density,
+}: {
+  density: CardDensity;
+}) {
+  const cardSizeClass =
+    density === "featured"
+      ? "max-w-[560px] md:w-[560px] md:p-6"
+      : density === "medium"
+        ? "max-w-[500px] md:w-[calc(50%_-_0.5rem)] xl:w-[calc(50%_-_0.5rem)]"
+        : "max-w-[380px] md:w-[calc(50%_-_0.5rem)] xl:w-[calc(33.333%_-_0.75rem)]";
+
   return (
-    <article className="w-full max-w-[380px] rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-sm md:w-[calc(50%_-_0.5rem)] xl:w-[calc(33.333%_-_0.75rem)]">
+    <article
+      className={`w-full rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-sm ${cardSizeClass}`}
+    >
       <div className="animate-pulse">
         <div className="h-5 w-2/3 rounded bg-slate-100" />
         <div className="mt-2 h-3 w-1/2 rounded bg-slate-100" />
@@ -496,7 +560,7 @@ function CompanySummarySkeleton() {
           <div className="mx-auto h-[132px] w-[132px] rounded-full bg-slate-100" />
           <div className="grid grid-cols-2 gap-2">
             {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="h-[58px] rounded-xl bg-slate-100" />
+              <div key={index} className="h-[84px] rounded-xl bg-slate-100" />
             ))}
           </div>
         </div>
