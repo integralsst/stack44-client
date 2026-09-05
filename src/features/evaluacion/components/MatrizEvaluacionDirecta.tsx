@@ -2,9 +2,11 @@ import {
   ArrowUpRight,
   CheckCircle2,
   ChevronDown,
+  Eye,
   FileWarning,
   Filter,
   History,
+  PencilLine,
   Save,
   Search,
   ShieldCheck,
@@ -123,6 +125,7 @@ export default function MatrizEvaluacionDirecta({
   const [estandarId, setEstandarId] = useState("");
   const [vigencia, setVigencia] = useState("");
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
+  const [modoManual, setModoManual] = useState(false);
   const [visibles, setVisibles] = useState(40);
   const [evidenciasAbiertas, setEvidenciasAbiertas] = useState(false);
   const [registros, setRegistros] = useState<
@@ -153,6 +156,7 @@ export default function MatrizEvaluacionDirecta({
     setProcesoId("");
     setEstandarId("");
     setVigencia("");
+    setModoManual(true);
   }, [aspectoEnfocado]);
 
   const evaluacionesSeleccionadas = useMemo(() => {
@@ -471,32 +475,66 @@ export default function MatrizEvaluacionDirecta({
                 <ShieldCheck size={17} />
               </span>
               <div>
-                <h2 className="text-sm font-bold text-slate-900">
-                  Evaluación directa de la Supermatriz
-                </h2>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-sm font-bold text-slate-900">
+                    Evaluación directa de la Supermatriz
+                  </h2>
+                  <span className={`rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
+                    modoManual
+                      ? "border-cyan-200 bg-cyan-50 text-cyan-700"
+                      : "border-slate-200 bg-white text-slate-500"
+                  }`}>
+                    {modoManual ? "Calificación manual" : "Vista Bitácora"}
+                  </span>
+                </div>
                 <p className="mt-0.5 text-xs leading-5 text-slate-500">
-                  Registra únicamente lo revisado. Cada guardado crea una nueva evaluación y conserva íntegramente el historial anterior.
+                  {modoManual
+                    ? "Registra únicamente lo revisado. Cada guardado crea una nueva evaluación y conserva íntegramente el historial anterior."
+                    : "Consulta rápidamente el estado de cada aspecto. Activa la calificación manual solo cuando necesites intervenir directamente la matriz."}
                 </p>
               </div>
             </div>
           </div>
 
           {editable && (
-            <button
-              type="button"
-              onClick={() => void guardar()}
-              disabled={
-                procesando || evaluacionesSeleccionadas.size === 0
-              }
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-cyan-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
-            >
-              <Save size={16} />
-              {procesando
-                ? "Guardando..."
-                : evaluacionesSeleccionadas.size > 0
-                  ? `Guardar evaluaciones (${evaluacionesSeleccionadas.size})`
-                  : "Guardar evaluaciones"}
-            </button>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <button
+                type="button"
+                onClick={() => setModoManual((actual) => !actual)}
+                disabled={procesando}
+                aria-pressed={modoManual}
+                className={`inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                  modoManual
+                    ? "border-slate-300 bg-white text-slate-700 hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
+                    : "border-cyan-200 bg-cyan-50 text-cyan-800 hover:border-cyan-300 hover:bg-cyan-100"
+                }`}
+              >
+                {modoManual ? <Eye size={16} /> : <PencilLine size={16} />}
+                {modoManual
+                  ? "Volver a vista Bitácora"
+                  : evaluacionesSeleccionadas.size > 0
+                    ? `Continuar calificación manual (${evaluacionesSeleccionadas.size})`
+                    : "Activar calificación manual"}
+              </button>
+
+              {modoManual && (
+                <button
+                  type="button"
+                  onClick={() => void guardar()}
+                  disabled={
+                    procesando || evaluacionesSeleccionadas.size === 0
+                  }
+                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-cyan-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-cyan-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
+                >
+                  <Save size={16} />
+                  {procesando
+                    ? "Guardando..."
+                    : evaluacionesSeleccionadas.size > 0
+                      ? `Guardar evaluaciones (${evaluacionesSeleccionadas.size})`
+                      : "Guardar evaluaciones"}
+                </button>
+              )}
+            </div>
           )}
         </div>
 
@@ -589,7 +627,11 @@ export default function MatrizEvaluacionDirecta({
       </div>
 
       <div className="max-h-[72vh] min-h-[420px] overflow-auto overscroll-contain bg-white [scrollbar-gutter:stable]">
-        <table className="min-w-[1960px] border-separate border-spacing-0 text-left text-[11px] text-slate-700">
+        <table
+          className={`${
+            modoManual ? "min-w-[1960px]" : "w-full min-w-[760px]"
+          } border-separate border-spacing-0 text-left text-[11px] text-slate-700`}
+        >
           <thead className="sticky top-0 z-40 bg-slate-50 text-[9px] uppercase tracking-wider text-slate-500">
             <tr>
               <Header
@@ -604,33 +646,47 @@ export default function MatrizEvaluacionDirecta({
               >
                 Aspecto
               </Header>
-              <Header className="w-[180px] min-w-[180px]">
-                Proceso
-              </Header>
-              <Header className="w-[210px] min-w-[210px]">
-                Último estado
-              </Header>
-              <Header className="w-[170px] min-w-[170px]">
-                Nueva evaluación
-              </Header>
-              <Header className="w-[72px] min-w-[72px] text-center">
-                Nota
-              </Header>
-              <Header className="w-[260px] min-w-[260px]">
-                Observación nueva
-              </Header>
-              <Header className="w-[150px] min-w-[150px]">
-                Fecha soporte
-              </Header>
-              <Header className="w-[175px] min-w-[175px]">
-                Vigencia
-              </Header>
-              <Header className="w-[220px] min-w-[220px]">
-                No aplica / revisión
-              </Header>
-              <Header className="w-[100px] min-w-[100px] text-center">
-                Detalle
-              </Header>
+
+              {modoManual ? (
+                <>
+                  <Header className="w-[180px] min-w-[180px]">
+                    Proceso
+                  </Header>
+                  <Header className="w-[210px] min-w-[210px]">
+                    Último estado
+                  </Header>
+                  <Header className="w-[170px] min-w-[170px]">
+                    Nueva evaluación
+                  </Header>
+                  <Header className="w-[72px] min-w-[72px] text-center">
+                    Nota
+                  </Header>
+                  <Header className="w-[260px] min-w-[260px]">
+                    Observación nueva
+                  </Header>
+                  <Header className="w-[150px] min-w-[150px]">
+                    Fecha soporte
+                  </Header>
+                  <Header className="w-[175px] min-w-[175px]">
+                    Vigencia
+                  </Header>
+                  <Header className="w-[220px] min-w-[220px]">
+                    No aplica / revisión
+                  </Header>
+                  <Header className="w-[100px] min-w-[100px] text-center">
+                    Detalle
+                  </Header>
+                </>
+              ) : (
+                <>
+                  <Header className="w-[210px] min-w-[210px]">
+                    Calificación
+                  </Header>
+                  <Header className="w-[110px] min-w-[110px] text-center">
+                    Historial
+                  </Header>
+                </>
+              )}
             </tr>
           </thead>
 
@@ -679,176 +735,216 @@ export default function MatrizEvaluacionDirecta({
                       {fila.estandar.nombre}
                     </p>
                   </Cell>
-                  <Cell>
-                    <p className="leading-5 text-slate-600">
-                      {fila.proceso.nombre}
-                    </p>
-                  </Cell>
-                  <Cell>
-                    {ultima ? (
-                      <div className="space-y-1.5">
-                        <span
-                          className={`inline-flex rounded-full border px-2 py-1 text-[9px] font-bold uppercase ${estadoClass(
-                            ultima.estadoCumplimiento
-                          )}`}
-                        >
-                          {ESTADO_LABEL[ultima.estadoCumplimiento]} ·{" "}
-                          {ultima.calificacionEfectiva}
-                        </span>
-                        <p className="text-[10px] text-slate-500">
-                          {fechaCorta(ultima.gestion.fechaGestion)}
-                          {ultima.resultadoProvisional
-                            ? " · provisional"
-                            : ""}
+
+                  {modoManual ? (
+                    <>
+                      <Cell>
+                        <p className="leading-5 text-slate-600">
+                          {fila.proceso.nombre}
                         </p>
-                        {fila.evidenciaPendiente && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              abrirDetalle(fila, "EVIDENCIAS")
-                            }
-                            className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[9px] font-bold text-amber-700 transition hover:bg-amber-100"
-                          >
-                            Evidencia pendiente
-                          </button>
+                      </Cell>
+                      <Cell>
+                        {ultima ? (
+                          <div className="space-y-1.5">
+                            <span
+                              className={`inline-flex rounded-full border px-2 py-1 text-[9px] font-bold uppercase ${estadoClass(
+                                ultima.estadoCumplimiento
+                              )}`}
+                            >
+                              {ESTADO_LABEL[ultima.estadoCumplimiento]} ·{" "}
+                              {ultima.calificacionEfectiva}
+                            </span>
+                            <p className="text-[10px] text-slate-500">
+                              {fechaCorta(ultima.gestion.fechaGestion)}
+                              {ultima.resultadoProvisional
+                                ? " · provisional"
+                                : ""}
+                            </p>
+                            {fila.evidenciaPendiente && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  abrirDetalle(fila, "EVIDENCIAS")
+                                }
+                                className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-1 text-[9px] font-bold text-amber-700 transition hover:bg-amber-100"
+                              >
+                                Evidencia pendiente
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">
+                            Sin revisión
+                          </span>
                         )}
-                      </div>
-                    ) : (
-                      <span className="text-slate-400">
-                        Sin revisión
-                      </span>
-                    )}
-                  </Cell>
-                  <Cell>
-                    <select
-                      value={registro.estadoCumplimiento}
-                      disabled={!editable || procesando}
-                      onChange={(event) =>
-                        actualizar(fila, {
-                          estadoCumplimiento: event.target
-                            .value as EstadoCumplimientoAspecto | "",
-                        })
-                      }
-                      className={controlClass}
-                    >
-                      <option value="">Sin nueva evaluación</option>
-                      <option value="CUMPLIDO">Cumplido</option>
-                      <option value="PARCIAL">Parcial</option>
-                      <option value="NO_CUMPLIDO">No cumplido</option>
-                      {permiteNoAplica && (
-                        <option value="NO_APLICA">No aplica</option>
-                      )}
-                    </select>
-                  </Cell>
-                  <Cell className="text-center">
-                    <span className="text-base font-bold text-slate-900">
-                      {registro.calificacionAdministrativa ?? "—"}
-                    </span>
-                  </Cell>
-                  <Cell>
-                    <textarea
-                      rows={3}
-                      value={registro.observacion}
-                      disabled={!editable || procesando}
-                      onChange={(event) =>
-                        actualizar(fila, {
-                          observacion: event.target.value,
-                        })
-                      }
-                      placeholder="Qué se verificó o qué cambió..."
-                      className={`${controlClass} resize-y`}
-                    />
-                  </Cell>
-                  <Cell>
-                    <AppDateField
-                      value={registro.fechaDocumento}
-                      onChange={(value) =>
-                        actualizar(fila, { fechaDocumento: value })
-                      }
-                      disabled={
-                        !editable ||
-                        procesando ||
-                        registro.estadoCumplimiento === "NO_APLICA" ||
-                        fila.aspecto.configuracionVigencia
-                          ?.permiteFechaManual === false
-                      }
-                      inputClassName={controlClass}
-                    />
-                  </Cell>
-                  <Cell>
-                    <VigenciaBadge
-                      estado={fila.estadoVigenciaOficial}
-                      detalle={fila.detalleVigencia}
-                    />
-                  </Cell>
-                  <Cell>
-                    {registro.estadoCumplimiento === "NO_APLICA" ? (
-                      <textarea
-                        rows={3}
-                        value={registro.justificacionNoAplica}
-                        disabled={!editable || procesando}
-                        onChange={(event) =>
-                          actualizar(fila, {
-                            justificacionNoAplica: event.target.value,
-                          })
-                        }
-                        placeholder="Justificación obligatoria"
-                        className={`${controlClass} resize-y`}
-                      />
-                    ) : (
-                      <div className="space-y-2">
-                        <label className="flex items-center gap-2 text-[10px] text-slate-600">
-                          <input
-                            type="checkbox"
-                            checked={registro.marcadaRevisionTecnica}
-                            disabled={
-                              !editable ||
-                              procesando ||
-                              revisionObligatoria
-                            }
-                            onChange={(event) =>
-                              actualizar(fila, {
-                                marcadaRevisionTecnica:
-                                  event.target.checked,
-                              })
-                            }
-                            className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
-                          />
-                          {revisionObligatoria
-                            ? "Revisión técnica obligatoria"
-                            : "Solicitar revisión técnica"}
-                        </label>
-                        {registro.marcadaRevisionTecnica && (
+                      </Cell>
+                      <Cell>
+                        <select
+                          value={registro.estadoCumplimiento}
+                          disabled={!editable || procesando}
+                          onChange={(event) =>
+                            actualizar(fila, {
+                              estadoCumplimiento: event.target
+                                .value as EstadoCumplimientoAspecto | "",
+                            })
+                          }
+                          className={controlClass}
+                        >
+                          <option value="">Sin nueva evaluación</option>
+                          <option value="CUMPLIDO">Cumplido</option>
+                          <option value="PARCIAL">Parcial</option>
+                          <option value="NO_CUMPLIDO">No cumplido</option>
+                          {permiteNoAplica && (
+                            <option value="NO_APLICA">No aplica</option>
+                          )}
+                        </select>
+                      </Cell>
+                      <Cell className="text-center">
+                        <span className="text-base font-bold text-slate-900">
+                          {registro.calificacionAdministrativa ?? "—"}
+                        </span>
+                      </Cell>
+                      <Cell>
+                        <textarea
+                          rows={3}
+                          value={registro.observacion}
+                          disabled={!editable || procesando}
+                          onChange={(event) =>
+                            actualizar(fila, {
+                              observacion: event.target.value,
+                            })
+                          }
+                          placeholder="Qué se verificó o qué cambió..."
+                          className={`${controlClass} resize-y`}
+                        />
+                      </Cell>
+                      <Cell>
+                        <AppDateField
+                          value={registro.fechaDocumento}
+                          onChange={(value) =>
+                            actualizar(fila, { fechaDocumento: value })
+                          }
+                          disabled={
+                            !editable ||
+                            procesando ||
+                            registro.estadoCumplimiento === "NO_APLICA" ||
+                            fila.aspecto.configuracionVigencia
+                              ?.permiteFechaManual === false
+                          }
+                          inputClassName={controlClass}
+                        />
+                      </Cell>
+                      <Cell>
+                        <VigenciaBadge
+                          estado={fila.estadoVigenciaOficial}
+                          detalle={fila.detalleVigencia}
+                        />
+                      </Cell>
+                      <Cell>
+                        {registro.estadoCumplimiento === "NO_APLICA" ? (
                           <textarea
-                            rows={2}
-                            value={registro.motivoRevisionTecnica}
+                            rows={3}
+                            value={registro.justificacionNoAplica}
                             disabled={!editable || procesando}
                             onChange={(event) =>
                               actualizar(fila, {
-                                motivoRevisionTecnica:
-                                  event.target.value,
+                                justificacionNoAplica: event.target.value,
                               })
                             }
-                            placeholder="Motivo de la revisión"
+                            placeholder="Justificación obligatoria"
                             className={`${controlClass} resize-y`}
                           />
+                        ) : (
+                          <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-[10px] text-slate-600">
+                              <input
+                                type="checkbox"
+                                checked={registro.marcadaRevisionTecnica}
+                                disabled={
+                                  !editable ||
+                                  procesando ||
+                                  revisionObligatoria
+                                }
+                                onChange={(event) =>
+                                  actualizar(fila, {
+                                    marcadaRevisionTecnica:
+                                      event.target.checked,
+                                  })
+                                }
+                                className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+                              />
+                              {revisionObligatoria
+                                ? "Revisión técnica obligatoria"
+                                : "Solicitar revisión técnica"}
+                            </label>
+                            {registro.marcadaRevisionTecnica && (
+                              <textarea
+                                rows={2}
+                                value={registro.motivoRevisionTecnica}
+                                disabled={!editable || procesando}
+                                onChange={(event) =>
+                                  actualizar(fila, {
+                                    motivoRevisionTecnica:
+                                      event.target.value,
+                                  })
+                                }
+                                placeholder="Motivo de la revisión"
+                                className={`${controlClass} resize-y`}
+                              />
+                            )}
+                          </div>
                         )}
-                      </div>
-                    )}
-                  </Cell>
-                  <Cell className="text-center">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        abrirDetalle(fila, "HISTORIAL")
-                      }
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-[10px] font-semibold text-slate-600 shadow-sm transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
-                      title={`Abrir detalle de ${fila.aspecto.nombre}`}
-                    >
-                      <History size={13} />
-                      Historial
-                    </button>
-                  </Cell>
+                      </Cell>
+                      <Cell className="text-center">
+                        <HistoryButton
+                          fila={fila}
+                          onClick={() =>
+                            abrirDetalle(fila, "HISTORIAL")
+                          }
+                        />
+                      </Cell>
+                    </>
+                  ) : (
+                    <>
+                      <Cell>
+                        {ultima ? (
+                          <div className="space-y-1.5">
+                            <span
+                              className={`inline-flex rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase ${estadoClass(
+                                ultima.estadoCumplimiento
+                              )}`}
+                            >
+                              {ESTADO_LABEL[ultima.estadoCumplimiento]} ·{" "}
+                              {ultima.calificacionEfectiva}
+                            </span>
+                            <p className="text-[10px] text-slate-500">
+                              {fechaCorta(ultima.gestion.fechaGestion)}
+                              {ultima.resultadoProvisional
+                                ? " · provisional"
+                                : ""}
+                            </p>
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">
+                            Sin revisión
+                          </span>
+                        )}
+                        {cambio && (
+                          <span className="mt-2 inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-2 py-1 text-[9px] font-bold text-cyan-700">
+                            Cambio manual sin guardar
+                          </span>
+                        )}
+                      </Cell>
+                      <Cell className="text-center">
+                        <HistoryButton
+                          fila={fila}
+                          onClick={() =>
+                            abrirDetalle(fila, "HISTORIAL")
+                          }
+                        />
+                      </Cell>
+                    </>
+                  )}
                 </tr>
               );
             })}
@@ -856,7 +952,7 @@ export default function MatrizEvaluacionDirecta({
             {rows.length === 0 && (
               <tr>
                 <td
-                  colSpan={11}
+                  colSpan={modoManual ? 11 : 4}
                   className="px-6 py-16 text-center text-sm text-slate-500"
                 >
                   No hay aspectos que coincidan con los filtros.
@@ -896,6 +992,26 @@ export default function MatrizEvaluacionDirecta({
         onClose={() => setToast(null)}
       />
     </section>
+  );
+}
+
+function HistoryButton({
+  fila,
+  onClick,
+}: {
+  fila: FilaEvaluacion;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-[10px] font-semibold text-slate-600 shadow-sm transition hover:border-cyan-300 hover:bg-cyan-50 hover:text-cyan-800"
+      title={`Abrir detalle de ${fila.aspecto.nombre}`}
+    >
+      <History size={13} />
+      Historial
+    </button>
   );
 }
 
