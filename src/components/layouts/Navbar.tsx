@@ -7,6 +7,7 @@ import {
 import { Link } from "react-router-dom";
 import {
   ChevronRight,
+  Loader2,
   LogOut,
   Menu,
   X,
@@ -240,9 +241,18 @@ const Navbar = () => {
           <div className="hidden min-w-[140px] items-center justify-end gap-4 md:flex">
             {loading ? (
               <div
-                className="h-10 w-32 animate-pulse rounded-full bg-white/5"
+                className="relative flex h-10 w-32 items-center justify-center gap-2 overflow-hidden rounded-full border border-cyan-400/15 bg-white/[0.04] px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300 shadow-[0_10px_30px_rgba(6,182,212,0.08)]"
+                role="status"
+                aria-live="polite"
                 aria-label="Comprobando sesión"
-              />
+              >
+                <span className="absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-cyan-400/[0.06] to-transparent" />
+                <Loader2
+                  size={15}
+                  className="relative shrink-0 animate-spin text-cyan-400"
+                />
+                <span className="relative">Conectando</span>
+              </div>
             ) : user ? (
               <div className="flex items-center gap-4 rounded-full border border-white/5 bg-white/[0.02] py-1.5 pl-5 pr-1.5 transition-colors hover:border-white/10">
                 <Link
@@ -356,9 +366,22 @@ const Navbar = () => {
         <div className="mb-4 p-6">
           <div className="rounded-[32px] border border-white/10 bg-white/5 p-6">
             {loading ? (
-              <div className="space-y-4">
-                <div className="h-14 animate-pulse rounded-2xl bg-white/5" />
-                <div className="h-14 animate-pulse rounded-2xl bg-white/5" />
+              <div
+                className="flex items-center gap-4 rounded-2xl border border-cyan-400/10 bg-cyan-400/[0.04] px-4 py-4"
+                role="status"
+                aria-live="polite"
+              >
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-cyan-400/15 bg-cyan-400/[0.06] text-cyan-400">
+                  <Loader2 size={20} className="animate-spin" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-white">
+                    Conectando con Stack44
+                  </p>
+                  <p className="mt-0.5 text-xs leading-5 text-slate-400">
+                    Estamos validando tu sesión de forma segura.
+                  </p>
+                </div>
               </div>
             ) : user ? (
               <div className="flex flex-col gap-5">
