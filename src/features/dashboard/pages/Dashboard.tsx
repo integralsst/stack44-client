@@ -21,6 +21,8 @@ import {
   useAuth,
   type UserRole,
 } from "../../auth/context/AuthContext";
+import { obtenerResultadosEvaluacion } from "../../evaluacion/api/resultados-evaluacion.api";
+import type { ResultadosEvaluacionResponse } from "../../evaluacion/types/resultados-evaluacion.types";
 
 const INTERNAL_ROLES = new Set<UserRole>([
   "ADMIN",
@@ -58,6 +60,14 @@ const ROLE_LABELS: Record<UserRole, string> = {
   SUPERADMIN: "Superadministración",
 };
 
+const STATUS_COLORS = {
+  cumplidos: "#10b981",
+  parciales: "#f59e0b",
+  noCumplidos: "#ef4444",
+  noAplica: "#06b6d4",
+  sinEvaluar: "#cbd5e1",
+} as const;
+
 function fechaActualBogota(): string {
   return new Intl.DateTimeFormat("es-CO", {
     timeZone: "America/Bogota",
@@ -71,12 +81,21 @@ function capitalizar(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+function clampPercentage(value: number): number {
+  return Math.max(0, Math.min(value, 100));
+}
+
 export default function Dashboard() {
   const { user, token } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [actions, setActions] = useState<ResumenCentroAcciones | null>(null);
   const [loading, setLoading] = useState(true);
   const [partialWarning, setPartialWarning] = useState(false);
+  const [selectedCompanyId, setSelectedCompanyId] = useState("");
+  const [progressResults, setProgressResults] =
+    useState<ResultadosEvaluacionResponse | null>(null);
+  const [progressLoading, setProgressLoading] = useState(false);
+  const [progressError, setProgressError] = useState(false);
 
   const canViewActions = Boolean(user && ACTION_ROLES.has(user.role));
   const canEvaluate = Boolean(user && EVALUATION_ROLES.has(user.role));
@@ -127,6 +146,101 @@ export default function Dashboard() {
     [companies]
   );
 
+  useEffect(() => {
+    if (activeCompanies.length === 0) {
+      setSelectedCompanyId("");
+      return;
+    }
+
+    const selectionStillVisible = activeCompanies.some(
+      (company) => company.id === selectedCompanyId
+    );
+
+    if (!selectionStillVisible) {
+      setSelectedCompanyId(activeCompanies[0]?.id ?? "");
+    }
+  }, [activeCompanies, selectedCompanyId]);
+
+  useEffect(() => {
+    if (!token || !selectedCompanyId || !canViewActions) {
+      setProgressResults(null);
+      setProgressLoading(false);
+      setProgressError(false);
+      return;
+    }
+
+    let active = true;
+
+    const loadProgress = async () => {
+      setProgressLoading(true);
+      setProgressError(false);
+
+      try {
+        const result = await obtenerResultadosEvaluacion(
+          selectedCompanyId,
+          year,
+          "TODOS",
+          token
+        );
+
+        if (!active) return;
+        setProgressResults(result);
+      } catch {
+        if (!active) return;
+        setProgressResults(null);
+        setProgressError(true);
+      } finally {
+        if (active) {
+          setProgressLoading(false);
+        }
+      }
+    };
+
+    void loadProgress();
+
+    return () => {
+      active = false;
+    };
+  }, [canViewActions, selectedCompanyId, token, year]);
+
+  const phvaProgress = useMemo(() => {
+    const grouped = new Map<
+      string,
+      {
+        codigo: string;
+        nombre: string;
+        orden: number;
+        total: number;
+        evaluados: number;
+      }
+    >();
+
+    for (const standard of progressResults?.estandares ?? []) {
+      const key = standard.cicloPhva.codigo;
+      const current = grouped.get(key) ?? {
+        codigo: standard.cicloPhva.codigo,
+        nombre: standard.cicloPhva.nombre,
+        orden: standard.cicloPhva.orden,
+        total: 0,
+        evaluados: 0,
+      };
+
+      current.total += standard.totalAspectos;
+      current.evaluados += standard.evaluados;
+      grouped.set(key, current);
+    }
+
+    return [...grouped.values()]
+      .sort((a, b) => a.orden - b.orden)
+      .map((item) => ({
+        ...item,
+        porcentaje:
+          item.total > 0
+            ? Math.round((item.evaluados / item.total) * 100)
+            : 0,
+      }));
+  }, [progressResults]);
+
   if (!user) return null;
 
   const displayName =
@@ -146,6 +260,7 @@ export default function Dashboard() {
   const visibleCompanies = activeCompanies.slice(0, 5);
   const isInternal = INTERNAL_ROLES.has(user.role);
   const categoryCounts = actions?.categorias;
+  const summary = progressResults?.resumenEmpresa;
 
   const operationTitle =
     urgentCount > 0
@@ -155,6 +270,72 @@ export default function Dashboard() {
         : "Operación al día";
 
   const secondaryLoading = loading || !canViewActions;
+
+  const statusItems = summary
+    ? [
+        {
+          label: "Cumple",
+          value: summary.estados.cumplidos,
+          color: STATUS_COLORS.cumplidos,
+        },
+        {
+          label: "Parcial",
+          value: summary.estados.parciales,
+          color: STATUS_COLORS.parciales,
+        },
+        {
+          label: "No cumple",
+          value: summary.estados.noCumplidos,
+          color: STATUS_COLORS.noCumplidos,
+        },
+        {
+          label: "No aplica",
+          value: summary.estados.noAplica,
+          color: STATUS_COLORS.noAplica,
+        },
+        {
+          label: "Sin evaluar",
+          value: summary.estados.sinEvaluar,
+          color: STATUS_COLORS.sinEvaluar,
+        },
+      ]
+    : [];
+
+  const statusTotal = statusItems.reduce((total, item) => total + item.value, 0);
+  let runningPercentage = 0;
+  const donutSegments = statusItems.map((item) => {
+    const start = runningPercentage;
+    const portion = statusTotal > 0 ? (item.value / statusTotal) * 100 : 0;
+    runningPercentage += portion;
+    return `${item.color} ${start}% ${runningPercentage}%`;
+  });
+  const donutBackground =
+    statusTotal > 0
+      ? `conic-gradient(${donutSegments.join(", ")})`
+      : "#f1f5f9";
+
+  const generalIndicators = summary
+    ? [
+        {
+          label: "Cobertura",
+          display: `${Math.round(summary.coberturaPorcentaje)}%`,
+          percentage: summary.coberturaPorcentaje,
+          tone: "bg-cyan-500",
+        },
+        {
+          label: "Administrativo",
+          display: `${summary.cumplimientoAdministrativo.toFixed(1)} / 5`,
+          percentage: (summary.cumplimientoAdministrativo / 5) * 100,
+          tone: "bg-indigo-500",
+        },
+        {
+          label: "Ministerial",
+          display: `${Math.round(summary.porcentajeMinisterial)}%`,
+          percentage: summary.porcentajeMinisterial,
+          tone: "bg-emerald-500",
+        },
+      ]
+    : [];
 
   return (
     <div className="mx-auto w-full max-w-[1180px] space-y-5 pb-8">
@@ -206,33 +387,6 @@ export default function Dashboard() {
         />
       </section>
 
-      <section
-        aria-label="Carga operativa por tipo"
-        className="grid gap-3 sm:grid-cols-3"
-      >
-        <Kpi
-          label="Gestiones por atender"
-          value={secondaryLoading ? "—" : String(categoryCounts?.GESTIONES ?? 0)}
-          hint="Seguimientos operativos"
-          icon={<ClipboardList size={17} />}
-          accent
-        />
-        <Kpi
-          label="Evidencias por revisar"
-          value={secondaryLoading ? "—" : String(categoryCounts?.EVIDENCIAS ?? 0)}
-          hint="Soportes pendientes"
-          icon={<FileText size={17} />}
-          accent
-        />
-        <Kpi
-          label="Revisión técnica"
-          value={secondaryLoading ? "—" : String(categoryCounts?.REVISION_TECNICA ?? 0)}
-          hint="Validaciones pendientes"
-          icon={<Search size={17} />}
-          accent
-        />
-      </section>
-
       <section className="rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0 flex-1">
@@ -276,13 +430,53 @@ export default function Dashboard() {
                         ? "bg-amber-500"
                         : "bg-emerald-500"
                   }`}
-                  style={{ width: `${Math.max(0, Math.min(progress, 100))}%` }}
+                  style={{ width: `${clampPercentage(progress)}%` }}
                 />
               </div>
               <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-500">
-                <span><strong className="font-medium text-slate-800">{companiesUpToDate}</strong> al día</span>
-                <span><strong className="font-medium text-slate-800">{companiesWithActions}</strong> con acciones</span>
+                <span>
+                  <strong className="font-medium text-slate-800">
+                    {companiesUpToDate}
+                  </strong>{" "}
+                  al día
+                </span>
+                <span>
+                  <strong className="font-medium text-slate-800">
+                    {companiesWithActions}
+                  </strong>{" "}
+                  con acciones
+                </span>
               </div>
+            </div>
+
+            <div className="mt-5 grid gap-2 sm:grid-cols-3">
+              <CompactMetric
+                label="Gestiones"
+                value={
+                  secondaryLoading
+                    ? "—"
+                    : String(categoryCounts?.GESTIONES ?? 0)
+                }
+                icon={<ClipboardList size={14} />}
+              />
+              <CompactMetric
+                label="Evidencias"
+                value={
+                  secondaryLoading
+                    ? "—"
+                    : String(categoryCounts?.EVIDENCIAS ?? 0)
+                }
+                icon={<FileText size={14} />}
+              />
+              <CompactMetric
+                label="Revisión"
+                value={
+                  secondaryLoading
+                    ? "—"
+                    : String(categoryCounts?.REVISION_TECNICA ?? 0)
+                }
+                icon={<Search size={14} />}
+              />
             </div>
           </div>
 
@@ -296,6 +490,189 @@ export default function Dashboard() {
           )}
         </div>
       </section>
+
+      {canViewActions && activeCompanies.length > 0 && (
+        <section className="rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-400">
+                Progreso SG-SST
+              </p>
+              <h2 className="mt-1 text-lg font-semibold text-slate-950">
+                Contexto de avance
+              </h2>
+              <p className="mt-1 text-sm text-slate-500">
+                Cobertura, estado de aspectos y avance por ciclo PHVA.
+              </p>
+            </div>
+
+            {activeCompanies.length > 1 && (
+              <label className="min-w-0 sm:w-[310px]">
+                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.1em] text-slate-400">
+                  Empresa
+                </span>
+                <select
+                  value={selectedCompanyId}
+                  onChange={(event) => setSelectedCompanyId(event.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10"
+                >
+                  {activeCompanies.map((company) => (
+                    <option key={company.id} value={company.id}>
+                      {company.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </div>
+
+          {progressLoading ? (
+            <div className="mt-6 grid gap-3 lg:grid-cols-2">
+              <ChartSkeleton />
+              <ChartSkeleton />
+              <div className="lg:col-span-2">
+                <ChartSkeleton compact />
+              </div>
+            </div>
+          ) : progressError ? (
+            <div className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+              No fue posible cargar el progreso de esta empresa en este momento.
+            </div>
+          ) : !summary ? (
+            <div className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+              Aún no hay un periodo de evaluación disponible para {year}.
+            </div>
+          ) : (
+            <div className="mt-6 grid gap-3 lg:grid-cols-[1.15fr_0.85fr]">
+              <article className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:p-5">
+                <div className="flex items-baseline justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-900">
+                      Avance por ciclo PHVA
+                    </h3>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Aspectos evaluados sobre el total de cada ciclo.
+                    </p>
+                  </div>
+                  <span className="text-xs font-medium text-slate-400">
+                    {year}
+                  </span>
+                </div>
+
+                <div className="mt-5 space-y-4">
+                  {phvaProgress.map((item) => (
+                    <div key={item.codigo}>
+                      <div className="mb-1.5 flex items-center justify-between gap-3 text-xs">
+                        <span className="truncate font-medium text-slate-700">
+                          {item.nombre}
+                        </span>
+                        <span className="shrink-0 font-semibold text-slate-900">
+                          {item.porcentaje}%
+                        </span>
+                      </div>
+                      <div className="h-2.5 overflow-hidden rounded-full bg-white ring-1 ring-inset ring-slate-200">
+                        <div
+                          className="h-full rounded-full bg-cyan-500 transition-all duration-700"
+                          style={{
+                            width: `${clampPercentage(item.porcentaje)}%`,
+                          }}
+                        />
+                      </div>
+                      <p className="mt-1 text-[11px] text-slate-400">
+                        {item.evaluados} de {item.total} aspectos
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </article>
+
+              <article className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:p-5">
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Estado de los aspectos
+                </h3>
+                <p className="mt-1 text-xs text-slate-500">
+                  Distribución del estado efectivo al corte anual.
+                </p>
+
+                <div className="mt-5 flex flex-col items-center gap-5 sm:flex-row sm:items-center lg:flex-col xl:flex-row">
+                  <div
+                    className="relative h-36 w-36 shrink-0 rounded-full"
+                    style={{ background: donutBackground }}
+                    aria-label={`Cobertura ${Math.round(summary.coberturaPorcentaje)}%`}
+                  >
+                    <div className="absolute inset-[18px] flex flex-col items-center justify-center rounded-full bg-white shadow-inner">
+                      <span className="text-2xl font-semibold tracking-tight text-slate-950">
+                        {Math.round(summary.coberturaPorcentaje)}%
+                      </span>
+                      <span className="mt-0.5 text-[10px] font-medium uppercase tracking-[0.1em] text-slate-400">
+                        cobertura
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid w-full min-w-0 grid-cols-2 gap-x-4 gap-y-2.5">
+                    {statusItems.map((item) => (
+                      <div key={item.label} className="flex min-w-0 items-center gap-2">
+                        <span
+                          className="h-2.5 w-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <div className="min-w-0">
+                          <p className="truncate text-[11px] text-slate-500">
+                            {item.label}
+                          </p>
+                          <p className="text-sm font-semibold text-slate-900">
+                            {item.value}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </article>
+
+              <article className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:p-5 lg:col-span-2">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-900">
+                      Indicadores generales
+                    </h3>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Lectura rápida de cobertura, administrativo y ministerial.
+                    </p>
+                  </div>
+                  <span className="text-[11px] text-slate-400">
+                    Administrativo conserva escala 0–5
+                  </span>
+                </div>
+
+                <div className="mt-5 grid gap-4 md:grid-cols-3">
+                  {generalIndicators.map((indicator) => (
+                    <div key={indicator.label}>
+                      <div className="mb-2 flex items-center justify-between gap-3">
+                        <span className="text-xs font-medium text-slate-600">
+                          {indicator.label}
+                        </span>
+                        <span className="text-sm font-semibold text-slate-950">
+                          {indicator.display}
+                        </span>
+                      </div>
+                      <div className="h-2.5 overflow-hidden rounded-full bg-white ring-1 ring-inset ring-slate-200">
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ${indicator.tone}`}
+                          style={{
+                            width: `${clampPercentage(indicator.percentage)}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="rounded-[1.4rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="flex items-start justify-between gap-4">
@@ -343,7 +720,9 @@ export default function Dashboard() {
                       {company.mainCity || "Ciudad no registrada"}
                     </span>
                     {company.mainRiskClass && (
-                      <span className="shrink-0">· Riesgo {company.mainRiskClass}</span>
+                      <span className="shrink-0">
+                        · Riesgo {company.mainRiskClass}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -373,39 +752,26 @@ function Kpi({
   label,
   value,
   icon,
-  hint,
   attention = false,
   danger = false,
-  accent = false,
 }: {
   label: string;
   value: string;
   icon: React.ReactNode;
-  hint?: string;
   attention?: boolean;
   danger?: boolean;
-  accent?: boolean;
 }) {
   return (
     <article className="h-full rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm transition-shadow duration-200 hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <span className="block text-sm leading-5 text-slate-500">{label}</span>
-          {hint && (
-            <span className="mt-0.5 block text-[11px] leading-4 text-slate-400">
-              {hint}
-            </span>
-          )}
-        </div>
+        <span className="block text-sm leading-5 text-slate-500">{label}</span>
         <span
           className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
             danger
               ? "bg-red-50 text-red-700"
               : attention
                 ? "bg-amber-50 text-amber-700"
-                : accent
-                  ? "bg-cyan-50 text-cyan-700"
-                  : "bg-slate-100 text-slate-600"
+                : "bg-slate-100 text-slate-600"
           }`}
         >
           {icon}
@@ -415,5 +781,42 @@ function Kpi({
         {value}
       </p>
     </article>
+  );
+}
+
+function CompactMetric({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5">
+      <div className="flex min-w-0 items-center gap-2 text-slate-500">
+        <span className="text-cyan-700">{icon}</span>
+        <span className="truncate text-xs font-medium">{label}</span>
+      </div>
+      <span className="shrink-0 text-sm font-semibold text-slate-900">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function ChartSkeleton({ compact = false }: { compact?: boolean }) {
+  return (
+    <div
+      className={`animate-pulse rounded-2xl border border-slate-200 bg-slate-50 ${
+        compact ? "h-32" : "h-64"
+      }`}
+    >
+      <div className="p-5">
+        <div className="h-4 w-36 rounded bg-slate-200" />
+        <div className="mt-3 h-3 w-56 max-w-full rounded bg-slate-100" />
+      </div>
+    </div>
   );
 }
