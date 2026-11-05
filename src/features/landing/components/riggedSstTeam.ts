@@ -150,6 +150,7 @@ export function mountRiggedSstTeam(
 
   const axis = new THREE.Vector3(1, 0, 0);
   const angleOffset = new THREE.Quaternion();
+  const smoothTarget = new THREE.Quaternion();
   const idle = (joint: BoneJoint, action: OfficeAction, time: number, index: number) => {
     const t = time * 2.3 + index * .95;
     if (joint.part === "head") return Math.sin(t * .47) * .035;
@@ -214,7 +215,9 @@ export function mountRiggedSstTeam(
           else angle = Math.sin(time * 3.65) * .02;
         }
         angleOffset.setFromAxisAngle(axis, angle);
-        joint.bone.quaternion.copy(joint.neutral).multiply(angleOffset);
+        // Interpolar el hueso evita saltos al pasar de sentado a caminando.
+        smoothTarget.copy(joint.neutral).multiply(angleOffset);
+        joint.bone.quaternion.slerp(smoothTarget, Math.min(1, delta * 8));
       }
       if (pose.walking) {
         avatar.root.position.y += Math.abs(Math.sin(time * 7.3)) * .025;
