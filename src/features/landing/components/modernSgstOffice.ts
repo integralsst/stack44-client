@@ -14,13 +14,11 @@ export function buildExecutiveOffice(world: THREE.Group, compact: boolean) {
   const warmConcrete = mat(0xc2b8a8, 0.85);
   const travertine = mat(0xe2d9c9, 0.79);
   const graphite = mat(0x18252e, 0.28, 0.42);
-  const blackGlass = mat(0x0e1b24, 0.15, 0.25);
   const metallic = mat(0x8c989b, 0.31, 0.74);
   const bronze = mat(0xa5886a, 0.43, 0.56);
   const walnut = mat(0x73543c, 0.39);
   const oak = mat(0xa88764, 0.51);
   const leather = mat(0x39454a, 0.83);
-  const white = mat(0xf6f5ef, 0.48);
   const fern = mat(0x28543c, 0.74);
   const olive = mat(0x54765a, 0.76);
   const sage = mat(0x769275, 0.83);
