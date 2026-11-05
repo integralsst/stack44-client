@@ -134,6 +134,19 @@ export default function OfficeHero() {
               Darth Iron
             </a>{" "}
             (CC BY 4.0), adaptadas para Stack44.
+            {annexReady && (
+              <>
+                {" "}· Oficina 3D de{" "}
+                <a
+                  href="https://sketchfab.com/3d-models/isometric-office-d31464eed8044190911b221648aca432"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="pointer-events-auto font-semibold underline underline-offset-2 hover:text-emerald-800"
+                >
+                  Companion_Cube
+                </a>{" "}(CC BY 4.0).
+              </>
+            )}
           </p>
         </div>
       </div>
