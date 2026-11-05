@@ -32,6 +32,8 @@ export default function OfficeHero() {
   const [ready, setReady] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
   const [exploring, setExploring] = useState(false);
+  const [annexReady, setAnnexReady] = useState(false);
+  const [officeFocus, setOfficeFocus] = useState<"main" | "annex">("main");
   const [modelsStatus, setModelsStatus] = useState<SstModelStatus>({
     phase: "loading", loaded: 0, total: 10, errorCount: 0,
   });
@@ -46,6 +48,8 @@ export default function OfficeHero() {
           if (!cancelled) setUnavailable(true);
         }, (status) => {
           if (!cancelled) setModelsStatus(status);
+        }, (isReady) => {
+          if (!cancelled) setAnnexReady(isReady);
         });
         if (worldRef.current) {
           worldRef.current.setInteractive(false);
@@ -68,6 +72,11 @@ export default function OfficeHero() {
     setExploring(next);
     worldRef.current?.setInteractive(next);
   }, [exploring]);
+
+  const focusOffice = useCallback((office: "main" | "annex") => {
+    worldRef.current?.focusOffice(office);
+    setOfficeFocus(office);
+  }, []);
 
   const resetView = useCallback(() => {
     worldRef.current?.reset();
@@ -204,6 +213,20 @@ export default function OfficeHero() {
               {exploring ? "Salir de exploración" : "Explorar mundo"}
             </button>
 
+            {annexReady && (
+              <div className="flex items-center gap-1 rounded-2xl border border-slate-200 bg-white/90 p-1 shadow-lg backdrop-blur-xl">
+                <button type="button" onClick={() => focusOffice("main")}
+                  aria-pressed={officeFocus === "main"}
+                  className={`rounded-xl px-3 py-2 text-[11px] font-semibold ${officeFocus === "main" ? "bg-slate-800 text-white" : "text-slate-700 hover:bg-slate-100"}`}>
+                  Oficina 1
+                </button>
+                <button type="button" onClick={() => focusOffice("annex")}
+                  aria-pressed={officeFocus === "annex"}
+                  className={`rounded-xl px-3 py-2 text-[11px] font-semibold ${officeFocus === "annex" ? "bg-slate-800 text-white" : "text-slate-700 hover:bg-slate-100"}`}>
+                  Oficina 2
+                </button>
+              </div>
+            )}
             <div className="flex items-center gap-1.5 rounded-2xl border border-white/10 bg-[#0c2231]/80 p-1.5 shadow-xl backdrop-blur-xl">
               <ToolButton label="Alejar cámara" onClick={() => worldRef.current?.zoomOut()}>
                 <Minus size={18} />
