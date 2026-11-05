@@ -170,7 +170,7 @@ export function addSstOfficeDetails(
   tv(-0.05, 3.18, -9.10, 4.85, 1.60, "overview");
   tv(7.40, 2.42, -8.91, 2.76, 1.20, "meeting");
   tv(-7.30, 3.10, -9.07, 3.45, 1.30, "training");
-  tv(-7.00, 1.86, 2.00, 2.95, 0.82, "reception");
+  tv(-7.00, 2.28, -0.66, 2.95, 0.82, "reception");
 
   // Acabados arquitectónicos: listones de madera, plafones, LEDs y estructura abierta.
   for (let i = 0; i < 12; i += 1) {
@@ -180,7 +180,7 @@ export function addSstOfficeDetails(
   for (const x of [-3.65, 3.8, 11.07]) {
     cube(world, 0.10, 3.45, 0.10, brushedMetal, x, 1.62, -8.93);
   }
-  for (const [x, z] of [[-1.7, -6.5], [1.5, -6.5], [-1.7, -3.55], [1.5, -3.55]] as const) {
+  for (const [x, z] of [[-2.15, -6.6], [1.25, -6.6], [-2.15, -3.6], [1.25, -3.6]] as const) {
     // Pantallas individuales con ilustraciones SG-SST.
     tv(x, 1.43, z - 0.24, 0.73, 0.44, "device", Math.round(Math.abs(x + z) * 5));
   }
