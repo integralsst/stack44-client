@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
+import { applyPremiumSstHair } from "./premiumSstHair";
 
 type FigureRole = "typing" | "walking" | "presenting" | "reception" | "training" | "meeting";
 
@@ -11,6 +12,7 @@ export type SstModelStatus = {
   errorCount: number;
 };
 
+type WalkBone = { bone: THREE.Bone; rest: THREE.Quaternion; swingDirection: number; amplitude: number };
 type Figure = {
   root: THREE.Group;
   mixer: THREE.AnimationMixer;
@@ -18,6 +20,7 @@ type Figure = {
   phase: number;
   position: THREE.Vector3;
   slot: number;
+  walkBones: WalkBone[];
 };
 
 const MODEL_PATHS = [
@@ -101,6 +104,12 @@ export function mountRiggedSstTeam(
         const model = cloneSkeleton(source.scene);
         if (!model) throw new Error("No se pudo clonar la jerarquía del GLB");
         model.name = "Stack44 GLB · " + setup.role;
+        // Cabello profesional con volumen y mechones definidos. Se ancla
+        // al hueso de cabeza para que no se despegue con las animaciones.
+        applyPremiumSstHair(
+          model, setup.model,
+          setup.role === "presenting" || setup.role === "training",
+        );
 
         // Ajuste automático con medidas reales del GLB (altura ≈4 unidades).
         // Evita que un modelo importado aparezca escondido bajo el piso o sea
@@ -122,7 +131,7 @@ export function mountRiggedSstTeam(
 
         const root = new THREE.Group();
         root.name = "Personaje SST · " + index;
-        root.position.set(setup.x, -0.12, setup.z);
+        root.position.set(setup.x, -0.19, setup.z);
         root.rotation.y = setup.turn;
         root.add(model);
         root.updateMatrixWorld(true);
@@ -134,15 +143,38 @@ export function mountRiggedSstTeam(
         });
 
         const mixer = new THREE.AnimationMixer(model);
-        const clipName = setup.role === "walking" ? "Caminar"
-          : setup.role === "presenting" || setup.role === "training" ? "Saludar" : "Idle";
-        const clip = THREE.AnimationClip.findByName(source.animations, clipName)
-          ?? source.animations[0];
-        if (clip) {
-          const action = mixer.clipAction(clip);
-          action.setLoop(THREE.LoopRepeat, Infinity);
-          action.play();
-          mixer.update(setup.phase);
+        // El clip Caminar exportado podía torcer las articulaciones y hacer
+        // que el muñeco saltara. Lo sustituimos por un ciclo articulado corto,
+        // calculado respecto a la posición neutral real de cada hueso.
+        const clipName = setup.role === "presenting" || setup.role === "training"
+          ? "Saludar" : "Idle";
+        if (setup.role !== "walking") {
+          const clip = THREE.AnimationClip.findByName(source.animations, clipName)
+            ?? source.animations[0];
+          if (clip) {
+            const action = mixer.clipAction(clip);
+            action.setLoop(THREE.LoopRepeat, Infinity);
+            action.play();
+            mixer.update(setup.phase);
+          }
+        }
+        const walkBones: WalkBone[] = [];
+        if (setup.role === "walking") {
+          const walkSetup = [
+            ["Bone.003_9", 1, 0.24],
+            ["Bone.004_11", -1, 0.24],
+            ["Bone.007_3", -1, 0.15],
+            ["Bone.006_6", 1, 0.15],
+          ] as const;
+          for (const [name, direction, amplitude] of walkSetup) {
+            const bone = model.getObjectByName(name);
+            if (bone instanceof THREE.Bone) {
+              walkBones.push({
+                bone, rest: bone.quaternion.clone(),
+                swingDirection: direction, amplitude,
+              });
+            }
+          }
         }
 
         // El reemplazo es individual. Nunca ocultamos todo el equipo
@@ -152,7 +184,7 @@ export function mountRiggedSstTeam(
         fallback[index]?.root && (fallback[index].root.visible = false);
         figures.push({
           root, mixer, role: setup.role, phase: setup.phase,
-          position: root.position.clone(), slot: index,
+          position: root.position.clone(), slot: index, walkBones,
         });
       } catch (error) {
         console.error("[Stack44] Falló el personaje SST en la posición", index, error);
@@ -164,8 +196,7 @@ export function mountRiggedSstTeam(
       phase: loaded === TEAM.length ? "ready" : loaded > 0 ? "partial" : "error",
       loaded,
       total: TEAM.length,
-      errorCount: results.filter((x) => x.status === "rejected").length
-        + TEAM.length - loaded - TEAM.filter((x) => available[x.model] === null).length,
+      errorCount: TEAM.length - loaded,
     });
   }).catch((error: unknown) => {
     if (!disposed) {
@@ -181,9 +212,30 @@ export function mountRiggedSstTeam(
         if (!figure.root.visible) continue;
         figure.mixer.update(delta);
         if (figure.role === "walking") {
-          figure.root.position.x = figure.position.x + Math.sin(time * 0.46) * 2.65;
-          figure.root.rotation.y = Math.cos(time * 0.46) > 0 ? Math.PI / 2 : -Math.PI / 2;
-          figure.root.position.y = figure.position.y + Math.abs(Math.sin(time * 5)) * 0.045;
+          // Recorrido continuo elíptico por el pasillo: sin teletransportes
+          // ni cambios bruscos de orientación al llegar a los extremos.
+          const phase = time * 0.42 + figure.phase * 0.08;
+          const rx = 2.20;
+          const rz = 0.47;
+          figure.root.position.x = figure.position.x + Math.sin(phase) * rx;
+          figure.root.position.z = figure.position.z + (Math.cos(phase) - 1) * rz;
+          const dx = Math.cos(phase) * rx;
+          const dz = -Math.sin(phase) * rz;
+          const targetYaw = Math.atan2(dx, dz);
+          const yawError = Math.atan2(
+            Math.sin(targetYaw - figure.root.rotation.y),
+            Math.cos(targetYaw - figure.root.rotation.y),
+          );
+          figure.root.rotation.y += yawError * Math.min(1, delta * 5.5);
+          const stepPhase = time * 4.6 + figure.phase;
+          const swing = Math.sin(stepPhase);
+          figure.root.position.y = figure.position.y + (1 - Math.cos(2 * stepPhase)) * 0.008;
+          const axis = new THREE.Vector3(1, 0, 0);
+          const offset = new THREE.Quaternion();
+          for (const joint of figure.walkBones) {
+            offset.setFromAxisAngle(axis, swing * joint.swingDirection * joint.amplitude);
+            joint.bone.quaternion.copy(joint.rest).multiply(offset);
+          }
         }
       }
     },
