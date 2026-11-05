@@ -25,7 +25,7 @@ function ToolButton({
   );
 }
 
-/** Hero V2 decorativo. No conecta agentes a servicios, credenciales ni IA. */
+/** Hero corporativo SG-SST: conversación simulada, sin datos reales ni agentes conectados. */
 export default function OfficeHero() {
   const hostRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<MiniWorld | null>(null);
@@ -33,7 +33,7 @@ export default function OfficeHero() {
   const [unavailable, setUnavailable] = useState(false);
   const [exploring, setExploring] = useState(false);
   const [modelsStatus, setModelsStatus] = useState<SstModelStatus>({
-    phase: "loading", loaded: 0, total: 10, errorCount: 0,
+    phase: "loading", loaded: 0, total: 5, errorCount: 0,
   });
 
   useEffect(() => {
@@ -75,7 +75,7 @@ export default function OfficeHero() {
 
   return (
     <section
-      aria-label="Mundo de oficinas 3D de Stack44"
+      aria-label="Oficina ejecutiva SG-SST 3D con cinco profesionales y jardines"
       className="relative isolate min-h-[660px] h-[100svh] max-h-[1060px] w-full overflow-hidden bg-[#f7faf8] md:min-h-[720px]"
     >
       <div
@@ -85,7 +85,7 @@ export default function OfficeHero() {
 
       <div
         ref={hostRef}
-        aria-label="Oficina tecnológica de seguridad y salud en el trabajo, con pantallas SG-SST, minifiguras, jardines, espacios abiertos y autos en movimiento"
+        aria-label="Oficina moderna con cinco puestos de trabajo: Jesús, Cristina, Apolo, Zeus y Hera; portátiles estilo MacBook, televisores panorámicos y jardines"
         role="img"
         className="absolute inset-0 z-[1] select-none"
       />
@@ -104,15 +104,15 @@ export default function OfficeHero() {
           <span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-500" />
           STACK44 <span className="mx-1 text-emerald-600/40">/</span> SG-SST
         </div>
-        <div className="max-w-[460px] rounded-[28px] border border-white/70 bg-white/75 p-5 shadow-[0_24px_85px_rgba(28,70,80,0.11)] backdrop-blur-xl sm:p-7 md:bg-white/65">
+        <div className="max-w-[420px] rounded-[28px] border border-white/70 bg-white/80 p-5 shadow-[0_24px_85px_rgba(28,70,80,0.11)] backdrop-blur-xl sm:p-7 md:bg-white/65">
           <p className="mb-3 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.20em] text-emerald-700 sm:text-[11px]">
             <ShieldCheck size={15} /> Gestión inteligente en SST
           </p>
           <h1 className="text-[30px] font-extrabold leading-[1.04] tracking-tight text-slate-950 sm:text-4xl md:text-[44px]">
-            La prevención también tiene un mundo propio.
+            La prevención se gestiona en equipo.
           </h1>
           <p className="mt-3 max-w-[370px] text-[13px] font-medium leading-relaxed text-slate-700 sm:text-[15px]">
-            Explora oficinas, tecnología y personas trabajando por entornos más seguros.
+            Conoce a Jesús, Cristina, Apolo, Zeus y Hera en nuestra oficina SG-SST: tecnología, seguimiento y decisiones en un mismo lugar.
           </p>
           <p className="mt-3 text-[10px] leading-relaxed text-slate-500">
             Minifiguras 3D basadas en el trabajo de{" "}
@@ -126,7 +126,7 @@ export default function OfficeHero() {
             >
               {modelsStatus.source === "animated" ? "Ben Shaffer" : "Darth Iron"}
             </a>{" "}
-            (CC BY 4.0), adaptadas para Stack44.
+            (CC BY 4.0), adaptadas para Stack44. Conversaciones ilustrativas, no datos reales.
           </p>
         </div>
       </div>
@@ -171,8 +171,8 @@ export default function OfficeHero() {
             <span className="inline-flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
               {modelsStatus.source === "animated"
-                ? "10 minifiguras animadas · 6 estilos SST"
-                : "10 minifiguras GLB anteriores cargadas"}
+                ? "5 profesionales SG-SST · Personajes 3D"
+                : "5 personajes 3D en sus puestos"}
             </span>
           )}
           {modelsStatus.phase === "partial" && (
