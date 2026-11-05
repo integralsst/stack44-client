@@ -44,7 +44,6 @@ export function buildUltraPremiumCampus(world: THREE.Group, mobile: boolean) {
     transparent: true, opacity: mobile ? .13 : .19,
     depthWrite: false, side: THREE.DoubleSide,
   });
-  const accent = meshMat(0xc7b08a, .30, .42);
 
   const block = (
     parent: THREE.Object3D, w: number, h: number, d: number,
