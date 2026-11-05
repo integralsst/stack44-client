@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowDown, Maximize2, Minus, Plus, RotateCcw, ShieldCheck, Sparkles, X } from "lucide-react";
 import type { MiniWorld } from "./officeScene";
+import type { SstModelStatus } from "./riggedSstTeam";
 
 function ToolButton({
   label, onClick, children, disabled = false,
@@ -31,6 +32,9 @@ export default function OfficeHero() {
   const [ready, setReady] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
   const [exploring, setExploring] = useState(false);
+  const [modelsStatus, setModelsStatus] = useState<SstModelStatus>({
+    phase: "loading", loaded: 0, total: 10, errorCount: 0,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -40,6 +44,8 @@ export default function OfficeHero() {
         if (cancelled || !hostRef.current) return;
         worldRef.current = mountOfficeScene(hostRef.current, () => {
           if (!cancelled) setUnavailable(true);
+        }, (status) => {
+          if (!cancelled) setModelsStatus(status);
         });
         if (worldRef.current) {
           worldRef.current.setInteractive(false);
@@ -146,6 +152,39 @@ export default function OfficeHero() {
       >
         Continuar <ArrowDown size={14} />
       </a>
+
+      {ready && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="absolute left-5 top-36 z-[5] max-w-[calc(100%-40px)] rounded-xl border border-slate-200/90 bg-white/90 px-3 py-2 text-[11px] font-semibold text-slate-700 shadow-sm backdrop-blur-xl sm:left-10 md:top-40"
+        >
+          {modelsStatus.phase === "loading" && (
+            <span className="inline-flex items-center gap-2">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-amber-500" />
+              Cargando minifiguras 3D reales…
+            </span>
+          )}
+          {modelsStatus.phase === "ready" && (
+            <span className="inline-flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              {modelsStatus.loaded} minifiguras GLB cargadas
+            </span>
+          )}
+          {modelsStatus.phase === "partial" && (
+            <span className="inline-flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-amber-500" />
+              {modelsStatus.loaded} de {modelsStatus.total} minifiguras GLB cargadas
+            </span>
+          )}
+          {modelsStatus.phase === "error" && (
+            <span className="inline-flex items-center gap-2 text-red-700">
+              <span className="h-2 w-2 rounded-full bg-red-500" />
+              Error al cargar GLB: mostrando respaldo 3D
+            </span>
+          )}
+        </div>
+      )}
 
       {ready && (
         <>
