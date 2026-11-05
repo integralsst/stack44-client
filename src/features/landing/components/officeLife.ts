@@ -116,12 +116,17 @@ export function getOfficePose(actor: number, elapsed: number): OfficePose {
   const t = ((elapsed % OFFICE_CYCLE_SECONDS) + OFFICE_CYCLE_SECONDS) %
     OFFICE_CYCLE_SECONDS;
   let begin = timeline[0];
-  let end = timeline[timeline.length - 1];
-  for (let i = 1; i < timeline.length; i += 1) {
-    if (t <= timeline[i].t) {
-      begin = timeline[i - 1];
-      end = timeline[i];
-      break;
+  let end = timeline[0];
+  if (t >= timeline[timeline.length - 1].t) {
+    begin = timeline[timeline.length - 1];
+    end = begin;
+  } else {
+    for (let i = 1; i < timeline.length; i += 1) {
+      if (t <= timeline[i].t) {
+        begin = timeline[i - 1];
+        end = timeline[i];
+        break;
+      }
     }
   }
   const seconds = Math.max(0.001, end.t - begin.t);
@@ -132,12 +137,23 @@ export function getOfficePose(actor: number, elapsed: number): OfficePose {
   const vz = end.z - begin.z;
   const walking = Math.hypot(vx, vz) >= 0.35 && amount > 0.015 && amount < 0.985;
   const range = visibility[actor] ?? visibility[0];
+  const action = walking ? "walk" : end.action;
+  // En sus puestos están del lado +Z del escritorio, mirando hacia -Z;
+  // así la pantalla del MacBook los mira de frente, nunca al revés.
+  let yaw = walking ? Math.atan2(vx, vz) : Math.PI;
+  if (!walking && (action === "meet" || action === "talk")) {
+    yaw = Math.atan2(.0 - x, .7 - z);
+  } else if (!walking && action === "greet") {
+    yaw = Math.atan2(-4.5 - x, 8.6 - z);
+  } else if (!walking && action === "relax") {
+    yaw = Math.atan2(-13.8 - x, 11.6 - z);
+  } else if (!walking && action === "walk" && Math.hypot(vx, vz) > .01) {
+    yaw = Math.atan2(vx, vz);
+  }
   return {
-    x, z,
-    yaw: walking ? Math.atan2(vx, vz) : 0,
-    walking,
+    x, z, yaw, walking,
     visible: t >= range[0] && t <= range[1],
-    action: walking ? "walk" : end.action,
+    action,
   };
 }
 
