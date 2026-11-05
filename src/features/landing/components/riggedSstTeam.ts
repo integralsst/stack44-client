@@ -4,7 +4,7 @@ import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.j
 
 type FigureRole = "typing" | "walking" | "presenting" | "reception" | "training" | "meeting";
 type Figure = {
-  root: THREE.Group;
+  root: THREE.Object3D;
   mixer: THREE.AnimationMixer;
   role: FigureRole;
   phase: number;
