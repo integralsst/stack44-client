@@ -15,7 +15,7 @@ export default function CloudBridge() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none relative z-20 -mt-24 h-[210px] w-full overflow-hidden bg-gradient-to-b from-[#f7faf8]/90 via-[#e9f3f4] via-55% to-[#05080a] md:-mt-32 md:h-[280px]"
+      className="pointer-events-none relative z-20 -mt-24 h-[210px] w-full overflow-hidden bg-gradient-to-b from-[#f7faf8]/90 via-[#e9f3f4] via-[55%] to-[#05080a] md:-mt-32 md:h-[280px]"
     >
       <div className="absolute inset-0 bg-gradient-to-r from-white/25 via-transparent to-white/25" />
       {clouds.map((cloud, index) => (
