@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { addSstOfficeDetails } from "./officeSSTDetails";
 
 export type MiniWorld = {
   dispose: () => void;
@@ -55,17 +56,18 @@ export function mountOfficeScene(
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compact ? 1.15 : 1.65));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.6;
-  renderer.setClearColor(0x030d15, 0);
+  renderer.toneMappingExposure = 1.35;
+  renderer.setClearColor(0xf7faf8, 1);
   renderer.shadowMap.enabled = !compact;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.domElement.className = "h-full w-full touch-none outline-none";
+  renderer.domElement.className = "h-full w-full outline-none";
   renderer.domElement.setAttribute("aria-hidden", "true");
   renderer.domElement.style.display = "block";
   renderer.domElement.style.pointerEvents = "none";
   host.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xf7faf8);
   const world = new THREE.Group();
   scene.add(world);
 
@@ -88,6 +90,8 @@ export function mountOfficeScene(
   controls.maxAzimuthAngle = Math.PI * 0.48;
   controls.target.set(0, 0.25, 0);
   controls.update();
+  // El gesto vertical sigue desplazando la página incluso en modo exploración.
+  renderer.domElement.style.touchAction = "pan-y";
 
   const mat = (hex: number, gloss = 0.35, metal = 0) =>
     new THREE.MeshPhysicalMaterial({
@@ -98,44 +102,72 @@ export function mountOfficeScene(
       clearcoatRoughness: 0.26,
     });
   const color = {
-    dark: mat(0x17283a),
-    outline: mat(0x526276),
-    base: mat(0x132235),
-    white: mat(0xf0ece4, 0.42),
-    cream: mat(0xded4c2, 0.5),
-    tile: mat(0xbfcbd1, 0.58),
+    dark: mat(0x334655),
+    outline: mat(0x81929b, 0.34, 0.35),
+    base: mat(0xf0f1ed, 0.36),
+    white: mat(0xf8f8f4, 0.26),
+    cream: mat(0xe9e3d7, 0.42),
+    tile: mat(0xe1e8e6, 0.38),
     glass: new THREE.MeshPhysicalMaterial({
       color: 0x98e9ff, roughness: 0.09, metalness: 0.1, transparent: true,
       opacity: 0.36, depthWrite: false, side: THREE.DoubleSide,
     }),
-    wood: mat(0x9c6344, 0.49),
-    darkWood: mat(0x67452e),
-    asphalt: mat(0x293645, 0.85),
+    wood: mat(0xffffff, 0.39),
+    darkWood: mat(0xe6c2a6, 0.35),
+    asphalt: mat(0x414c56, 0.91),
     line: mat(0xe8e4cf),
-    green: mat(0x60b979),
-    greenDark: mat(0x358465),
-    greenLight: mat(0x82c98d),
-    yellow: mat(0xffcf37, 0.25),
-    skinBrown: mat(0xa75f35, 0.27),
-    skinTan: mat(0xdba66d, 0.27),
+    green: mat(0x4e9e6e, 0.59),
+    greenDark: mat(0x2f7754, 0.55),
+    greenLight: mat(0x92cb8b, 0.58),
+    yellow: mat(0xffd242, 0.20),
+    skinBrown: mat(0xa86842, 0.20),
+    skinTan: mat(0xe4ad78, 0.20),
     black: mat(0x19252b, 0.29),
     hairBrown: mat(0x693821, 0.26),
     hairRed: mat(0xa94a2d, 0.27),
     hairBlonde: mat(0xe0ac57, 0.28),
-    cyan: mat(0x18d4dc, 0.27),
-    royal: mat(0x366cbe, 0.3),
-    navy: mat(0x283960, 0.25),
-    red: mat(0xd95366, 0.33),
+    cyan: mat(0x16bcc6, 0.20),
+    royal: mat(0x2877bb, 0.21),
+    navy: mat(0x284d69, 0.22),
+    red: mat(0xdd5865, 0.23),
     tan: mat(0xcab6a0, 0.33),
-    violet: mat(0x8259b7, 0.3),
-    mint: mat(0x48af98, 0.31),
-    orange: mat(0xe8994b, 0.3),
+    violet: mat(0x9878c1, 0.23),
+    mint: mat(0x47b2a6, 0.23),
+    orange: mat(0xeb9857, 0.24),
     light: new THREE.MeshBasicMaterial({ color: 0x8befff }),
     ink: new THREE.MeshBasicMaterial({ color: 0x253447 }),
     screen: new THREE.MeshBasicMaterial({ color: 0x163b4a }),
     whiteScreen: new THREE.MeshBasicMaterial({ color: 0xc8f8ff }),
     windowDark: new THREE.MeshBasicMaterial({ color: 0x27546b }),
   };
+
+
+  // Textura de veta de roble cálido con variación física (no una superficie plana).
+  const woodCanvas = document.createElement("canvas");
+  woodCanvas.width = woodCanvas.height = 256;
+  const woodContext = woodCanvas.getContext("2d");
+  if (woodContext) {
+    woodContext.fillStyle = "#af8568";
+    woodContext.fillRect(0, 0, 256, 256);
+    for (let i = 0; i < 90; i += 1) {
+      const y = (i * 23.7) % 256;
+      const alpha = (i % 5 === 0 ? 0.19 : 0.07);
+      woodContext.strokeStyle = i % 4 === 0
+        ? "rgba(71,44,28," + alpha + ")"
+        : "rgba(245,224,191," + alpha + ")";
+      woodContext.lineWidth = (i % 7 === 0 ? 2.1 : 0.9);
+      woodContext.beginPath();
+      woodContext.moveTo(0, y);
+      woodContext.bezierCurveTo(70, y - 4, 168, y + 4, 256, y + 1);
+      woodContext.stroke();
+    }
+  }
+  const woodTexture = new THREE.CanvasTexture(woodCanvas);
+  woodTexture.colorSpace = THREE.SRGBColorSpace;
+  woodTexture.wrapS = woodTexture.wrapT = THREE.RepeatWrapping;
+  woodTexture.repeat.set(1.2, 1.0);
+  color.wood.map = woodTexture;
+  color.wood.needsUpdate = true;
 
   const box = (
     parent: THREE.Object3D, w: number, h: number, d: number,
@@ -241,9 +273,9 @@ export function mountOfficeScene(
   scene.add(accentLight);
 
   // Base de maqueta, baldosas, jardines y un boulevard transitable.
-  roundBox(world, 23.8, 0.48, 20.0, color.dark, 0, -0.62, 0.1, 0.17);
+  roundBox(world, 23.8, 0.48, 20.0, color.white, 0, -0.62, 0.1, 0.17);
   box(world, 23.6, 0.085, 19.9, color.cream, 0, -0.34, 0.1);
-  roundBox(world, 23.9, 0.09, 20.15, color.cyan, 0, -0.96, 0.1, 0.05);
+  roundBox(world, 23.9, 0.09, 20.15, color.outline, 0, -0.96, 0.1, 0.05);
   box(world, 23.2, 0.07, 12.1, color.tile, 0, -0.245, -3.65);
   box(world, 23.4, 0.035, 4.65, color.asphalt, 0, -0.28, 7.57);
   box(world, 23.3, 0.09, 1.00, color.cream, 0, -0.22, 4.75);
@@ -264,9 +296,9 @@ export function mountOfficeScene(
   const tc = tileCanvas.getContext("2d");
   let tileTexture: THREE.CanvasTexture | null = null;
   if (tc) {
-    tc.fillStyle = "#c9d3d2";
+    tc.fillStyle = "#e6e9e5";
     tc.fillRect(0, 0, 512, 512);
-    tc.strokeStyle = "#acbcbd";
+    tc.strokeStyle = "#d3dcd9";
     tc.lineWidth = 3;
     for (let i = 0; i <= 8; i += 1) {
       const n = i * 64;
@@ -572,23 +604,17 @@ export function mountOfficeScene(
     car(color.red, 12.8, 6.35, 0.88),
   ];
 
-  // Ambientación urbana al otro lado de la vía: fachadas, balcones y árboles.
-  for (let i = 0; i < 6; i += 1) {
-    const x = -10.4 + i * 4.3;
-    const block = new THREE.Group();
-    block.position.set(x, 0, 11.65);
-    world.add(block);
-    box(block, 3.6, 0.20, 2.4, color.cream, 0, -0.45, 0);
-    box(block, 2.94, 2.5 + (i % 3) * 0.55, 1.56,
-      i % 2 === 0 ? color.white : color.tan, 0, 1.0, 0);
-    for (const dx of [-0.86, 0, 0.86]) {
-      for (const y of [1.15, 1.89]) {
-        box(block, 0.42, 0.46, 0.035, color.windowDark, dx, y, 0.81);
-        box(block, 0.05, 0.48, 0.041, color.cream, dx, y, 0.84);
-      }
-    }
-    box(block, 3.15, 0.15, 1.80, color.dark, 0, 2.30 + (i % 3) * 0.55, 0);
-  }
+  // Campus abierto: retiramos por completo los edificios del primer plano.
+  // Añadimos pantallas SG-SST, acabados premium, jardines y más detalle a figuras.
+  addSstOfficeDetails(world, people);
+
+  // El scroll vertical siempre tiene prioridad frente a OrbitControls.
+  const allowPageScroll = (event: WheelEvent) => {
+    // La rueda y Ctrl+rueda conservan el desplazamiento/zoom del navegador.
+    // El zoom del mundo queda en botones y gesto táctil de dos dedos.
+    event.stopPropagation();
+  };
+  host.addEventListener("wheel", allowPageScroll, { capture: true, passive: true });
 
   let initialZoom = 1;
   let userAdjustedZoom = false;
@@ -738,6 +764,7 @@ export function mountOfficeScene(
     setInteractive: (enabled) => {
       interactive = enabled;
       renderer.domElement.style.pointerEvents = enabled ? "auto" : "none";
+      renderer.domElement.style.touchAction = "pan-y";
       controls.enabled = enabled;
       if (enabled) start();
       else render();
@@ -750,6 +777,7 @@ export function mountOfficeScene(
       motionQuery.removeEventListener("change", motionChange);
       document.removeEventListener("visibilitychange", visibilityChange);
       renderer.domElement.removeEventListener("webglcontextlost", contextLost);
+      host.removeEventListener("wheel", allowPageScroll, { capture: true });
       controls.dispose();
       const geos = new Set<THREE.BufferGeometry>();
       const materials = new Set<THREE.Material>();

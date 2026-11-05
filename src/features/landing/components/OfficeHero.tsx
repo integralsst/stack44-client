@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Maximize2, Minus, Plus, RotateCcw, Sparkles, X } from "lucide-react";
+import { ArrowDown, Maximize2, Minus, Plus, RotateCcw, ShieldCheck, Sparkles, X } from "lucide-react";
 import type { MiniWorld } from "./officeScene";
 
 function ToolButton({
@@ -70,43 +70,43 @@ export default function OfficeHero() {
   return (
     <section
       aria-label="Mundo de oficinas 3D de Stack44"
-      className="relative isolate min-h-[660px] h-[100svh] max-h-[1060px] w-full overflow-hidden bg-[#07121c] md:min-h-[720px]"
+      className="relative isolate min-h-[660px] h-[100svh] max-h-[1060px] w-full overflow-hidden bg-[#f7faf8] md:min-h-[720px]"
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_52%,#1a3949_0%,#0d2030_46%,#07121c_87%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_45%,#ffffff_4%,#f5faf8_56%,#e5f1ef_100%)]"
       />
 
       <div
         ref={hostRef}
-        aria-label="Maqueta tridimensional interactiva: una oficina corporativa con recepción, sala de juntas, puestos de trabajo, cafetería, calle y autos en movimiento"
+        aria-label="Oficina tecnológica de seguridad y salud en el trabajo, con pantallas SG-SST, minifiguras, jardines, espacios abiertos y autos en movimiento"
         role="img"
         className="absolute inset-0 z-[1] select-none"
       />
 
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 z-[2] h-44 bg-gradient-to-b from-[#07121c]/70 to-transparent"
+        className="pointer-events-none absolute inset-x-0 top-0 z-[2] h-36 bg-gradient-to-b from-white/70 to-transparent"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-44 bg-gradient-to-t from-[#07121c]/80 via-[#07121c]/35 to-transparent"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-56 bg-gradient-to-t from-[#f7faf8]/90 via-[#f7faf8]/20 to-transparent"
       />
 
-      <div className="pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-[1480px] flex-col justify-between px-5 pb-24 pt-20 sm:px-10 md:pb-12 md:pt-28">
-        <div className="w-fit rounded-full border border-cyan-200/15 bg-[#0a2535]/70 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-100/90 shadow-xl backdrop-blur-xl sm:text-xs">
-          <span className="mr-2 inline-block h-2 w-2 rounded-full bg-cyan-300 shadow-[0_0_11px_rgba(77,229,241,0.9)]" />
-          STACK44 <span className="mx-1 text-cyan-300/40">/</span> Un mundo en movimiento
+      <div className="pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-[1480px] flex-col justify-between px-5 pb-28 pt-20 sm:px-10 md:pb-14 md:pt-28">
+        <div className="w-fit rounded-full border border-emerald-700/15 bg-white/85 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.20em] text-slate-800 shadow-[0_12px_32px_rgba(30,90,90,0.08)] backdrop-blur-xl sm:text-xs">
+          <span className="mr-2 inline-block h-2 w-2 rounded-full bg-emerald-500" />
+          STACK44 <span className="mx-1 text-emerald-600/40">/</span> SG-SST
         </div>
-        <div className="max-w-[460px]">
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.31em] text-cyan-200/80 sm:text-[11px]">
-            Explora cada rincón
+        <div className="max-w-[460px] rounded-[28px] border border-white/70 bg-white/75 p-5 shadow-[0_24px_85px_rgba(28,70,80,0.11)] backdrop-blur-xl sm:p-7 md:bg-white/65">
+          <p className="mb-3 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.20em] text-emerald-700 sm:text-[11px]">
+            <ShieldCheck size={15} /> Gestión inteligente en SST
           </p>
-          <h1 className="text-[30px] font-extrabold leading-[1.02] tracking-tight text-white drop-shadow-[0_7px_24px_rgba(0,0,0,0.8)] sm:text-4xl md:text-[44px]">
-            Bienvenido a un mundo de ideas.
+          <h1 className="text-[30px] font-extrabold leading-[1.04] tracking-tight text-slate-950 sm:text-4xl md:text-[44px]">
+            La prevención también tiene un mundo propio.
           </h1>
-          <p className="mt-3 max-w-[370px] text-[13px] font-medium leading-relaxed text-slate-200/85 sm:text-[15px]">
-            Un pequeño universo donde cada personaje tiene una tarea.
+          <p className="mt-3 max-w-[370px] text-[13px] font-medium leading-relaxed text-slate-700 sm:text-[15px]">
+            Explora oficinas, tecnología y personas trabajando por entornos más seguros.
           </p>
         </div>
       </div>
@@ -116,23 +116,30 @@ export default function OfficeHero() {
           role="status"
           className="pointer-events-none absolute inset-0 z-[4] flex items-center justify-center px-6"
         >
-          <div className="rounded-2xl border border-white/10 bg-[#0a2535]/85 px-6 py-5 text-center shadow-2xl backdrop-blur-xl">
-            <Sparkles className="mx-auto mb-2 text-cyan-300" size={25} />
-            <p className="text-sm font-semibold text-white">
+          <div className="rounded-2xl border border-emerald-600/10 bg-white/90 px-6 py-5 text-center shadow-2xl backdrop-blur-xl">
+            <Sparkles className="mx-auto mb-2 text-emerald-700" size={25} />
+            <p className="text-sm font-semibold text-slate-900">
               {unavailable ? "El modo 3D no está disponible en este navegador" : "Preparando el mundo 3D"}
             </p>
             {unavailable && (
-              <p className="mt-2 text-xs text-slate-300">Puedes seguir explorando el resto de Stack44.</p>
+              <p className="mt-2 text-xs text-slate-600">Puedes seguir explorando el resto de Stack44.</p>
             )}
           </div>
         </div>
       )}
 
+      <a
+        href="#comparativa"
+        className="absolute right-5 top-20 z-[5] inline-flex min-h-10 items-center gap-1.5 rounded-full border border-slate-200 bg-white/90 px-4 text-[11px] font-bold text-slate-700 shadow-sm backdrop-blur-xl transition-colors hover:border-emerald-500/30 hover:text-emerald-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 sm:right-10 md:top-28"
+      >
+        Continuar <ArrowDown size={14} />
+      </a>
+
       {ready && (
         <>
           {exploring && (
-            <div className="pointer-events-none absolute left-1/2 top-24 z-[4] -translate-x-1/2 rounded-full border border-cyan-300/25 bg-[#0b2738]/80 px-4 py-2 text-center text-[11px] font-medium text-cyan-100 backdrop-blur-xl sm:top-28">
-              Arrastra para girar · Pellizca o usa la rueda para acercarte
+            <div className="pointer-events-none absolute left-1/2 top-36 z-[4] -translate-x-1/2 rounded-full border border-emerald-700/15 bg-white/90 px-4 py-2 text-center text-[11px] font-medium text-slate-800 shadow-lg backdrop-blur-xl sm:top-28">
+              Arrastra para girar · Pellizca para acercarte · Desliza para bajar
             </div>
           )}
           <div className="absolute bottom-5 left-4 right-4 z-[5] flex items-end justify-between gap-2 sm:bottom-7 sm:left-8 sm:right-8">

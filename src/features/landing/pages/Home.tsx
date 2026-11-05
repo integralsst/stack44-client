@@ -1,5 +1,6 @@
 import { motion, type Variants } from "framer-motion";
 import OfficeHero from "../components/OfficeHero";
+import CloudBridge from "../components/CloudBridge";
 import Comparison from "../components/Comparison";
 import { DiagnosticQuiz } from "../components/DiagnosticQuiz";
 import { SGSSTDashboard } from "../components/SGSSTDashboard";
@@ -22,8 +23,9 @@ export default function LandingPage() {
     <div className="relative w-full">
       <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(#334155_1px,transparent_1px)] opacity-20 [background-size:24px_24px]" />
 
-      <main className="relative z-10 flex flex-col gap-12 md:gap-24">
+      <main className="relative z-10 flex flex-col gap-0">
         <OfficeHero />
+        <CloudBridge />
 
         <motion.div
           id="comparativa"
@@ -38,7 +40,7 @@ export default function LandingPage() {
 
         <motion.div
           id="diagnostico"
-          className="scroll-mt-32"
+          className="mt-12 scroll-mt-32 md:mt-24"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
@@ -49,7 +51,7 @@ export default function LandingPage() {
 
         <motion.div
           id="dashboard"
-          className="scroll-mt-32"
+          className="mt-12 scroll-mt-32 md:mt-24"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
@@ -60,7 +62,7 @@ export default function LandingPage() {
 
         <motion.div
           id="modulos"
-          className="scroll-mt-32"
+          className="mt-12 scroll-mt-32 md:mt-24"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
@@ -72,7 +74,7 @@ export default function LandingPage() {
         <div className="flex flex-col">
           <motion.div
             id="faq"
-            className="scroll-mt-32"
+            className="mt-12 scroll-mt-32 md:mt-24"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-100px" }}
