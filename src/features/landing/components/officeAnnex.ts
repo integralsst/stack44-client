@@ -24,7 +24,6 @@ export function mountOfficeAnnex(
   onStatus: (status: AnnexState) => void,
 ): OfficeAnnexHandle {
   let disposed = false;
-  let annex: THREE.Group | null = null;
 
   const shell = new THREE.Group();
   shell.name = "Stack44 · Campus SG-SST / Oficina 2";
@@ -32,9 +31,6 @@ export function mountOfficeAnnex(
 
   const porcelain = new THREE.MeshStandardMaterial({
     color: 0xf3f7f2, roughness: 0.6, metalness: 0.05,
-  });
-  const soil = new THREE.MeshStandardMaterial({
-    color: 0xc7d9cf, roughness: 0.83,
   });
   const asphalt = new THREE.MeshStandardMaterial({
     color: 0x454e57, roughness: 0.92,
@@ -198,7 +194,6 @@ export function mountOfficeAnnex(
     shell.add(model);
     addGround();
     world.add(shell);
-    annex = shell;
     onStatus("ready");
   }
 
@@ -214,7 +209,6 @@ export function mountOfficeAnnex(
       disposed = true;
       controller.abort();
       // La escena principal elimina materiales y geometrías al desmontarse.
-      annex = null;
     },
   };
 }
