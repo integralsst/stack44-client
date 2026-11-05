@@ -108,6 +108,18 @@ export default function OfficeHero() {
           <p className="mt-3 max-w-[370px] text-[13px] font-medium leading-relaxed text-slate-700 sm:text-[15px]">
             Explora oficinas, tecnología y personas trabajando por entornos más seguros.
           </p>
+          <p className="mt-3 text-[10px] leading-relaxed text-slate-500">
+            Minifiguras 3D basadas en el trabajo de{" "}
+            <a
+              href="https://sketchfab.com/3d-models/lego-minifigure-rigged-42612b64a3004d3c97872c4c444f9544"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="pointer-events-auto font-semibold underline underline-offset-2 hover:text-emerald-800"
+            >
+              Darth Iron
+            </a>{" "}
+            (CC BY 4.0), adaptadas para Stack44.
+          </p>
         </div>
       </div>
 
