@@ -1,11 +1,9 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
-import { applyPremiumSstHair } from "./premiumSstHair";
 import { decorateAnimatedSstFigure } from "./animatedSstCharacters";
-import { OFFICE_TEAM } from "./officeTeam";
-
-type FigureRole = "typing" | "walking" | "presenting" | "reception" | "training" | "meeting";
+import { getOfficePose, type OfficeAction } from "./officeLife";
+import { OFFICE_TEAM, VISITOR_TEAM } from "./officeTeam";
 
 export type SstModelStatus = {
   phase: "loading" | "ready" | "partial" | "error";
@@ -15,283 +13,214 @@ export type SstModelStatus = {
   source?: "animated" | "legacy";
 };
 
-type WalkBone = { bone: THREE.Bone; rest: THREE.Quaternion; swingDirection: number; amplitude: number };
-type Figure = {
+type BoneJoint = {
+  bone: THREE.Bone;
+  neutral: THREE.Quaternion;
+  part: "legL" | "legR" | "armL" | "armR" | "head";
+};
+type Avatar = {
   root: THREE.Group;
-  mixer: THREE.AnimationMixer;
-  role: FigureRole;
-  phase: number;
-  position: THREE.Vector3;
-  slot: number;
-  walkBones: WalkBone[];
-  animatedSource: boolean;
+  model: THREE.Object3D;
+  joints: BoneJoint[];
+  index: number;
+  seated: number;
+  yaw: number;
 };
 
-const MODEL_PATHS = [
-  "/models/sst/profesional_sst.glb",
-  "/models/sst/inspectora_sst.glb",
-  "/models/sst/coordinadora_sst.glb",
-  "/models/sst/auditor_sst.glb",
-  "/models/sst/lego_minifigure_animated.glb",
-] as const;
-
-const TEAM = OFFICE_TEAM.map((member, index) => ({
-  model: index % 4,
-  x: member.x,
-  z: member.z,
-  turn: 0,
-  role: "typing" as FigureRole,
-  phase: index * 0.7,
-}));
+const MODEL = "/models/sst/lego_minifigure_animated.glb";
+const ACTORS = [...OFFICE_TEAM, ...VISITOR_TEAM];
 
 /**
- * Los modelos personalizados reemplazan a los muñecos geométricos por posición.
- * Cada fuente GLB se valida antes de ocultar su correspondiente respaldo.
- * El indicador de estado permite comprobar la carga real en la página.
+ * Un único GLB animable compartido por 5 empleados y 3 clientes.
+ * La línea de tiempo de officeLife dicta dónde está y qué hace cada persona.
+ * No se reproduce "Take 001" porque mezcla más movimientos que caminar.
  */
 export function mountRiggedSstTeam(
   world: THREE.Group,
   fallback: Array<{ root: THREE.Group }>,
-  isMobile: () => boolean,
+  mobile: () => boolean,
   report?: (status: SstModelStatus) => void,
 ): {
   update: (delta: number, time: number) => void;
   resize: () => void;
   dispose: () => void;
 } {
-  const loader = new GLTFLoader();
-  const figures: Figure[] = [];
-  const controllers: AbortController[] = [];
+  const avatars: Avatar[] = [];
+  const controller = new AbortController();
   let disposed = false;
-
-  report?.({ phase: "loading", loaded: 0, total: TEAM.length, errorCount: 0 });
-
-  // Un archivo inexistente o una respuesta HTML del router SPA no se confunden
-  // silenciosamente con un modelo 3D válido.
-  const loadChecked = async (url: string) => {
-    const controller = new AbortController();
-    controllers.push(controller);
-    const response = await fetch(url + "?rev=sst155-executive", {
-      signal: controller.signal,
-      cache: "no-store",
-    });
-    if (!response.ok) {
-      throw new Error(url + ": respuesta HTTP " + response.status);
-    }
-    const buffer = await response.arrayBuffer();
-    const bytes = new Uint8Array(buffer);
-    if (bytes.length < 20 ||
-        bytes[0] !== 0x67 || bytes[1] !== 0x6c ||
-        bytes[2] !== 0x54 || bytes[3] !== 0x46) {
-      throw new Error(url + ": el servidor no devolvió un archivo GLB válido");
-    }
-    return loader.parseAsync(buffer, "");
-  };
-
-  void Promise.allSettled(MODEL_PATHS.map(loadChecked)).then((results) => {
-    if (disposed) return;
-    const available = results.map((result, i) => {
-      if (result.status === "fulfilled") return result.value;
-      if (i === 4) console.info("[Stack44] Modelo nuevo todavía no publicado. Se usan los personajes existentes.");
-      else console.error("[Stack44] No se pudo cargar el modelo SST:", MODEL_PATHS[i], result.reason);
-      return null;
-    });
-
-    const animatedSourceReady = available[4] !== null;
-    for (const [index, setup] of TEAM.entries()) {
-      const source = available[4] ?? available[setup.model];
-      if (!source) continue;
-      try {
-        const model = cloneSkeleton(source.scene);
-        if (!model) throw new Error("No se pudo clonar la jerarquía del GLB");
-        model.name = "Stack44 · " + OFFICE_TEAM[index].name + " · " + OFFICE_TEAM[index].title;
-        if (animatedSourceReady) {
-          decorateAnimatedSstFigure(model, index);
-        } else {
-          // Las cuatro figuras GLB anteriores permanecen como respaldo hasta
-          // que el archivo animado nuevo se haya publicado realmente.
-          applyPremiumSstHair(
-            model, setup.model,
-            setup.role === "presenting" || setup.role === "training",
-          );
-        }
-
-        // Ajuste automático: el modelo nuevo mide ~1.07 y el anterior ~4.
-        // Evita que un modelo importado aparezca escondido bajo el piso o sea
-        // demasiado pequeño para reconocerse frente al resto de la maqueta.
-        model.updateMatrixWorld(true);
-        const bounds = new THREE.Box3().setFromObject(model);
-        const height = bounds.max.y - bounds.min.y;
-        if (!Number.isFinite(height) || height <= 0.01) {
-          throw new Error("Dimensiones del GLB inválidas");
-        }
-        model.scale.setScalar(2.18 / height);
-        model.updateMatrixWorld(true);
-        const fitted = new THREE.Box3().setFromObject(model);
-        const center = new THREE.Vector3();
-        fitted.getCenter(center);
-        model.position.x -= center.x;
-        model.position.y -= fitted.min.y;
-        model.position.z -= center.z;
-
-        const root = new THREE.Group();
-        root.name = "Personaje SG-SST · " + OFFICE_TEAM[index].name;
-        root.position.set(setup.x, -0.19, setup.z);
-        root.rotation.y = setup.turn;
-        root.add(model);
-        root.updateMatrixWorld(true);
-        root.traverse((object) => {
-          if (object instanceof THREE.Mesh || object instanceof THREE.SkinnedMesh) {
-            object.castShadow = !isMobile();
-            object.receiveShadow = !isMobile();
-          }
-        });
-
-        const mixer = new THREE.AnimationMixer(model);
-        // El clip Caminar exportado podía torcer las articulaciones y hacer
-        // que el muñeco saltara. Lo sustituimos por un ciclo articulado corto,
-        // calculado respecto a la posición neutral real de cada hueso.
-        const clipName = setup.role === "presenting" || setup.role === "training"
-          ? "Saludar" : "Idle";
-        if (!animatedSourceReady && setup.role !== "walking") {
-          const clip = THREE.AnimationClip.findByName(source.animations, clipName)
-            ?? source.animations[0];
-          if (clip) {
-            const action = mixer.clipAction(clip);
-            action.setLoop(THREE.LoopRepeat, Infinity);
-            action.play();
-            mixer.update(setup.phase);
-          }
-        }
-        const walkBones: WalkBone[] = [];
-        if (animatedSourceReady || setup.role === "walking") {
-          const walkSetup = animatedSourceReady ? [
-            ["L_Leg_04", 1, 0.22],
-            ["R_Reg_08", -1, 0.22],
-            ["L_Arm_02", -1, 0.15],
-            ["R_Arm_06", 1, 0.15],
-            ["Head_00", 1, 0.025],
-          ] as const : [
-            ["Bone.003_9", 1, 0.24],
-            ["Bone.004_11", -1, 0.24],
-            ["Bone.007_3", -1, 0.15],
-            ["Bone.006_6", 1, 0.15],
-          ] as const;
-          for (const [name, direction, amplitude] of walkSetup) {
-            const bone = model.getObjectByName(name);
-            if (bone instanceof THREE.Bone) {
-              walkBones.push({
-                bone, rest: bone.quaternion.clone(),
-                swingDirection: direction, amplitude,
-              });
-            }
-          }
-        }
-
-        // El reemplazo es individual. Nunca ocultamos los cinco empleados
-        // si uno de los cuatro archivos no se pudo cargar.
-        root.visible = !isMobile() || index < 6;
-        world.add(root);
-        fallback[index]?.root && (fallback[index].root.visible = false);
-        figures.push({
-          root, mixer, role: setup.role, phase: setup.phase,
-          position: root.position.clone(), slot: index, walkBones,
-          animatedSource: animatedSourceReady,
-        });
-      } catch (error) {
-        console.error("[Stack44] Falló el personaje SST en la posición", index, error);
-      }
-    }
-
-    const loaded = figures.length;
-    report?.({
-      phase: loaded === TEAM.length ? "ready" : loaded > 0 ? "partial" : "error",
-      loaded,
-      total: TEAM.length,
-      errorCount: TEAM.length - loaded,
-      source: animatedSourceReady ? "animated" : "legacy",
-    });
-  }).catch((error: unknown) => {
-    if (!disposed) {
-      console.error("[Stack44] Falló la importación del equipo SST", error);
-      report?.({ phase: "error", loaded: 0, total: TEAM.length, errorCount: MODEL_PATHS.length });
-    }
+  let elapsed = 0;
+  report?.({
+    phase: "loading", loaded: 0, total: ACTORS.length, errorCount: 0,
   });
 
+  const jointNames: Array<[string, BoneJoint["part"]]> = [
+    ["L_Leg_04", "legL"],
+    ["R_Reg_08", "legR"],
+    ["L_Arm_02", "armL"],
+    ["R_Arm_06", "armR"],
+    ["Head_00", "head"],
+  ];
+
+  const getBounds = (model: THREE.Object3D): THREE.Box3 => {
+    const bounds = new THREE.Box3();
+    model.updateMatrixWorld(true);
+    // La descarga incluye suelo y cabeza "dead" ocultos. Excluirlos es
+    // importante: de lo contrario el autoencuadre escala mal los personajes.
+    model.traverse((child) => {
+      if (!(child instanceof THREE.Mesh) || !child.visible) return;
+      if (/Floor|Object_79|Head02/i.test(child.name)) return;
+      bounds.union(new THREE.Box3().setFromObject(child));
+    });
+    return bounds;
+  };
+
+  void (async () => {
+    const response = await fetch(MODEL + "?rev=campus-20261105", {
+      signal: controller.signal,
+      cache: "force-cache",
+    });
+    if (!response.ok) throw new Error("GLB HTTP " + response.status);
+    const buffer = await response.arrayBuffer();
+    const sig = new Uint8Array(buffer.slice(0, 4));
+    if (sig.length !== 4 ||
+      sig[0] !== 103 || sig[1] !== 108 || sig[2] !== 84 || sig[3] !== 70) {
+      throw new Error("El servidor devolvió una página HTML en vez del GLB");
+    }
+    const glb = await new GLTFLoader().parseAsync(buffer, "");
+    if (disposed) return;
+
+    for (const [index, actor] of ACTORS.entries()) {
+      const root = new THREE.Group();
+      let model: THREE.Object3D;
+      try {
+        model = cloneSkeleton(glb.scene);
+        decorateAnimatedSstFigure(model, index);
+        model.name = actor.name + " · " + actor.title;
+        const bounds = getBounds(model);
+        const height = bounds.max.y - bounds.min.y;
+        if (!Number.isFinite(height) || height < .15) throw new Error("Altura del personaje inválida");
+        const scale = (index >= OFFICE_TEAM.length ? 2.0 : 2.18) / height;
+        model.scale.setScalar(scale);
+        model.updateMatrixWorld(true);
+        const fitted = getBounds(model);
+        const center = fitted.getCenter(new THREE.Vector3());
+        model.position.set(-center.x, -fitted.min.y, -center.z);
+      } catch (error) {
+        console.warn("[Stack44] Personaje no utilizable:", actor.name, error);
+        continue;
+      }
+
+      const joints: BoneJoint[] = [];
+      jointNames.forEach(([name, part]) => {
+        const joint = model.getObjectByName(name);
+        if (joint instanceof THREE.Bone) {
+          joints.push({ bone: joint, neutral: joint.quaternion.clone(), part });
+        }
+      });
+      const pose = getOfficePose(index, elapsed);
+      root.name = "Stack44 / " + actor.name;
+      root.position.set(pose.x, -.18, pose.z);
+      root.rotation.y = pose.yaw;
+      root.add(model);
+      root.traverse((child) => {
+        if (child instanceof THREE.Mesh || child instanceof THREE.SkinnedMesh) {
+          child.castShadow = !mobile();
+          child.receiveShadow = !mobile();
+        }
+      });
+      world.add(root);
+      fallback[index]?.root && (fallback[index].root.visible = false);
+      avatars.push({ root, model, joints, index, seated: 0, yaw: pose.yaw });
+    }
+
+    const count = avatars.length;
+    report?.({
+      phase: count === ACTORS.length ? "ready" : count ? "partial" : "error",
+      loaded: count, total: ACTORS.length, errorCount: ACTORS.length - count,
+      source: "animated",
+    });
+  })().catch((error: unknown) => {
+    if (disposed || controller.signal.aborted) return;
+    console.error("[Stack44] No se cargó el GLB de los personajes:", error);
+    report?.({
+      phase: "error", loaded: 0, total: ACTORS.length,
+      errorCount: ACTORS.length, source: "legacy",
+    });
+  });
+
+  const axis = new THREE.Vector3(1, 0, 0);
+  const angleOffset = new THREE.Quaternion();
+  const idle = (joint: BoneJoint, action: OfficeAction, time: number, index: number) => {
+    const t = time * 2.3 + index * .95;
+    if (joint.part === "head") return Math.sin(t * .47) * .035;
+    if (joint.part === "legL" || joint.part === "legR") return action === "work" ? .33 : 0;
+    const right = joint.part === "armR";
+    if (action === "work") {
+      return -.30 + Math.sin(t * 1.75 + (right ? Math.PI : 0)) * .06;
+    }
+    if (action === "talk" || action === "meet") {
+      return right ? -.24 + Math.sin(t * .9) * .14 : -.10;
+    }
+    if (action === "greet") {
+      return right ? -.47 + Math.sin(t * 1.3) * .17 : -.04;
+    }
+    return .04 + Math.sin(t * .54 + (right ? Math.PI : 0)) * .06;
+  };
+  const update = (delta: number, time: number) => {
+    elapsed = time;
+    // Respaldo geométrico también se desplaza si el GLB no llega a cargar.
+    fallback.forEach(({ root }, index) => {
+      if (!root.visible && avatars.some((avatar) => avatar.index === index)) return;
+      const pose = getOfficePose(index, time);
+      root.visible = pose.visible && (!mobile() || index < 6);
+      root.position.set(pose.x, pose.action === "work" ? -.41 : -.16, pose.z);
+      root.rotation.y = pose.yaw;
+    });
+
+    avatars.forEach((avatar) => {
+      const pose = getOfficePose(avatar.index, time);
+      avatar.root.visible = pose.visible && (!mobile() || avatar.index < 6);
+      if (!avatar.root.visible) return;
+
+      avatar.root.position.x = pose.x;
+      avatar.root.position.z = pose.z;
+      const sitting = pose.action === "work" ? .48 : pose.action === "meet" ? .14 : 0;
+      avatar.seated = THREE.MathUtils.damp(avatar.seated, sitting, 4.4, delta);
+      avatar.root.position.y = -.18 - avatar.seated;
+
+      const desired = pose.yaw;
+      const diff = Math.atan2(Math.sin(desired - avatar.yaw), Math.cos(desired - avatar.yaw));
+      avatar.yaw += diff * Math.min(1, delta * 4.7);
+      avatar.root.rotation.y = avatar.yaw;
+
+      const stride = Math.sin(time * 7.3 + avatar.index * .43);
+      for (const joint of avatar.joints) {
+        let angle = idle(joint, pose.action, time, avatar.index);
+        if (pose.walking) {
+          if (joint.part === "legL") angle = stride * .28;
+          else if (joint.part === "legR") angle = -stride * .28;
+          else if (joint.part === "armL") angle = -stride * .18;
+          else if (joint.part === "armR") angle = stride * .18;
+          else angle = Math.sin(time * 3.65) * .02;
+        }
+        angleOffset.setFromAxisAngle(axis, angle);
+        joint.bone.quaternion.copy(joint.neutral).multiply(angleOffset);
+      }
+      if (pose.walking) {
+        avatar.root.position.y += Math.abs(Math.sin(time * 7.3)) * .025;
+      }
+    });
+  };
+
   return {
-    update: (delta, time) => {
-      if (disposed) return;
-      for (const figure of figures) {
-        if (!figure.root.visible) continue;
-        figure.mixer.update(delta);
-        if (figure.animatedSource && figure.role !== "walking") {
-          const t = time * 2.0 + figure.phase;
-          const offset = new THREE.Quaternion();
-          const axis = new THREE.Vector3(1, 0, 0);
-          for (const joint of figure.walkBones) {
-            const leg = /Leg|Reg/.test(joint.bone.name);
-            const head = /Head/.test(joint.bone.name);
-            const right = /R_Arm/.test(joint.bone.name);
-            let angle = 0;
-            if (head) angle = Math.sin(t * 0.43) * 0.027;
-            else if (leg) angle = 0;
-            else if (figure.role === "typing" || figure.role === "reception") {
-              angle = -0.10 + Math.sin(t * 3.0 + (right ? Math.PI : 0)) * 0.055;
-            } else if (figure.role === "presenting" || figure.role === "training") {
-              angle = right ? -0.26 + Math.sin(t * 0.9) * 0.08 : 0.015;
-            } else if (figure.role === "meeting") {
-              angle = right ? Math.sin(t * 0.65) * 0.055 : 0;
-            }
-            offset.setFromAxisAngle(axis, angle);
-            joint.bone.quaternion.copy(joint.rest).multiply(offset);
-          }
-        }
-        if (figure.role === "walking") {
-          // Recorrido continuo elíptico por el pasillo: sin teletransportes
-          // ni cambios bruscos de orientación al llegar a los extremos.
-          const phase = time * 0.42 + figure.phase * 0.08;
-          const rx = 2.20;
-          const rz = 0.47;
-          figure.root.position.x = figure.position.x + Math.sin(phase) * rx;
-          figure.root.position.z = figure.position.z + (Math.cos(phase) - 1) * rz;
-          const dx = Math.cos(phase) * rx;
-          const dz = -Math.sin(phase) * rz;
-          const targetYaw = Math.atan2(dx, dz);
-          const yawError = Math.atan2(
-            Math.sin(targetYaw - figure.root.rotation.y),
-            Math.cos(targetYaw - figure.root.rotation.y),
-          );
-          figure.root.rotation.y += yawError * Math.min(1, delta * 5.5);
-          const stepPhase = time * 4.6 + figure.phase;
-          const swing = Math.sin(stepPhase);
-          figure.root.position.y = figure.position.y + (1 - Math.cos(2 * stepPhase)) * 0.008;
-          const axis = new THREE.Vector3(1, 0, 0);
-          const offset = new THREE.Quaternion();
-          for (const joint of figure.walkBones) {
-            offset.setFromAxisAngle(axis, swing * joint.swingDirection * joint.amplitude);
-            joint.bone.quaternion.copy(joint.rest).multiply(offset);
-          }
-        }
-      }
-    },
-    resize: () => {
-      for (const figure of figures) {
-        figure.root.visible = !isMobile() || figure.slot < 6;
-        figure.root.traverse((obj) => {
-          if (obj instanceof THREE.Mesh || obj instanceof THREE.SkinnedMesh) {
-            obj.castShadow = !isMobile();
-            obj.receiveShadow = !isMobile();
-          }
-        });
-      }
-    },
-    dispose: () => {
+    update,
+    resize: () => update(.016, elapsed),
+    dispose() {
       disposed = true;
-      controllers.forEach((controller) => controller.abort());
-      for (const figure of figures) {
-        figure.mixer.stopAllAction();
-        figure.mixer.uncacheRoot(figure.root);
-      }
+      controller.abort();
+      avatars.forEach(({ root }) => {
+        world.remove(root);
+      });
     },
   };
 }
