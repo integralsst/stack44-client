@@ -20,13 +20,12 @@ type CharacterStyle = {
 };
 
 const STYLES: CharacterStyle[] = [
-  { name: "Coordinador SST", shirt: 0x1b99a4, pants: 0x28374b, hair: 0x29201c, secondaryHair: 0x62443a, hairStyle: "executive", eyewear: "rectangular", safety: false, blazer: false },
-  { name: "Profesional SST", shirt: 0xf1e7d8, pants: 0x39435d, hair: 0x57352a, secondaryHair: 0x956548, hairStyle: "waves", eyewear: "none", safety: false, blazer: true },
-  { name: "Inspectora SST", shirt: 0xdb802d, pants: 0x263e4e, hair: 0x322f2e, secondaryHair: 0x65605a, hairStyle: "bob", eyewear: "safety", safety: true, blazer: false },
-  { name: "Coordinadora", shirt: 0xa84e6e, pants: 0x242e47, hair: 0x242128, secondaryHair: 0x5f4c52, hairStyle: "bun", eyewear: "round", safety: false, blazer: true },
-  { name: "Analista de prevención", shirt: 0x4d8c64, pants: 0x384158, hair: 0x171f29, secondaryHair: 0x445364, hairStyle: "curls", eyewear: "none", safety: false, blazer: false },
-  { name: "Auditor SST", shirt: 0x4762a6, pants: 0x2b344c, hair: 0x69402a, secondaryHair: 0x9b6345, hairStyle: "swept", eyewear: "rectangular", safety: false, blazer: true },
-];
+  { name: "Jesús · Gerencia", shirt: 0x263b4b, pants: 0x242a32, hair: 0x2c2724, secondaryHair: 0x54443c, hairStyle: "executive", eyewear: "rectangular", safety: false, blazer: true },
+  { name: "Cristina · Gerencia", shirt: 0xe2d6c5, pants: 0x3c4244, hair: 0x52382f, secondaryHair: 0x916c53, hairStyle: "waves", eyewear: "round", safety: false, blazer: true },
+  { name: "Apolo · Profesional SG-SST", shirt: 0x315d4d, pants: 0x263944, hair: 0x242930, secondaryHair: 0x455967, hairStyle: "curls", eyewear: "none", safety: false, blazer: false },
+  { name: "Zeus · Coordinador SG-SST", shirt: 0x4a6574, pants: 0x28313b, hair: 0x453327, secondaryHair: 0x79583d, hairStyle: "swept", eyewear: "rectangular", safety: false, blazer: false },
+  { name: "Hera · Profesional SG-SST", shirt: 0xddd7c9, pants: 0x405047, hair: 0x332a2b, secondaryHair: 0x6d5556, hairStyle: "bun", eyewear: "none", safety: false, blazer: true },
+]
 
 function polished(color: number, transparent = false) {
   return new THREE.MeshPhysicalMaterial({
