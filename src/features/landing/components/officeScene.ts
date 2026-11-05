@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { addSstOfficeDetails } from "./officeSSTDetails";
 import { mountRiggedSstTeam, type SstModelStatus } from "./riggedSstTeam";
+import { mountOfficeAnnex } from "./officeAnnex";
 
 export type MiniWorld = {
   dispose: () => void;
@@ -9,6 +10,7 @@ export type MiniWorld = {
   zoomOut: () => void;
   reset: () => void;
   setInteractive: (enabled: boolean) => void;
+  focusOffice: (office: "main" | "annex") => void;
 };
 
 type AgentRole = "typing" | "walking" | "presenting" | "meeting" | "coffee" | "reception";
@@ -32,6 +34,7 @@ export function mountOfficeScene(
   host: HTMLElement,
   onUnavailable: () => void,
   onModelsStatus?: (status: SstModelStatus) => void,
+  onAnnexReady?: (ready: boolean) => void,
 ): MiniWorld | null {
   let renderer: THREE.WebGLRenderer;
   let compact = host.clientWidth < 720;
@@ -609,6 +612,17 @@ export function mountOfficeScene(
   // Campus abierto: retiramos por completo los edificios del primer plano.
   // Añadimos pantallas SG-SST, acabados premium, jardines y más detalle a figuras.
   addSstOfficeDetails(world, people);
+  let annexLoaded = false;
+  let movedToAnnex = false;
+  const annex = mountOfficeAnnex(world, () => compact, (state) => {
+    if (destroyed) return;
+    annexLoaded = state === "ready";
+    onAnnexReady?.(annexLoaded);
+    if (annexLoaded) {
+      resize();
+      render();
+    }
+  });
   const riggedTeam = mountRiggedSstTeam(world, people, () => compact, (status) => {
     onModelsStatus?.(status);
     if (!destroyed) renderer.render(scene, camera);
@@ -633,13 +647,20 @@ export function mountOfficeScene(
     const width = Math.max(host.clientWidth, 1);
     const height = Math.max(host.clientHeight, 1);
     compact = width < 720;
-    const halfHeight = compact ? 14.6 : width < 1100 ? 11.5 : 10.1;
+    const halfHeight = compact ? 14.6 : width < 1100 ? (annexLoaded ? 13.0 : 11.5) : (annexLoaded ? 11.6 : 10.1);
     const aspect = width / height;
     camera.left = -halfHeight * aspect;
     camera.right = halfHeight * aspect;
     camera.top = halfHeight;
     camera.bottom = -halfHeight;
     world.scale.setScalar(compact ? 0.53 : width < 1100 ? 0.80 : 1);
+    if (annexLoaded && !compact && !movedToAnnex) {
+      const centerX = 6.0 * (width < 1100 ? 0.80 : 1);
+      const shift = centerX - controls.target.x;
+      controls.target.x += shift;
+      camera.position.x += shift;
+      movedToAnnex = true;
+    }
     camera.updateProjectionMatrix();
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compact ? 1.15 : 1.65));
     renderer.setSize(width, height, false);
@@ -761,6 +782,20 @@ export function mountOfficeScene(
     start();
   };
   return {
+    focusOffice: (office) => {
+      if (office === "annex" && !annexLoaded) return;
+      const factor = compact ? 0.53 : host.clientWidth < 1100 ? 0.80 : 1;
+      const x = office === "annex" ? 18.3 * factor : 0;
+      const z = office === "annex" ? -3.3 * factor : 0;
+      const delta = new THREE.Vector3(x - controls.target.x, 0, z - controls.target.z);
+      controls.target.add(delta);
+      camera.position.add(delta);
+      camera.zoom = office === "annex" && compact ? 1.25 : 1;
+      userAdjustedZoom = office === "annex";
+      camera.updateProjectionMatrix();
+      controls.update();
+      render();
+    },
     zoomIn: () => changeZoom(1.23),
     zoomOut: () => changeZoom(1 / 1.23),
     reset: () => {
@@ -789,6 +824,7 @@ export function mountOfficeScene(
       host.removeEventListener("wheel", allowPageScroll, { capture: true });
       controls.dispose();
       riggedTeam.dispose();
+      annex.dispose();
       const geos = new Set<THREE.BufferGeometry>();
       const materials = new Set<THREE.Material>();
       const textures = new Set<THREE.Texture>();
