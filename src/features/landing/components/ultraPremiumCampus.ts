@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { OFFICE_TEAM, VISITOR_TEAM } from "./officeTeam";
-import { getOfficeDialogue, getOfficePose } from "./officeLife";
+import { getOfficePose } from "./officeLife";
 import { mountPremiumScreens } from "./officeScreensPremium";
 
 /**
@@ -235,30 +235,6 @@ export function buildUltraPremiumCampus(world: THREE.Group, mobile: boolean) {
     }
   };
 
-  const label = (name: string, role: string) => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 640; canvas.height = 172;
-    const ctx = canvas.getContext("2d");
-    if (ctx) {
-      ctx.fillStyle = "#17272d";
-      ctx.fillRect(0, 0, 640, 172);
-      ctx.fillStyle = "#d8c5a1";
-      ctx.fillRect(12, 12, 616, 3);
-      ctx.textAlign = "center";
-      ctx.fillStyle = "#f5efe2";
-      ctx.font = "700 55px Arial";
-      ctx.fillText(name.toUpperCase(), 320, 80);
-      ctx.fillStyle = "#b4c0b7";
-      ctx.font = "26px Arial";
-      ctx.fillText(role.toUpperCase(), 320, 128, 620);
-    }
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    return new THREE.Mesh(
-      new THREE.PlaneGeometry(1.75, .48),
-      new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }),
-    );
-  };
   const sculpture = (x: number, z: number) => {
     cylinder(world, .34, .40, .08, bronze, x, 1.25, z);
     sphere(world, .36, bronze, x, 1.63, z, [.62, 1.16, .44]);
@@ -281,10 +257,7 @@ export function buildUltraPremiumCampus(world: THREE.Group, mobile: boolean) {
     // pantalla mirando +Z hacia el trabajador situado delante.
     screens.laptop(person.x + (isExecutive ? -.24 : 0), 1.255, zDesk + .06, isExecutive ? 1.10 : .97);
     ergonomicChair(person.x, person.z + .05, isExecutive);
-    // Placa grabada con su nombre, ubicada en el canto frontal del vidrio.
-    const plaque = label(person.name, person.title);
-    plaque.position.set(0, 1.02, depth / 2 + .024);
-    office.add(plaque);
+    // Escritorio de vidrio sin rótulos, placas ni etiquetas sobreimpresas.
     // Documentación, accesorios y materiales físicos de trabajo.
     rounded(office, .82, .045, .47, midnight, -width * .35, 1.26, .25);
     rounded(office, .66, .025, .38, ivory, -width * .35, 1.29, .25);
@@ -418,9 +391,7 @@ export function buildUltraPremiumCampus(world: THREE.Group, mobile: boolean) {
   for (let i = 0; i < 8; i += 1) {
     block(world, .04, .62, .07, bronze, -7.9 + i * .87, .58, 11.71);
   }
-  const receptionLogo = label("STACK44", "CENTRO DE OPERACIONES SG-SST");
-  receptionLogo.position.set(-4.9, 1.52, 11.71);
-  world.add(receptionLogo);
+  // Recepción limpia: sin letreros ni etiquetas publicitarias.
 
   // Helipuerto con helicóptero ejecutivo estilizado: aterrizado y rotor en giro.
   const pad = cylinder(world, 4.1, 4.1, .10, midnight, 18.5, -.115, 18.2, 48);
@@ -506,81 +477,19 @@ export function buildUltraPremiumCampus(world: THREE.Group, mobile: boolean) {
     return { root };
   });
 
-  // Un solo globo de conversación, proyectado en 3D con posición anclada
-  // al personaje que habla. Nunca se muestran varios diálogos a la vez.
-  const bubbleCanvas = document.createElement("canvas");
-  bubbleCanvas.width = 1024; bubbleCanvas.height = 288;
-  const bubbleContext = bubbleCanvas.getContext("2d");
-  const bubbleTexture = new THREE.CanvasTexture(bubbleCanvas);
-  bubbleTexture.colorSpace = THREE.SRGBColorSpace;
-  const bubbleMaterial = new THREE.SpriteMaterial({
-    map: bubbleTexture, transparent: true, depthWrite: false,
-    opacity: .96, sizeAttenuation: true,
-  });
-  const bubble = new THREE.Sprite(bubbleMaterial);
-  bubble.name = "Conversación SG-SST · ejemplo ficticio";
-  bubble.scale.set(6.3, 1.77, 1);
-  bubble.visible = false;
-  bubble.renderOrder = 25;
-  world.add(bubble);
-  let lastDialogueKey = "";
-  const refreshBubble = (who: string, role: string, message: string) => {
-    if (!bubbleContext) return;
-    const key = who + message;
-    if (key === lastDialogueKey) return;
-    lastDialogueKey = key;
-    const ctx = bubbleContext;
-    ctx.clearRect(0, 0, 1024, 288);
-    ctx.fillStyle = "rgba(14,30,37,.95)";
-    ctx.beginPath(); ctx.roundRect(16, 14, 992, 258, 38); ctx.fill();
-    ctx.strokeStyle = "#c6af84"; ctx.lineWidth = 6; ctx.stroke();
-    ctx.fillStyle = "#d9c39a"; ctx.font = "700 28px Arial";
-    ctx.fillText(who.toUpperCase() + "  ·  " + role.toUpperCase(), 51, 78, 908);
-    ctx.fillStyle = "#f8f5ea"; ctx.font = "700 38px Arial";
-    const words = message.split(" ");
-    const rows: string[] = [];
-    let current = "";
-    for (const word of words) {
-      const next = current ? current + " " + word : word;
-      if (ctx.measureText(next).width > 910 && current) {
-        rows.push(current);
-        current = word;
-      } else current = next;
-    }
-    if (current) rows.push(current);
-    rows.slice(0, 2).forEach((row, index) => ctx.fillText(row, 51, 144 + index * 51));
-    ctx.fillStyle = "#a7b6ad"; ctx.font = "22px Arial";
-    ctx.fillText("SIMULACIÓN VISUAL · OPERACIÓN SG-SST", 51, 250);
-    bubbleTexture.needsUpdate = true;
-  };
-
   return {
     fallback,
     update(time: number) {
       screens.update(time);
       rotor.rotation.y = time * 1.75;
       tailRotor.rotation.z = time * 5.0;
-      const dialog = getOfficeDialogue(time);
-      bubble.visible = dialog !== null;
-      if (dialog) {
-        refreshBubble(dialog.speaker, dialog.role, dialog.text);
-        const pose = getOfficePose(dialog.actor, time);
-        bubble.position.set(
-          pose.x, dialog.actor >= 5 ? 3.40 : 3.85,
-          pose.z + .15,
-        );
-        const tau = time % 120;
-        const fade = Math.abs(Math.sin(tau * .72));
-        bubbleMaterial.opacity = .78 + fade * .20;
-        bubble.position.y += Math.sin(time * 1.2) * .055;
-      }
+
     },
-    resize(isMobile: boolean) {
-      bubble.scale.set(isMobile ? 5.0 : 6.3, isMobile ? 1.41 : 1.77, 1);
+    resize(_isMobile: boolean) {
+      // Conserva la interfaz de redimensionado sin rótulos 3D.
     },
     dispose() {
       screens.dispose();
-      bubbleTexture.dispose();
     },
   };
 }

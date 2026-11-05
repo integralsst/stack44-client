@@ -18,8 +18,6 @@ import {
   type UserRole,
 } from "../features/auth/context/AuthContext";
 
-import Navbar from "../components/layouts/Navbar";
-import Footer from "../components/layouts/Footer";
 import LandingPage from "../features/landing/pages/Home";
 
 /* ======================================================
@@ -287,15 +285,7 @@ function EvaluacionRoute() {
 }
 
 function PublicLanding() {
-  return (
-    <>
-      <Navbar />
-      <main className="flex-grow">
-        <LandingPage />
-      </main>
-      <Footer />
-    </>
-  );
+  return <LandingPage />;
 }
 
 /* ======================================================

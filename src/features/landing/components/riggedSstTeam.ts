@@ -150,13 +150,21 @@ export function mountRiggedSstTeam(
 
   const axis = new THREE.Vector3(1, 0, 0);
   const angleOffset = new THREE.Quaternion();
+  const smoothTarget = new THREE.Quaternion();
   const idle = (joint: BoneJoint, action: OfficeAction, time: number, index: number) => {
     const t = time * 2.3 + index * .95;
     if (joint.part === "head") return Math.sin(t * .47) * .035;
-    if (joint.part === "legL" || joint.part === "legR") return action === "work" ? .33 : 0;
+    // Los huesos de piernas del GLB están espejados: una pierna necesita
+    // rotación local negativa y la otra positiva para apuntar hacia delante.
+    // Ángulo de ~60 grados: postura sentada reconocible.
+    const seated = action === "work" || action === "meet" || action === "relax";
+    if (joint.part === "legL") return seated ? -1.04 : 0;
+    if (joint.part === "legR") return seated ? 1.04 : 0;
     const right = joint.part === "armR";
     if (action === "work") {
-      return -.30 + Math.sin(t * 1.75 + (right ? Math.PI : 0)) * .06;
+      // Ambos antebrazos hacia el teclado (+Z local): huesos espejados.
+      const sign = right ? 1 : -1;
+      return sign * (.45 + Math.sin(t * 1.75 + (right ? Math.PI : 0)) * .065);
     }
     if (action === "talk" || action === "meet") {
       return right ? -.24 + Math.sin(t * .9) * .14 : -.10;
@@ -173,7 +181,9 @@ export function mountRiggedSstTeam(
       if (!root.visible && avatars.some((avatar) => avatar.index === index)) return;
       const pose = getOfficePose(index, time);
       root.visible = pose.visible && (!mobile() || index < 6);
-      root.position.set(pose.x, pose.action === "work" ? -.41 : -.16, pose.z);
+      const isSitting = pose.action === "work" || pose.action === "meet" ||
+        pose.action === "relax";
+      root.position.set(pose.x, isSitting ? -.66 : -.16, pose.z);
       root.rotation.y = pose.yaw;
     });
 
@@ -184,7 +194,8 @@ export function mountRiggedSstTeam(
 
       avatar.root.position.x = pose.x;
       avatar.root.position.z = pose.z;
-      const sitting = pose.action === "work" ? .48 : pose.action === "meet" ? .14 : 0;
+      const sitting = pose.action === "work" ? .58
+        : pose.action === "meet" ? .50 : pose.action === "relax" ? .40 : 0;
       avatar.seated = THREE.MathUtils.damp(avatar.seated, sitting, 4.4, delta);
       avatar.root.position.y = -.18 - avatar.seated;
 
@@ -204,7 +215,9 @@ export function mountRiggedSstTeam(
           else angle = Math.sin(time * 3.65) * .02;
         }
         angleOffset.setFromAxisAngle(axis, angle);
-        joint.bone.quaternion.copy(joint.neutral).multiply(angleOffset);
+        // Interpolar el hueso evita saltos al pasar de sentado a caminando.
+        smoothTarget.copy(joint.neutral).multiply(angleOffset);
+        joint.bone.quaternion.slerp(smoothTarget, Math.min(1, delta * 8));
       }
       if (pose.walking) {
         avatar.root.position.y += Math.abs(Math.sin(time * 7.3)) * .025;
