@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { addSstOfficeDetails } from "./officeSSTDetails";
-import { mountRiggedSstTeam } from "./riggedSstTeam";
+import { mountRiggedSstTeam, type SstModelStatus } from "./riggedSstTeam";
 
 export type MiniWorld = {
   dispose: () => void;
@@ -31,6 +31,7 @@ type Vehicle = { root: THREE.Group; wheels: THREE.Mesh[]; speed: number; start: 
 export function mountOfficeScene(
   host: HTMLElement,
   onUnavailable: () => void,
+  onModelsStatus?: (status: SstModelStatus) => void,
 ): MiniWorld | null {
   let renderer: THREE.WebGLRenderer;
   let compact = host.clientWidth < 720;
@@ -608,7 +609,10 @@ export function mountOfficeScene(
   // Campus abierto: retiramos por completo los edificios del primer plano.
   // Añadimos pantallas SG-SST, acabados premium, jardines y más detalle a figuras.
   addSstOfficeDetails(world, people);
-  const riggedTeam = mountRiggedSstTeam(world, people, () => compact);
+  const riggedTeam = mountRiggedSstTeam(world, people, () => compact, (status) => {
+    onModelsStatus?.(status);
+    if (!destroyed) renderer.render(scene, camera);
+  });
 
   // El scroll vertical siempre tiene prioridad frente a OrbitControls.
   const allowPageScroll = (event: WheelEvent) => {
@@ -664,6 +668,7 @@ export function mountOfficeScene(
       elapsed += dt;
       const t = elapsed;
       for (const person of people) {
+        if (!person.root.visible) continue;
         const phase = t * 2.0 + person.phase;
         person.head.rotation.z = Math.sin(phase * 0.67) * 0.06;
         person.leftArm.rotation.x = 0;
