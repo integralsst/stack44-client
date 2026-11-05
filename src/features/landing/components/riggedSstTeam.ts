@@ -3,6 +3,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { applyPremiumSstHair } from "./premiumSstHair";
 import { decorateAnimatedSstFigure } from "./animatedSstCharacters";
+import { OFFICE_TEAM } from "./officeTeam";
 
 type FigureRole = "typing" | "walking" | "presenting" | "reception" | "training" | "meeting";
 
@@ -34,20 +35,14 @@ const MODEL_PATHS = [
   "/models/sst/lego_minifigure_animated.glb",
 ] as const;
 
-const TEAM = [
-  { model: 0, x: -1.9, z: -7.7, turn: Math.PI, role: "typing", phase: 0.1 },
-  { model: 1, x: 1.4, z: -7.7, turn: Math.PI, role: "typing", phase: 1.6 },
-  { model: 3, x: -1.9, z: -4.7, turn: Math.PI, role: "typing", phase: 2.0 },
-  { model: 2, x: 1.4, z: -4.7, turn: Math.PI, role: "typing", phase: 2.8 },
-  { model: 2, x: -7.1, z: -0.80, turn: Math.PI, role: "reception", phase: 0.4 },
-  { model: 1, x: 6.35, z: -6.65, turn: 0.22, role: "presenting", phase: 1.2 },
-  { model: 0, x: 8.70, z: -5.58, turn: -0.4, role: "meeting", phase: 2.3 },
-  { model: 2, x: 6.55, z: -2.7, turn: Math.PI, role: "meeting", phase: 3.1 },
-  { model: 3, x: -8.10, z: -4.35, turn: 0.25, role: "training", phase: 0.4 },
-  { model: 0, x: -0.3, z: 2.33, turn: Math.PI / 2, role: "walking", phase: 1.5 },
-] satisfies Array<{
-  model: number; x: number; z: number; turn: number; role: FigureRole; phase: number;
-}>;
+const TEAM = OFFICE_TEAM.map((member, index) => ({
+  model: index % 4,
+  x: member.x,
+  z: member.z,
+  turn: 0,
+  role: "typing" as FigureRole,
+  phase: index * 0.7,
+}));
 
 /**
  * Los modelos personalizados reemplazan a los muñecos geométricos por posición.
@@ -76,7 +71,7 @@ export function mountRiggedSstTeam(
   const loadChecked = async (url: string) => {
     const controller = new AbortController();
     controllers.push(controller);
-    const response = await fetch(url + "?rev=sst151a", {
+    const response = await fetch(url + "?rev=sst155-executive", {
       signal: controller.signal,
       cache: "no-store",
     });
@@ -109,9 +104,9 @@ export function mountRiggedSstTeam(
       try {
         const model = cloneSkeleton(source.scene);
         if (!model) throw new Error("No se pudo clonar la jerarquía del GLB");
-        model.name = "Stack44 GLB · " + setup.role;
+        model.name = "Stack44 · " + OFFICE_TEAM[index].name + " · " + OFFICE_TEAM[index].title;
         if (animatedSourceReady) {
-          decorateAnimatedSstFigure(model, index % 6);
+          decorateAnimatedSstFigure(model, index);
         } else {
           // Las cuatro figuras GLB anteriores permanecen como respaldo hasta
           // que el archivo animado nuevo se haya publicado realmente.
@@ -140,7 +135,7 @@ export function mountRiggedSstTeam(
         model.position.z -= center.z;
 
         const root = new THREE.Group();
-        root.name = "Personaje SST · " + index;
+        root.name = "Personaje SG-SST · " + OFFICE_TEAM[index].name;
         root.position.set(setup.x, -0.19, setup.z);
         root.rotation.y = setup.turn;
         root.add(model);
@@ -193,7 +188,7 @@ export function mountRiggedSstTeam(
           }
         }
 
-        // El reemplazo es individual. Nunca ocultamos todo el equipo
+        // El reemplazo es individual. Nunca ocultamos los cinco empleados
         // si uno de los cuatro archivos no se pudo cargar.
         root.visible = !isMobile() || index < 6;
         world.add(root);
