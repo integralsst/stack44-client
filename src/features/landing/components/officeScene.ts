@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { buildUltraPremiumCampus } from "./ultraPremiumCampus";
+import { buildMiniatureCity } from "./miniatureCity";
 import { mountRiggedSstTeam, type SstModelStatus } from "./riggedSstTeam";
 
 /**
@@ -55,7 +56,7 @@ export function mountOfficeScene(
   const camera = new THREE.OrthographicCamera(-23, 23, 21, -21, .1, 180);
   camera.position.set(31, 36, 38);
   const controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, .75, .8);
+  controls.target.set(0, .52, .5);
   controls.enableDamping = true;
   controls.dampingFactor = .065;
   controls.enablePan = true;
@@ -100,14 +101,22 @@ export function mountOfficeScene(
   let elapsed = 0;
   let userAdjustedZoom = false;
   let reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const campus = buildUltraPremiumCampus(world, compact);
+  // La oficina se interpreta ahora como una maqueta compacta, protagonista
+  // pero rodeada de una ciudad. Los personajes se reducen con el edificio
+  // para que escritorios, sillas y rutas mantengan sus proporciones.
+  const campusRoot = new THREE.Group();
+  campusRoot.name = "Campus SG-SST compacto";
+  campusRoot.scale.setScalar(.64);
+  world.add(campusRoot);
+  const city = buildMiniatureCity(world, compact);
+  const campus = buildUltraPremiumCampus(campusRoot, compact);
 
   const render = () => {
     if (destroyed) return;
     controls.update();
     renderer.render(scene, camera);
   };
-  const team = mountRiggedSstTeam(world, campus.fallback, () => compact, (status) => {
+  const team = mountRiggedSstTeam(campusRoot, campus.fallback, () => compact, (status) => {
     if (!destroyed) {
       onModelsStatus?.(status);
       render();
@@ -119,14 +128,15 @@ export function mountOfficeScene(
     const width = Math.max(1, host.clientWidth);
     const height = Math.max(1, host.clientHeight);
     compact = width < 720;
-    const halfHeight = compact ? 25.2 : width < 1130 ? 24.0 : 20.4;
+    const halfHeight = compact ? 21.4 : width < 1130 ? 22.8 : 23.2;
     const aspect = width / height;
     camera.left = -halfHeight * aspect;
     camera.right = halfHeight * aspect;
     camera.top = halfHeight;
     camera.bottom = -halfHeight;
-    // Que todo el campus sea reconocible al abrir el hero en móvil.
-    world.scale.setScalar(compact ? .43 : width < 1130 ? .78 : 1);
+    // La ciudad enmarca el campus sin apoderarse de todo el hero.
+    // En móvil priorizamos mostrar los cinco puestos; el barrio puede recortarse.
+    world.scale.setScalar(compact ? .48 : width < 1130 ? .76 : .96);
     if (!userAdjustedZoom) camera.zoom = 1;
     camera.updateProjectionMatrix();
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, compact ? 1.05 : 1.5));
@@ -153,6 +163,7 @@ export function mountOfficeScene(
     // En modo sin animaciones queda un fotograma representativo con pantallas.
     const time = reducedMotion ? 2 : elapsed;
     campus.update(time);
+    city.update(time);
     team.update(dt, time);
     render();
     if (!reducedMotion || interactive) raf = requestAnimationFrame(frame);
