@@ -610,7 +610,8 @@ export function mountOfficeScene(
 
   // El scroll vertical siempre tiene prioridad frente a OrbitControls.
   const allowPageScroll = (event: WheelEvent) => {
-    if (event.ctrlKey) return; // No interrumpimos el zoom del navegador por accesibilidad.
+    // La rueda y Ctrl+rueda conservan el desplazamiento/zoom del navegador.
+    // El zoom del mundo queda en botones y gesto táctil de dos dedos.
     event.stopPropagation();
   };
   host.addEventListener("wheel", allowPageScroll, { capture: true, passive: true });
