@@ -4,7 +4,7 @@ import * as THREE from "three";
  * Vestuario, sonrisa, gafas y cabello aplicados a clones individuales del GLB
  * "LEGO Minifigure (Animated)" de Ben Shaffer (CC BY 4.0).
  *
- * Un mismo archivo binario puede representar seis profesionales de SG-SST.
+ * Un mismo GLB representa cinco profesionales y tres visitantes temporales.
  * Todos los accesorios siguen los huesos del modelo, sin crear más descargas.
  */
 type CharacterStyle = {
@@ -25,6 +25,9 @@ const STYLES: CharacterStyle[] = [
   { name: "Apolo · Profesional SG-SST", shirt: 0x315d4d, pants: 0x263944, hair: 0x242930, secondaryHair: 0x455967, hairStyle: "curls", eyewear: "none", safety: false, blazer: false },
   { name: "Zeus · Coordinador SG-SST", shirt: 0x4a6574, pants: 0x28313b, hair: 0x453327, secondaryHair: 0x79583d, hairStyle: "swept", eyewear: "rectangular", safety: false, blazer: false },
   { name: "Hera · Profesional SG-SST", shirt: 0xddd7c9, pants: 0x405047, hair: 0x332a2b, secondaryHair: 0x6d5556, hairStyle: "bun", eyewear: "none", safety: false, blazer: true },
+  { name: "Valentina · Cliente", shirt: 0x865b64, pants: 0x2e353c, hair: 0x342820, secondaryHair: 0x765647, hairStyle: "waves", eyewear: "round", safety: false, blazer: true },
+  { name: "Mateo · Cliente", shirt: 0x647a89, pants: 0x33333b, hair: 0x3a2b21, secondaryHair: 0x7b5946, hairStyle: "executive", eyewear: "none", safety: false, blazer: true },
+  { name: "Laura · Cliente", shirt: 0xb39a79, pants: 0x383d46, hair: 0x2c2225, secondaryHair: 0x645253, hairStyle: "bob", eyewear: "rectangular", safety: false, blazer: true },
 ]
 
 function polished(color: number, transparent = false) {

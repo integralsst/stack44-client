@@ -1,46 +1,52 @@
 /**
- * Personajes ficticios de la maqueta interactiva Stack44.
- * Los textos son diálogos de demostración, NO datos de operaciones reales.
+ * Identidades ficticias para una simulación visual de operación SG-SST.
+ * No son registros, chat ni actividad real de personas.
  */
 export const OFFICE_TEAM = [
   {
     name: "Jesús",
     title: "Gerente",
-    x: -7.3,
-    z: -7.55,
-    role: "typing",
-    line: "Cristina, revisemos el avance del plan anual de SST.",
+    x: -15,
+    z: -11.25,
+    role: "management",
+    line: "Cristina, revisemos el cumplimiento del plan anual.",
   },
   {
     name: "Cristina",
     title: "Gerente",
-    x: -0.2,
-    z: -7.55,
-    role: "typing",
-    line: "Los compromisos deben tener responsable y fecha.",
+    x: -3.8,
+    z: -11.25,
+    role: "management",
+    line: "Prioricemos acciones, responsables y evidencias.",
   },
   {
     name: "Apolo",
     title: "Profesional SG-SST",
-    x: 6.8,
-    z: -7.55,
-    role: "typing",
-    line: "Estoy verificando los peligros, controles y evidencias.",
+    x: 9,
+    z: -11.25,
+    role: "operations",
+    line: "Actualicé la identificación de peligros y controles.",
   },
   {
     name: "Zeus",
     title: "Coordinador SG-SST",
-    x: -3.4,
-    z: -3.40,
-    role: "typing",
-    line: "Ya organicé las inspecciones y los seguimientos PHVA.",
+    x: 14.45,
+    z: -11.25,
+    role: "operations",
+    line: "Consolidé las inspecciones y los compromisos PHVA.",
   },
   {
     name: "Hera",
     title: "Profesional SG-SST",
-    x: 4.0,
-    z: -3.40,
-    role: "typing",
-    line: "Actualizaré capacitaciones, indicadores y acciones.",
+    x: 19.7,
+    z: -11.25,
+    role: "operations",
+    line: "Estoy organizando capacitaciones e indicadores.",
   },
+] as const;
+
+export const VISITOR_TEAM = [
+  { name: "Valentina", title: "Cliente empresarial", style: 5 },
+  { name: "Mateo", title: "Cliente corporativo", style: 6 },
+  { name: "Laura", title: "Cliente de consultoría", style: 7 },
 ] as const;

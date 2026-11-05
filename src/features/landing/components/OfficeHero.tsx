@@ -33,7 +33,7 @@ export default function OfficeHero() {
   const [unavailable, setUnavailable] = useState(false);
   const [exploring, setExploring] = useState(false);
   const [modelsStatus, setModelsStatus] = useState<SstModelStatus>({
-    phase: "loading", loaded: 0, total: 5, errorCount: 0,
+    phase: "loading", loaded: 0, total: 8, errorCount: 0,
   });
 
   useEffect(() => {
@@ -75,17 +75,17 @@ export default function OfficeHero() {
 
   return (
     <section
-      aria-label="Oficina ejecutiva SG-SST 3D con cinco profesionales y jardines"
-      className="relative isolate min-h-[660px] h-[100svh] max-h-[1060px] w-full overflow-hidden bg-[#f7faf8] md:min-h-[720px]"
+      aria-label="Campus corporativo SG-SST ultra premium con cinco profesionales, clientes, reuniones, jardines y helipuerto"
+      className="relative isolate min-h-[660px] h-[100svh] max-h-[1060px] w-full overflow-hidden bg-[#f1eee7] md:min-h-[720px]"
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_45%,#ffffff_4%,#f5faf8_56%,#e5f1ef_100%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_45%,#ffffff_4%,#f3f0e8_56%,#dfd8ca_100%)]"
       />
 
       <div
         ref={hostRef}
-        aria-label="Oficina moderna con cinco puestos de trabajo: Jesús, Cristina, Apolo, Zeus y Hera; portátiles estilo MacBook, televisores panorámicos y jardines"
+        aria-label="Campus SG-SST ampliado con despachos de Jesús y Cristina, oficinas de Apolo, Zeus y Hera, sala de juntas, clientes, cristales, televisores, MacBooks, jardines, juegos y helicóptero"
         role="img"
         className="absolute inset-0 z-[1] select-none"
       />
@@ -96,7 +96,7 @@ export default function OfficeHero() {
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-56 bg-gradient-to-t from-[#f7faf8]/90 via-[#f7faf8]/20 to-transparent"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-56 bg-gradient-to-t from-[#f1eee7]/90 via-[#f1eee7]/20 to-transparent"
       />
 
       <div className="pointer-events-none absolute inset-0 z-[3] mx-auto flex max-w-[1480px] flex-col justify-between px-5 pb-28 pt-20 sm:px-10 md:pb-14 md:pt-28">
@@ -109,10 +109,10 @@ export default function OfficeHero() {
             <ShieldCheck size={15} /> Gestión inteligente en SST
           </p>
           <h1 className="text-[30px] font-extrabold leading-[1.04] tracking-tight text-slate-950 sm:text-4xl md:text-[44px]">
-            La prevención se gestiona en equipo.
+            Una nueva forma de vivir la prevención.
           </h1>
           <p className="mt-3 max-w-[370px] text-[13px] font-medium leading-relaxed text-slate-700 sm:text-[15px]">
-            Conoce a Jesús, Cristina, Apolo, Zeus y Hera en nuestra oficina SG-SST: tecnología, seguimiento y decisiones en un mismo lugar.
+            Entra al campus Stack44: Jesús, Cristina, Apolo, Zeus y Hera coordinan planes, reciben clientes y toman decisiones en un entorno de trabajo inteligente.
           </p>
           <p className="mt-3 text-[10px] leading-relaxed text-slate-500">
             Minifiguras 3D basadas en el trabajo de{" "}
@@ -171,14 +171,14 @@ export default function OfficeHero() {
             <span className="inline-flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
               {modelsStatus.source === "animated"
-                ? "5 profesionales SG-SST · Personajes 3D"
-                : "5 personajes 3D en sus puestos"}
+                ? "5 profesionales · 3 visitantes en movimiento"
+                : "Campus SG-SST en modo visual"}
             </span>
           )}
           {modelsStatus.phase === "partial" && (
             <span className="inline-flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-amber-500" />
-              {modelsStatus.loaded} de {modelsStatus.total} minifiguras GLB cargadas
+              {modelsStatus.loaded} de {modelsStatus.total} avatares 3D cargados
             </span>
           )}
           {modelsStatus.phase === "error" && (
@@ -194,7 +194,7 @@ export default function OfficeHero() {
         <>
           {exploring && (
             <div className="pointer-events-none absolute left-1/2 top-36 z-[4] -translate-x-1/2 rounded-full border border-emerald-700/15 bg-white/90 px-4 py-2 text-center text-[11px] font-medium text-slate-800 shadow-lg backdrop-blur-xl sm:top-28">
-              Arrastra para girar · Pellizca para acercarte · Desliza para bajar
+              Arrastra para girar · Pellizca para acercarte · Desliza para continuar
             </div>
           )}
           <div className="absolute bottom-5 left-4 right-4 z-[5] flex items-end justify-between gap-2 sm:bottom-7 sm:left-8 sm:right-8">
