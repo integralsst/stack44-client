@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone as cloneSkeleton } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { applyPremiumSstHair } from "./premiumSstHair";
+import { decorateAnimatedSstFigure } from "./animatedSstCharacters";
 
 type FigureRole = "typing" | "walking" | "presenting" | "reception" | "training" | "meeting";
 
@@ -10,6 +11,7 @@ export type SstModelStatus = {
   loaded: number;
   total: number;
   errorCount: number;
+  source?: "animated" | "legacy";
 };
 
 type WalkBone = { bone: THREE.Bone; rest: THREE.Quaternion; swingDirection: number; amplitude: number };
@@ -21,6 +23,7 @@ type Figure = {
   position: THREE.Vector3;
   slot: number;
   walkBones: WalkBone[];
+  animatedSource: boolean;
 };
 
 const MODEL_PATHS = [
@@ -28,6 +31,7 @@ const MODEL_PATHS = [
   "/models/sst/inspectora_sst.glb",
   "/models/sst/coordinadora_sst.glb",
   "/models/sst/auditor_sst.glb",
+  "/models/sst/lego_minifigure_animated.glb",
 ] as const;
 
 const TEAM = [
@@ -72,7 +76,7 @@ export function mountRiggedSstTeam(
   const loadChecked = async (url: string) => {
     const controller = new AbortController();
     controllers.push(controller);
-    const response = await fetch(url + "?rev=sst149a", {
+    const response = await fetch(url + "?rev=sst151a", {
       signal: controller.signal,
       cache: "no-store",
     });
@@ -93,25 +97,31 @@ export function mountRiggedSstTeam(
     if (disposed) return;
     const available = results.map((result, i) => {
       if (result.status === "fulfilled") return result.value;
-      console.error("[Stack44] No se pudo cargar el modelo SST:", MODEL_PATHS[i], result.reason);
+      if (i === 4) console.info("[Stack44] Modelo nuevo todavía no publicado. Se usan los personajes existentes.");
+      else console.error("[Stack44] No se pudo cargar el modelo SST:", MODEL_PATHS[i], result.reason);
       return null;
     });
 
+    const animatedSourceReady = available[4] !== null;
     for (const [index, setup] of TEAM.entries()) {
-      const source = available[setup.model];
+      const source = available[4] ?? available[setup.model];
       if (!source) continue;
       try {
         const model = cloneSkeleton(source.scene);
         if (!model) throw new Error("No se pudo clonar la jerarquía del GLB");
         model.name = "Stack44 GLB · " + setup.role;
-        // Cabello profesional con volumen y mechones definidos. Se ancla
-        // al hueso de cabeza para que no se despegue con las animaciones.
-        applyPremiumSstHair(
-          model, setup.model,
-          setup.role === "presenting" || setup.role === "training",
-        );
+        if (animatedSourceReady) {
+          decorateAnimatedSstFigure(model, index % 6);
+        } else {
+          // Las cuatro figuras GLB anteriores permanecen como respaldo hasta
+          // que el archivo animado nuevo se haya publicado realmente.
+          applyPremiumSstHair(
+            model, setup.model,
+            setup.role === "presenting" || setup.role === "training",
+          );
+        }
 
-        // Ajuste automático con medidas reales del GLB (altura ≈4 unidades).
+        // Ajuste automático: el modelo nuevo mide ~1.07 y el anterior ~4.
         // Evita que un modelo importado aparezca escondido bajo el piso o sea
         // demasiado pequeño para reconocerse frente al resto de la maqueta.
         model.updateMatrixWorld(true);
@@ -148,7 +158,7 @@ export function mountRiggedSstTeam(
         // calculado respecto a la posición neutral real de cada hueso.
         const clipName = setup.role === "presenting" || setup.role === "training"
           ? "Saludar" : "Idle";
-        if (setup.role !== "walking") {
+        if (!animatedSourceReady && setup.role !== "walking") {
           const clip = THREE.AnimationClip.findByName(source.animations, clipName)
             ?? source.animations[0];
           if (clip) {
@@ -159,8 +169,14 @@ export function mountRiggedSstTeam(
           }
         }
         const walkBones: WalkBone[] = [];
-        if (setup.role === "walking") {
-          const walkSetup = [
+        if (animatedSourceReady || setup.role === "walking") {
+          const walkSetup = animatedSourceReady ? [
+            ["L_Leg_04", 1, 0.22],
+            ["R_Reg_08", -1, 0.22],
+            ["L_Arm_02", -1, 0.15],
+            ["R_Arm_06", 1, 0.15],
+            ["Head_00", 1, 0.025],
+          ] as const : [
             ["Bone.003_9", 1, 0.24],
             ["Bone.004_11", -1, 0.24],
             ["Bone.007_3", -1, 0.15],
@@ -185,6 +201,7 @@ export function mountRiggedSstTeam(
         figures.push({
           root, mixer, role: setup.role, phase: setup.phase,
           position: root.position.clone(), slot: index, walkBones,
+          animatedSource: animatedSourceReady,
         });
       } catch (error) {
         console.error("[Stack44] Falló el personaje SST en la posición", index, error);
@@ -197,6 +214,7 @@ export function mountRiggedSstTeam(
       loaded,
       total: TEAM.length,
       errorCount: TEAM.length - loaded,
+      source: animatedSourceReady ? "animated" : "legacy",
     });
   }).catch((error: unknown) => {
     if (!disposed) {
@@ -211,6 +229,28 @@ export function mountRiggedSstTeam(
       for (const figure of figures) {
         if (!figure.root.visible) continue;
         figure.mixer.update(delta);
+        if (figure.animatedSource && figure.role !== "walking") {
+          const t = time * 2.0 + figure.phase;
+          const offset = new THREE.Quaternion();
+          const axis = new THREE.Vector3(1, 0, 0);
+          for (const joint of figure.walkBones) {
+            const leg = /Leg|Reg/.test(joint.bone.name);
+            const head = /Head/.test(joint.bone.name);
+            const right = /R_Arm/.test(joint.bone.name);
+            let angle = 0;
+            if (head) angle = Math.sin(t * 0.43) * 0.027;
+            else if (leg) angle = 0;
+            else if (figure.role === "typing" || figure.role === "reception") {
+              angle = -0.10 + Math.sin(t * 3.0 + (right ? Math.PI : 0)) * 0.055;
+            } else if (figure.role === "presenting" || figure.role === "training") {
+              angle = right ? -0.26 + Math.sin(t * 0.9) * 0.08 : 0.015;
+            } else if (figure.role === "meeting") {
+              angle = right ? Math.sin(t * 0.65) * 0.055 : 0;
+            }
+            offset.setFromAxisAngle(axis, angle);
+            joint.bone.quaternion.copy(joint.rest).multiply(offset);
+          }
+        }
         if (figure.role === "walking") {
           // Recorrido continuo elíptico por el pasillo: sin teletransportes
           // ni cambios bruscos de orientación al llegar a los extremos.
