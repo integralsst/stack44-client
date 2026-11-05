@@ -117,12 +117,14 @@ export default function OfficeHero() {
           <p className="mt-3 text-[10px] leading-relaxed text-slate-500">
             Minifiguras 3D basadas en el trabajo de{" "}
             <a
-              href="https://sketchfab.com/3d-models/lego-minifigure-rigged-42612b64a3004d3c97872c4c444f9544"
+              href={modelsStatus.source === "animated"
+                ? "https://sketchfab.com/3d-models/lego-minifigure-animated-ce3274a82ee74249901010d93fce3853"
+                : "https://sketchfab.com/3d-models/lego-minifigure-rigged-42612b64a3004d3c97872c4c444f9544"}
               target="_blank"
               rel="noopener noreferrer"
               className="pointer-events-auto font-semibold underline underline-offset-2 hover:text-emerald-800"
             >
-              Darth Iron
+              {modelsStatus.source === "animated" ? "Ben Shaffer" : "Darth Iron"}
             </a>{" "}
             (CC BY 4.0), adaptadas para Stack44.
           </p>
@@ -168,7 +170,9 @@ export default function OfficeHero() {
           {modelsStatus.phase === "ready" && (
             <span className="inline-flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-emerald-500" />
-              {modelsStatus.loaded} minifiguras GLB cargadas
+              {modelsStatus.source === "animated"
+                ? "10 minifiguras animadas · 6 estilos SST"
+                : "10 minifiguras GLB anteriores cargadas"}
             </span>
           )}
           {modelsStatus.phase === "partial" && (
