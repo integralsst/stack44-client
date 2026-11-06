@@ -72,7 +72,9 @@ export function MiniOfficeHero() {
       const width = element.clientWidth, height = element.clientHeight;
       if (!width || !height) return;
       const aspect = width / height;
-      const viewWidth = aspect < .8 ? 13.8 : aspect < 1.35 ? 18.8 : 19.4;
+      // Márgenes generosos para mostrar toda la oficina en escritorio y móvil.
+      // Antes el valor de 19.4 recortaba puestos y fachadas en 16:9.
+      const viewWidth = aspect < .8 ? 16.8 : aspect < 1.35 ? 22.5 : 27.4;
       const viewHeight = viewWidth / aspect;
       camera.left = -viewWidth / 2; camera.right = viewWidth / 2;
       camera.top = viewHeight / 2; camera.bottom = -viewHeight / 2;
@@ -87,7 +89,9 @@ export function MiniOfficeHero() {
     let panX = 0;
     const onDown = (event: PointerEvent) => {
       dragStart = { x: event.clientX, angle: orbit, pan: panX };
-      element.setPointerCapture(event.pointerId);
+      // Capturar solo el ratón: gestos verticales en móvil deben desplazar
+      // la landing y no quedar atrapados dentro del canvas Three.js.
+      if (event.pointerType === 'mouse') element.setPointerCapture(event.pointerId);
     };
     const onMove = (event: PointerEvent) => {
       if (!dragStart) return;
@@ -102,7 +106,10 @@ export function MiniOfficeHero() {
       camera.lookAt(panX, 1.35, -.4);
       renderScene();
     };
-    const onUp = () => { dragStart = null; };
+    const onUp = (event: PointerEvent) => {
+      dragStart = null;
+      if (element.hasPointerCapture(event.pointerId)) element.releasePointerCapture(event.pointerId);
+    };
     element.addEventListener('pointerdown', onDown);
     element.addEventListener('pointermove', onMove);
     element.addEventListener('pointerup', onUp);
