@@ -98,8 +98,7 @@ const DesktopDiagnosticBackground = () => {
         <motion.line
           x1="0"
           x2="900"
-          y1="0"
-          y2="0"
+          initial={{ y1: 90, y2: 90 }}
           stroke="url(#quiz-scan-line)"
           strokeWidth="1.5"
           animate={{ y1: [90, 520, 90], y2: [90, 520, 90] }}
