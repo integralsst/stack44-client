@@ -1,7 +1,7 @@
 const {chromium}=require('playwright-core');
 const fs=require('node:fs');
 const path=require('node:path');
-const dir=path.resolve('docs/design/captures');
+const dir=path.resolve(process.env.CAMPUS_QA_DIR||'docs/design/captures');
 (async()=>{
  fs.mkdirSync(dir,{recursive:true});
  const browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-webgl']});

@@ -1,3 +1,83 @@
+# Revisión V2 — campus cinematográfico, 6 de noviembre de 2026
+
+Rama conservada: `feat/premium-campus`. PR conservado: **#157**, en borrador. Punto de partida limpio: `af45336`. No se crean personajes, módulos o edificios; no se modifican los PNG de marca, las rutas funcionales ni producción.
+
+## Comparación nueva, no evidencia reciclada
+
+Se abrió y examinó de nuevo la referencia aprobada. Antes de editar se ejecutó Chrome y se capturó V1 otra vez: [1672×941](captures-v2/before-reference.png), [1440×900](captures-v2/before-desktop.png), [390×844](captures-v2/before-mobile.png). Estas imágenes son capturas nuevas de esta sesión, no copias de la entrega anterior.
+
+Tres diferencias iniciales: oficina poco elevada, perímetro verde demasiado plano y predominio de luz ambiental sin irradiación arquitectónica convincente.
+
+## Resultado y evidencia V2
+
+- [Campus equivalente a la referencia, 1672×941](captures-v2/after-reference.png).
+- [Escritorio, 1440×900](captures-v2/after-desktop.png) y [móvil, 390×844](captures-v2/after-mobile.png).
+- [Basamento elevado](captures-v2/basement.png), [lobby](captures-v2/lobby.png), [escaleras LED](captures-v2/stairs.png), [jardín nocturno](captures-v2/garden.png), [parqueadero y reflejos](captures-v2/parking.png).
+- [Transición escritorio](captures-v2/desktop-transition.png) y [transición móvil](captures-v2/mobile-transition.png).
+- [Impresión](captures-v2/printing.png), [documentos en mano](captures-v2/carrying.png), [entrega](captures-v2/delivery.png), [regreso](captures-v2/returned.png), [café](captures-v2/coffee.png), [reunión](captures-v2/meeting.png), [descanso](captures-v2/pergola-rest.png), [faros](captures-v2/car-lights.png).
+
+Antes/después: navegador DPR 1, resoluciones iguales, estado estático mediante reduced-motion, mismo renderizador Metal para la comparación general. La dirección de cámara se refina aproximadamente 1–2 grados y el encuadre se recalcula con los límites del conjunto elevado; no se presenta como comparación de píxeles con cámara idéntica. Los detalles son recortes de la captura V2 real, sin render sustitutivo. Las capturas de acciones se sincronizan con estados comprobados en el navegador.
+
+## Cambios evaluados
+
+| Criterio | Diferencia observada en V2 | Límite pendiente |
+| --- | --- | --- |
+| Jerarquía arquitectónica | Datum de oficina +1.30 sobre jardín -.98; losa gruesa, basamento pétreo retraído, abertura y escalera interior real | El concepto sigue teniendo una articulación de fachada más rica |
+| Base | Silueta curva con hombros y acceso, canto biselado, estratos de piedra/metal/terreno | Algunos macizos y bordes aún se perciben demasiado regulares |
+| Iluminación | Fuentes de área reales, luz interior, focos ascendentes, difusión bajo peldaños y muebles | Los proxies de contacto no reproducen rebote global ni AO volumétrica |
+| Materiales | Microrelieve y rugosidad mineral, veta fina, metal champaña y clearcoat de vehículos | Las formas de las copas y automóviles conservan la estilización de minifiguras |
+| Cristales y reflejos | Vidrio menos opaco, grosor de fachada, tiradores y entorno PMREM con tarjetas | Reflejo de estudio, sin reflejar dinámicamente cada objeto cercano |
+| Acabado | HDR real, ACES, bloom por umbral de luminancia, separación cromática y viñeta discreta | En dispositivos lentos el perfil reduce resolución y retira bloom |
+| Funciones | Seis personajes, impresión/entrega/café/juntas, raycasting, recorrido, scroll y login comprobados | Medición en teléfono físico pendiente |
+
+La escala editorial 0–100 y objetivo ≥90 del manual se conservan. La puntuación provisional V1 que se archiva abajo no constituye evidencia ni aprobación de V2. Esta entrega se fundamenta en las comparaciones y pruebas descritas; no se transforma la revisión visual pendiente del usuario en una puntuación automática.
+
+## Iteración visual efectuada
+
+La primera pasada V2 corrigió alturas y base, pero dejó piedra sobreexpuesta, borde exterior demasiado claro y puntos calientes en nogal/pavimento. Se corrigieron esas tres diferencias mediante exposición/entorno más contenidos, canto de piedra oscura y sustitución de puntos posteriores por una fuente de área uniforme. Se pasó de luces sobre pavimento a focos ascendentes dirigidos a árboles. Después se repitieron las capturas y se revisaron fachada, caras, libros, escalinata y vehículos contra la referencia.
+
+La segunda revisión técnica detectó que la compilación inicial de shaders causaba una bajada permanente de calidad. El perfil ahora espera cinco segundos antes de evaluar lentitud sostenida. La última muestra conserva bloom activo y DPR 1 en escritorio.
+
+## Alturas, rutas y recursos
+
+`office-upper-level` contiene arquitectura, seis rigs, escritorios, impresora y documentos. Las animaciones siguen usando sus coordenadas locales, sin escalar o recolocar individualmente a los protagonistas. Raycasting y destinos de cámara se convierten a coordenadas mundiales. El piso tiene un corte real de 3.1 unidades para el vuelo interior; se comprueba por raycast que el hueco está abierto y el pavimento adyacente mantiene su altura. Las rutas interiores no pasan por ese hueco. El visitante exterior sigue las cotas de la escalinata.
+
+La agrupación estática elimina **1667 mallas de envío independientes**; deja fuera rigs, papel, documentos, testigos, cristales e instancias. Los mapas procedurales son de 256², compartidos y liberados al desmontar, al igual que los pases y el shadow map. Sin dependencias nuevas en V2. La luz de área usa el módulo LTC ya incluido en Three.js; aumenta el chunk diferido del hero a **918.30 kB / 280.82 kB gzip**, frente a aproximadamente 654 / 173 kB en V1. Es el coste de transferencia del acabado y debe seguir vigilándose.
+
+## Verificaciones V2
+
+- `npm run build`: TypeScript + Vite correctos; permanece advertencia de chunk >500 kB.
+- `npx tsc -b`: correcto.
+- `npx eslint src/features/landing/mini-office`: correcto.
+- `npm run lint`: conserva 68 errores y 11 advertencias fuera del campus, sin nuevas incidencias en el alcance modificado.
+- `git diff --check`: correcto.
+- `node scripts/campus-behavior-check.cjs`: seis identidades, fases de impresión/entrega/regreso, taza de café, juntas, saludo, reduced-motion, altura mundial consistente y hueco de escalera real.
+- `CAMPUS_QA_DIR=docs/design/captures-v2/ node scripts/campus-qa.cjs`: 15 objetivos, siete pasos del recorrido, /login, scroll, gesto táctil sobre canvas, sin desbordamiento ni errores. [Resultados](captures-v2/qa.json).
+- `CAMPUS_QA_DIR=docs/design/captures-v2/ node scripts/campus-actions-qa.cjs`: clic directo a seis personajes y cinco espacios, estados de impresión/papel/documentos/entrega/café/juntas realmente afirmados antes de capturar, cotas mundiales comprobadas. [Resultados](captures-v2/actions-qa.json).
+- `node scripts/campus-v2-qa.cjs --before` se ejecutó antes de editar; sin el argumento genera las vistas nuevas y los detalles.
+- Inspección de QA habilitada únicamente por opt-in en desarrollo; la cadena `campus:inspect` está ausente del bundle de producción.
+
+## FPS medidos, con calidad declarada
+
+Fuente: [performance.json](captures-v2/performance.json). Chrome headless, ANGLE Metal Apple M4; cinco segundos de calentamiento y diez de muestra por perfil. Medición repetida sin otras capturas de Chrome simultáneas.
+
+| Perfil | Resolución | DPR efectivo | Bloom | Media FPS | p95 frame |
+| --- | --- | ---: | --- | ---: | ---: |
+| Escritorio | 1672×941 | 1.0 | Activo | **55.36** | 33.3 ms |
+| Móvil emulado sobre M4 | 390×844 | 1.2 | Omitido | **60.04** | 16.8 ms |
+
+[Calidad real al final de la muestra de escritorio](captures-v2/desktop-live-quality.png) · [calidad móvil emulada](captures-v2/mobile-emulated-live-quality.png). El sample de escritorio cumple el intervalo medio objetivo 50–60, pero el p95 registra frames de 33 ms: no es una garantía de 60 FPS constantes. La muestra móvil es una emulación de viewport sobre GPU de escritorio y no acredita 30 FPS en un teléfono real.
+
+## Pendientes de revisión
+
+La mejora visible se concentra en niveles, canto arquitectónico, irradiación, acabados y HDR, conforme al alcance solicitado. La referencia offline conserva más riqueza de rebote/contacto y mayor organicidad de masas vegetales. No se agregaron elementos para esconder esas diferencias. Queda pendiente la revisión visual del usuario y probar un móvil físico antes de certificar su presupuesto. **PR #157 continúa en borrador; no fusionar ni publicar directamente en producción.**
+
+---
+
+# Archivo de revisión V1 — evidencia histórica
+
+La sección siguiente se conserva como historial; sus capturas y puntuación no se presentan como validación de V2.
+
 # Revisión del campus — 6 de noviembre de 2026
 
 ## Referencia y prioridades
