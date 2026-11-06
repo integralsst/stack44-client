@@ -298,7 +298,6 @@ export function createOfficeLayout(root: THREE.Group, m: OfficeMaterials, textur
   foliage(root, m, -4.85, 0, -5.48, .82);
   foliage(root, m, 4.85, 0, -5.48, .92);
   const brandPanels = [
-    { x: -1.75, url: '/brands/stack44.png', crop: [.27, .21, .48, .59] as [number, number, number, number], width: 1.34, height: 1.18 },
     { x: .45, url: sisLogoUrl, crop: [.20, .11, .59, .70] as [number, number, number, number], width: 2.22, height: 1.61 },
   ];
   for (const panel of brandPanels) {
