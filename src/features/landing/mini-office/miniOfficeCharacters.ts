@@ -2,12 +2,12 @@ import * as THREE from 'three';
 import { box, cylinder, type OfficeMaterials } from './miniOfficeMaterials';
 import { desks } from './miniOfficeLayout';
 
-export type Behavior = 'WORKING' | 'SITTING' | 'STANDING_UP' | 'WALKING' | 'TALKING' | 'MEETING' | 'RETURNING_TO_DESK' | 'COFFEE_BREAK';
+export type Behavior = 'WORKING' | 'SITTING' | 'STANDING_UP' | 'WALKING' | 'TALKING' | 'MEETING' | 'RETURNING_TO_DESK' | 'COFFEE_BREAK' | 'PRINTING' | 'DELIVERING' | 'GREETING';
 export type Character = {
   name: string; root: THREE.Group; hip: THREE.Group; head: THREE.Group;
   leftThigh: THREE.Group; rightThigh: THREE.Group; leftShin: THREE.Group; rightShin: THREE.Group;
   leftArm: THREE.Group; rightArm: THREE.Group; leftForearm: THREE.Group; rightForearm: THREE.Group;
-  coffeeCup: THREE.Group;
+  coffeeCup: THREE.Group; documents: THREE.Group;
   desk: { x: number; z: number }; spaceScale: { x: number; z: number }; state: Behavior;
 };
 
@@ -17,6 +17,7 @@ const style = [
   { name: 'Apolo', jacket: 0x2c3741, shirt: 0xf1efea, pants: 0x282b32, hair: 0x38271e, skin: 0xc99167, glasses: false, hairType: 2 },
   { name: 'Zeus', jacket: 0xe9e9e4, shirt: 0x62839c, pants: 0x334157, hair: 0x1c2026, skin: 0xc58f68, glasses: true, hairType: 3 },
   { name: 'Hera', jacket: 0x24523e, shirt: 0xdcd4c8, pants: 0x263c33, hair: 0x211b1b, skin: 0xd7a075, glasses: false, hairType: 4 },
+  { name: 'Secretaria', jacket: 0x536b78, shirt: 0xf5ede0, pants: 0x263b49, hair: 0x3f2825, skin: 0xe4ae84, glasses: false, hairType: 5 },
 ] as const;
 
 function oval(parent: THREE.Object3D, mat: THREE.Material, x: number, y: number, z: number, sx: number, sy: number, sz: number) {
@@ -80,12 +81,20 @@ function face(head: THREE.Group, skin: THREE.Material, hair: THREE.Material, m: 
       const tuft = oval(head, hair, -.22 + i * .11, .38 + (i % 3) * .055, .11, .11, .16, .19);
       tuft.rotation.z = -.33;
     }
-  } else {
+  } else if (index === 4) {
     oval(head, hair, 0, .36, -.28, .24, .25, .24);
     oval(head, hair, -.16, .32, .18, .2, .12, .17);
     for (const x of [-.3, .3]) {
       const earring = new THREE.Mesh(new THREE.TorusGeometry(.045, .012, 6, 12), m.brass);
       earring.position.set(x, -.08, .12); head.add(earring);
+    }
+  } else {
+    oval(head, hair, 0, .37, -.21, .31, .14, .22);
+    for (const x of [-.25, .25]) oval(head, hair, x, .2, -.08, .11, .25, .14);
+    oval(head, hair, 0, .18, -.37, .2, .28, .18);
+    for (const x of [-.32, .32]) {
+      const earring = new THREE.Mesh(new THREE.TorusGeometry(.03, .009, 6, 12), m.brass);
+      earring.position.set(x, -.12, .15); head.add(earring);
     }
   }
 }
@@ -146,10 +155,16 @@ export function createCharacters(root: THREE.Group, m: OfficeMaterials, spaceSca
     cylinder(coffeeCup, .072, .072, .012, 0, .121, 0, m.walnutDark, 16);
     const cupHandle = new THREE.Mesh(new THREE.TorusGeometry(.055, .015, 6, 12, Math.PI * 1.5), m.brass);
     cupHandle.position.set(.095, .04, 0); cupHandle.rotation.y = Math.PI / 2; coffeeCup.add(cupHandle);
+    const documents = new THREE.Group(); documents.position.set(0, -.4, .18); documents.visible = false;
+    lArm.lower.add(documents);
+    box(documents, .52, .025, .38, 0, -.01, 0, m.forest);
+    for (let sheet = 0; sheet < 3; sheet++) box(documents, .46, .008, .32, 0, .015 + sheet * .014, 0, m.white);
+    box(documents, .26, .006, .016, -.07, .063, -.07, m.brass);
+    if (index === 5) box(hip, .08, .42, .024, 0, .56, .3, m.brass);
     return { name: s.name, root: figure, hip, head,
       leftThigh: lLeg.pivot, rightThigh: rLeg.pivot, leftShin: lLeg.lower, rightShin: rLeg.lower,
       leftArm: lArm.pivot, rightArm: rArm.pivot, leftForearm: lArm.lower, rightForearm: rArm.lower,
-      coffeeCup,
+      coffeeCup, documents,
       desk: { x: desk.x * spaceScale.x, z: (desk.z - .67) * spaceScale.z }, spaceScale, state: 'WORKING' };
   });
 }

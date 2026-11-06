@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import type { Character } from './miniOfficeCharacters';
+import type { OfficeFixtures } from './miniOfficeLayout';
+import { OfficeBehaviorController } from './miniOfficeBehaviorController';
 
 const cycle = 120;
 type Event = { start: number; end: number; target: [number, number]; kind: 'meeting' | 'coffee' };
@@ -46,10 +48,13 @@ function follow(points: number[][], progress: number) {
   return new THREE.Vector2(points[0][0], points[0][1]);
 }
 
-export function updateCharacters(characters: Character[], elapsed: number, reducedMotion: boolean) {
+export function updateCharacters(characters: Character[], elapsed: number, reducedMotion: boolean, controller: OfficeBehaviorController, fixtures: OfficeFixtures) {
   const time = reducedMotion ? 0 : elapsed;
-  const t = time % cycle;
+  controller.updateRoutine(time, characters, reducedMotion);
+  const directed = new Map(characters.map(character => [character.name, controller.pose(character.name, time)]));
+  const delivery = directed.get('Secretaria');
   for (const character of characters) {
+    const t = controller.autonomousTime(character.name, time) % cycle;
     const event = events[character.name];
     let sit = 1;
     let walking = false;
@@ -88,6 +93,11 @@ export function updateCharacters(characters: Character[], elapsed: number, reduc
         else desiredYaw = character.name === 'Zeus' || character.name === 'Jesús' ? -1.0 : 2.15;
       }
     } else character.state = 'WORKING';
+    const request = directed.get(character.name);
+    if (request) {
+      position = request.position; sit = request.sit; walking = request.walking;
+      desiredYaw = request.yaw; character.state = request.state;
+    }
     character.root.position.set(position.x, walking ? Math.abs(Math.sin(time * 8)) * .035 : 0, position.y);
     const delta = Math.atan2(Math.sin(desiredYaw - character.root.rotation.y), Math.cos(desiredYaw - character.root.rotation.y));
     character.root.rotation.y += delta * .14;
@@ -103,6 +113,14 @@ export function updateCharacters(characters: Character[], elapsed: number, reduc
     character.rightArm.rotation.x = -sit * .88 + (walking ? stride * .7 : 0) - talking * .6 - typing;
     character.leftForearm.rotation.x = -sit * .42 - talking * .5;
     character.rightForearm.rotation.x = -sit * .42;
+    const greeting = controller.isGreeting(character.name, time);
+    if (greeting) {
+      character.rightArm.rotation.x = -1.3;
+      character.rightForearm.rotation.x = -.55 + Math.sin(time * 5) * .14;
+      character.head.rotation.y = 0;
+    }
+    if (character.name === 'Jesús' && delivery && delivery.phase >= 24 && delivery.phase < 28)
+      character.rightArm.rotation.x = -.9;
     const coffee = character.state === 'COFFEE_BREAK';
     character.coffeeCup.visible = coffee;
     if (coffee) {
@@ -112,8 +130,20 @@ export function updateCharacters(characters: Character[], elapsed: number, reduc
       character.coffeeCup.rotation.x = -character.rightArm.rotation.x - character.rightForearm.rotation.x;
       character.leftArm.rotation.x = -.18;
     }
+    const carrying = character.name === 'Secretaria' && !!delivery && delivery.phase >= 12 && delivery.phase < 26;
+    character.documents.visible = carrying;
+    if (carrying) {
+      character.leftArm.rotation.x = -.88;
+      character.leftForearm.rotation.x = -.48;
+    }
     character.head.rotation.x = coffee ? Math.sin(time * 2.1) * .035 : 0;
     character.head.rotation.y = reducedMotion ? 0 : Math.sin(time * .78 + character.desk.x) * .065;
     character.head.rotation.z = reducedMotion ? 0 : Math.sin(time * 1.05 + character.desk.z) * .023;
+    if (character.name === 'Jesús' && delivery && delivery.phase >= 24 && delivery.phase < 28)
+      character.head.rotation.y = -.25;
   }
+  fixtures.printerPaper.visible = !!delivery && delivery.phase >= 8 && delivery.phase < 12;
+  if (delivery) fixtures.printerPaper.position.z = .39 + THREE.MathUtils.clamp((delivery.phase - 8) / 4, 0, 1) * .2;
+  fixtures.printerLight.visible = !!delivery && delivery.phase >= 7 && delivery.phase < 12 && Math.sin(time * 14) > 0;
+  fixtures.deliveredPaper.visible = (!!delivery && delivery.phase >= 26) || time < controller.deliveredUntil;
 }

@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { motion, useReducedMotion, type Variants } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight } from 'lucide-react';
+import { LogIn } from 'lucide-react';
 import Comparison from '../components/Comparison';
 import { DiagnosticQuiz } from '../components/DiagnosticQuiz';
 import { SGSSTDashboard } from '../components/SGSSTDashboard';
@@ -36,7 +36,7 @@ export default function LandingPage() {
     <main className="relative min-h-screen w-full overflow-x-clip bg-[#05080a]">
       <section
         aria-label="Oficina 3D Stack44"
-        className="relative h-[100svh] min-h-[520px] overflow-hidden bg-[#101b19]"
+        className="relative h-[78svh] min-h-[560px] overflow-hidden bg-[#101b19] md:h-[100svh] md:min-h-[520px]"
       >
         <Suspense fallback={null}>
           <MiniOfficeHero />
@@ -47,22 +47,22 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: .5 }}
-          className="group absolute right-5 top-5 z-10 inline-flex items-center gap-2 rounded-full border border-[#c9a668]/60 bg-[#11271f]/85 px-5 py-2.5 text-sm font-semibold text-[#fff8e9] shadow-[0_8px_30px_rgba(0,0,0,0.35),0_0_22px_rgba(205,169,105,0.25)] backdrop-blur-xl transition-colors hover:border-[#e5c98c] hover:bg-[#1d3b2e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#e5c98c] md:right-8 md:top-7"
+          className="group absolute right-5 top-5 z-10 inline-flex min-h-11 items-center gap-3 overflow-hidden rounded-full border border-cyan-300/55 bg-[#071a23]/90 px-5 py-2.5 text-sm font-semibold text-[#f4fbff] shadow-[0_8px_30px_rgba(0,0,0,.4),0_0_25px_rgba(68,200,225,.22)] backdrop-blur-xl transition-[border-color,background,box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-[#10303b] hover:shadow-[0_12px_35px_rgba(0,0,0,.45),0_0_29px_rgba(68,200,225,.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-200 md:right-8 md:top-7"
         >
           Iniciar sesión
           <motion.span
             aria-hidden="true"
             animate={reducedMotion ? undefined : { y: [0, -2, 0] }}
             transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-            className="text-[#e5c98c] transition-transform group-hover:translate-x-0.5"
+            className="text-cyan-200 transition-transform group-hover:translate-x-0.5"
           >
-            <ArrowUpRight size={15} />
+            <LogIn size={16} />
           </motion.span>
         </LoginLink>
       </section>
 
       {/* La maqueta termina aquí; el scroll continúa por la landing previa. */}
-      <div aria-hidden="true" className="h-24 bg-gradient-to-b from-[#0b1413] via-[#09100f] to-[#05080a]" />
+      <div aria-hidden="true" className="h-12 bg-gradient-to-b from-[#0b1413] via-[#09100f] to-[#05080a]" />
 
       <motion.section
         id="comparativa"

@@ -9,7 +9,10 @@ export const desks = [
   { name: 'Apolo', x: -4.05, z: 1.55, executive: false },
   { name: 'Zeus', x: 0, z: 1.55, executive: false },
   { name: 'Hera', x: 4.05, z: 1.55, executive: false },
+  { name: 'Secretaria', x: -8.35, z: 3.55, executive: false },
 ] as const;
+
+export type OfficeFixtures = { printerPaper: THREE.Group; deliveredPaper: THREE.Group; printerLight: THREE.Mesh };
 
 function foliage(root: THREE.Object3D, m: OfficeMaterials, x: number, y: number, z: number, scale = 1, hanging = false) {
   const group = new THREE.Group(); group.position.set(x, y, z); group.scale.setScalar(scale); root.add(group);
@@ -244,10 +247,10 @@ function screen(root: THREE.Group, m: OfficeMaterials, textures: THREE.Texture[]
   box(root, width + .15, height + .15, .11, x, y, z, m.metal);
   const texture = dashboardTexture(title); textures.push(texture);
   const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, height), new THREE.MeshBasicMaterial({ map: texture }));
-  mesh.position.set(x, y, z + .068); root.add(mesh);
+  mesh.position.set(x, y, z + .068); mesh.userData.officeAction = 'dashboard'; root.add(mesh);
 }
 
-export function createOfficeLayout(root: THREE.Group, m: OfficeMaterials, textures: THREE.Texture[], signal: AbortSignal) {
+export function createOfficeLayout(root: THREE.Group, m: OfficeMaterials, textures: THREE.Texture[], signal: AbortSignal): OfficeFixtures {
   box(root, 24.0, .18, 16.1, 0, -.65, -.42, m.forest);
   box(root, 23.8, .07, 15.9, 0, -.54, -.42, m.leaf);
   box(root, 20.25, .36, 12.0, 0, -.22, -.48, m.travertine);
@@ -295,18 +298,19 @@ export function createOfficeLayout(root: THREE.Group, m: OfficeMaterials, textur
   foliage(root, m, -4.85, 0, -5.48, .82);
   foliage(root, m, 4.85, 0, -5.48, .92);
   const brandPanels = [
-    { x: -.88, url: '/brands/stack44.png', crop: [.27, .21, .48, .59] as [number, number, number, number] },
-    { x: .88, url: sisLogoUrl, crop: [.20, .11, .59, .70] as [number, number, number, number] },
+    { x: -1.75, url: '/brands/stack44.png', crop: [.27, .21, .48, .59] as [number, number, number, number], width: 1.34, height: 1.18 },
+    { x: .45, url: sisLogoUrl, crop: [.20, .11, .59, .70] as [number, number, number, number], width: 2.22, height: 1.61 },
   ];
   for (const panel of brandPanels) {
-    box(root, 1.48, 1.24, .12, panel.x, 2.84, -6.14, m.brass);
-    box(root, 1.40, 1.16, .018, panel.x, 2.84, -6.068, m.cream);
+    box(root, panel.width + .08, panel.height + .08, .12, panel.x, 2.84, -6.14, m.brass);
+    box(root, panel.width, panel.height, .018, panel.x, 2.84, -6.068, m.cream);
     const material = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false });
     const initial = logoPanelTexture(panel.url, panel.crop, signal, loaded => {
       textures.push(loaded); material.map = loaded; material.needsUpdate = true;
     });
     textures.push(initial); material.map = initial;
-    const logo = new THREE.Mesh(new THREE.PlaneGeometry(1.06, 1.06), material);
+    const imageSide = Math.min(panel.width - .18, panel.height - .15);
+    const logo = new THREE.Mesh(new THREE.PlaneGeometry(imageSide, imageSide), material);
     logo.position.set(panel.x, 2.84, -6.052); root.add(logo);
   }
   screen(root, m, textures, 'CUMPLIMIENTO SG-SST', -6.05, 2.9, -5.94, 2.1);
@@ -342,7 +346,28 @@ export function createOfficeLayout(root: THREE.Group, m: OfficeMaterials, textur
     for (const z of [.92, 2.12]) box(root, .045, 1.25, .045, x, 1.46, z, m.metal);
   }
   const meetingRoom = new THREE.Group(); meetingRoom.position.set(-1.72, 0, -.38); root.add(meetingRoom); meeting(meetingRoom, m);
+  meetingRoom.userData.officeAction = 'meeting';
   const cafe = new THREE.Group(); cafe.position.set(1.72, 0, -.38); root.add(cafe); coffee(cafe, m);
+  cafe.userData.officeAction = 'coffee';
+  // Printer near reception. The output sheet and the delivered copy are animated independently.
+  const printStation = new THREE.Group(); printStation.position.set(-9.05, 0, .87); root.add(printStation);
+  softBox(printStation, 1.5, .89, .78, 0, .45, 0, m.walnutDark, .055);
+  softBox(printStation, 1.55, .08, .84, 0, .94, 0, m.travertine, .03);
+  softBox(printStation, 1.02, .52, .61, 0, 1.25, -.03, m.metal, .055);
+  box(printStation, .86, .035, .52, 0, 1.52, -.04, m.stone);
+  box(printStation, .69, .08, .11, 0, 1.19, .29, m.charcoal);
+  box(printStation, .25, .055, .012, -.23, 1.41, .278, m.glow);
+  for (const x of [.12, .22, .32]) box(printStation, .035, .035, .012, x, 1.41, .278, m.brass);
+  const printerLight = box(printStation, .11, .025, .01, .39, 1.41, .278, m.leafLight);
+  const printerPaper = new THREE.Group(); printerPaper.position.set(0, 1.13, .39); printStation.add(printerPaper);
+  for (let i = 0; i < 3; i++) box(printerPaper, .6, .008, .39, 0, i * .012, i * .017, m.white);
+  for (let i = 0; i < 3; i++) box(printerPaper, .27 - i * .04, .004, .009, -.08, .04, -.1 + i * .06, m.forest);
+  printerPaper.visible = false;
+  printStation.userData.officeAction = 'printer';
+  const deliveredPaper = new THREE.Group(); deliveredPaper.position.set(-3.33, 1.47, -2.47); root.add(deliveredPaper);
+  box(deliveredPaper, .5, .012, .36, 0, 0, 0, m.forest);
+  for (let i = 0; i < 3; i++) box(deliveredPaper, .44, .008, .31, 0, .016 + i * .012, i * .012, m.white);
+  deliveredPaper.visible = false;
   // The conference room is framed by low glazing, leaving its table and screen visible.
   box(root, .045, 1.45, 2.95, -6.75, .77, -2.92, m.glass);
   for (const z of [-4.4, -1.44]) box(root, .07, 1.5, .07, -6.75, .78, z, m.brass);
@@ -363,4 +388,5 @@ export function createOfficeLayout(root: THREE.Group, m: OfficeMaterials, textur
   foliage(root, m, -9.2, 0, 2.9, .75);
   foliage(root, m, 9.2, 0, -1.05, 1.15);
   exteriorGarden(root, m);
+  return { printerPaper, deliveredPaper, printerLight };
 }

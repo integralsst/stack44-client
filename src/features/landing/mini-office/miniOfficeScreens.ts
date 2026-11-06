@@ -34,7 +34,12 @@ export function logoPanelTexture(url: string, crop: [number, number, number, num
   image.onload = () => {
     if (signal.aborted) return;
     const [cx, cy, cw, ch] = crop;
-    c.drawImage(image, image.width * cx, image.height * cy, image.width * cw, image.height * ch, 44, 44, 424, 424);
+    const sourceWidth = image.width * cw, sourceHeight = image.height * ch;
+    const scale = Math.min(424 / sourceWidth, 424 / sourceHeight);
+    const width = sourceWidth * scale, height = sourceHeight * scale;
+    c.clearRect(0, 0, 512, 512);
+    c.drawImage(image, image.width * cx, image.height * cy, sourceWidth, sourceHeight,
+      (512 - width) / 2, (512 - height) / 2, width, height);
     // Swap in a fresh texture: some WebGL drivers do not upload a modified canvas consistently.
     onReady(texture(canvas));
   };

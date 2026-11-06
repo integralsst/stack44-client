@@ -46,6 +46,30 @@ La iteración ampliada añade libros de ocho tonos, una sala de juntas delimitad
 
 La iteración empresarial importa directamente el logo SIS desde [`referencias-diseno/sis-logo.png`](../../referencias-diseno/sis-logo.png). Su píxel exterior tiene alfa 0; las dos imágenes se dibujan sobre lienzos transparentes y se colocan en cuadros contiguos sin textos. Gerencia y operación tienen superficies y divisiones discretas propias. Un suelo oscuro visible detrás del diorama lo ancla visualmente. Apolo sostiene una taza durante la pausa y la acerca a la boca antes de volver al puesto.
 
+### Oficina interactiva V3
+
+| Vista | Captura real de Chrome |
+| --- | --- |
+| Oficina completa en escritorio | [desktop-v5.png](desktop-v5.png) |
+| Oficina en móvil | [mobile-v5.png](mobile-v5.png) |
+| Logo SIS original, ampliado y proporcionado | [sis-logo-detail-v5.png](sis-logo-detail-v5.png) |
+| Secretaria y bienvenida | [desktop-secretary-panel-v5.png](desktop-secretary-panel-v5.png) |
+| Hojas en la impresora | [secretary-printing-v5.png](secretary-printing-v5.png) |
+| Documentos en mano durante el trayecto | [secretary-carrying-v5.png](secretary-carrying-v5.png) |
+| Entrega frente a Jesús | [secretary-delivery-v5.png](secretary-delivery-v5.png) |
+| Secretaria de regreso al puesto | [secretary-returned-v5.png](secretary-returned-v5.png) |
+| Apolo tomando café con taza | [coffee-detail-v5.png](coffee-detail-v5.png) |
+| Panel de Jesús y recorrido | [jesus-panel-v5.png](jesus-panel-v5.png) |
+| Panel de Apolo | [apolo-panel-v5.png](apolo-panel-v5.png) |
+| Sala de juntas seleccionada | [meeting-panel-v5.png](meeting-panel-v5.png) |
+| Recorrido en móvil | [mobile-tour-v5.png](mobile-tour-v5.png) |
+| Botón tecnológico de acceso | [login-button-v5.png](login-button-v5.png) |
+| Transición con la siguiente sección | [transition-v5.png](transition-v5.png) |
+
+La nueva recepción incorpora una sexta figura, impresora y documentos vinculados a su mano. El controlador prioriza las acciones del visitante, coordina la entrega y devuelve al personaje a su puesto. Raycasting con áreas táctiles independientes activa seis personajes, televisor, sala, impresora y café. Los paneles ofrecen un recorrido opcional de siete paradas y enlazan únicamente a secciones públicas existentes o al correo que figura en el pie de página. Todo el contenido de los tableros es demostrativo; no se usan servicios de IA ni datos reales.
+
+Validación de Chrome/Playwright: selección individual de los diez objetivos, ciclos de impresión y café con cambios de estado inspeccionados, capturas de escritorio y móvil, toque sobre la secretaria, desplazamiento táctil vertical, scroll de escritorio, navegación a `/login`, sin errores de página y sin desbordamiento horizontal. El instrumento temporal usado para sincronizar capturas se retiró del código final. La compilación TypeScript, Vite y ESLint de los archivos modificados se verifican antes de publicar cada revisión.
+
 ## Comparación visual
 
 Las referencias muestran una representación con acabado de render conceptual. Esta implementación en tiempo real reproduce la composición compacta, los cinco personajes, el muro cálido de madera, el mobiliario de vidrio y metal, las pantallas SG-SST y la vegetación. Los primeros planos permiten revisar las diferencias restantes en detalle de rostros, cabello y follaje antes de aprobar cualquier fusión.
