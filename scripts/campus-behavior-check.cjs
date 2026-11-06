@@ -1,0 +1,34 @@
+// Exercises the production rigs/controller at fixed times, independently of GPU speed.
+const {buildSync}=require('esbuild');
+const {tmpdir}=require('node:os');
+const path=require('node:path');
+const fs=require('node:fs');
+const outfile=path.join(tmpdir(),'stack44-campus-behavior.cjs');
+buildSync({stdin:{contents:`
+import * as THREE from 'three';
+import assert from 'node:assert/strict';
+import {createCharacters} from './src/features/landing/mini-office/miniOfficeCharacters';
+import {OfficeBehaviorController} from './src/features/landing/mini-office/miniOfficeBehaviorController';
+import {updateCharacters} from './src/features/landing/mini-office/miniOfficeAnimation';
+const material = new THREE.MeshStandardMaterial();
+const m = new Proxy({}, {get:()=>material});
+const root=new THREE.Group(), actors=createCharacters(root,m as never), controller=new OfficeBehaviorController();
+const fixtures={printerPaper:new THREE.Group(),deliveredPaper:new THREE.Group(),printerLight:new THREE.Mesh()};
+const actor=(name:string)=>actors.find(a=>a.name===name)!;
+const update=(t:number)=>updateCharacters(actors,t,false,controller,fixtures);
+assert.deepEqual(actors.map(a=>a.name),['Jesús','Cristina','Apolo','Zeus','Hera','Secretaria']);
+update(0);controller.request('printer',0,actors);update(9);
+assert.equal(actor('Secretaria').state,'PRINTING');assert(fixtures.printerPaper.visible);
+update(20);assert.equal(actor('Secretaria').state,'DELIVERING');assert(actor('Secretaria').documents.visible);
+update(27);assert(fixtures.deliveredPaper.visible);assert(!actor('Secretaria').documents.visible);
+update(39);assert.equal(actor('Secretaria').state,'WORKING');
+assert(actor('Secretaria').root.position.distanceTo(new THREE.Vector3(actor('Secretaria').desk.x,0,actor('Secretaria').desk.z))<.001);
+controller.request('coffee',40,actors);update(52);assert.equal(actor('Apolo').state,'COFFEE_BREAK');assert(actor('Apolo').coffeeCup.visible);
+update(71);assert.equal(actor('Apolo').state,'WORKING');
+controller.request('meeting',72,actors);update(84);assert.equal(actor('Zeus').state,'MEETING');assert.equal(actor('Hera').state,'MEETING');
+update(103);assert.equal(actor('Zeus').state,'WORKING');assert.equal(actor('Hera').state,'WORKING');
+controller.greet('Jesús',104);assert(controller.isGreeting('Jesús',105));assert(!controller.isGreeting('Jesús',108));
+updateCharacters(actors,200,true,controller,fixtures);assert(!fixtures.printerPaper.visible);
+console.log('PASS: six identities, printing, carried documents, delivery, return, coffee cup, meeting, greetings and reduced motion.');
+`,resolveDir:process.cwd(),sourcefile:'campus-behavior-check.ts',loader:'ts'},bundle:true,platform:'node',format:'cjs',outfile,loader:{'.png':'dataurl'}});
+require(outfile);fs.unlinkSync(outfile);

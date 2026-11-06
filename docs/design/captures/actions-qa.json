@@ -1,0 +1,50 @@
+{
+  "errors": [],
+  "picks": [
+    {
+      "name": "Jesús",
+      "title": "Bienvenido a Stack44"
+    },
+    {
+      "name": "Cristina",
+      "title": "Indicadores y control"
+    },
+    {
+      "name": "Apolo",
+      "title": "Diagnóstico SG-SST"
+    },
+    {
+      "name": "Zeus",
+      "title": "Plan de trabajo"
+    },
+    {
+      "name": "Hera",
+      "title": "Capacitación y mejora"
+    },
+    {
+      "name": "Secretaria",
+      "title": "¡Bienvenido a Stack44!"
+    },
+    {
+      "name": "lobby",
+      "title": "Bienvenido al campus"
+    },
+    {
+      "name": "pergola",
+      "title": "Una pausa en el jardín"
+    },
+    {
+      "name": "monument",
+      "title": "Conoce Stack44"
+    },
+    {
+      "name": "car-dark",
+      "title": "Llegada al campus"
+    },
+    {
+      "name": "car-silver",
+      "title": "Bienvenida ejecutiva"
+    }
+  ],
+  "note": "Action screenshots use the browser clock; controller states are asserted separately by campus-behavior-check.cjs."
+}
