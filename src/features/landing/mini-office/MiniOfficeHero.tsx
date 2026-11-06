@@ -85,8 +85,7 @@ export function MiniOfficeHero() {
     renderer.domElement.style.display = 'block';
     renderer.domElement.style.touchAction = 'pan-y';
     element.appendChild(renderer.domElement);
-    const resize = () => {
-      const width = element.clientWidth, height = element.clientHeight;
+    const fitCamera = (width: number, height: number) => {
       if (!width || !height) return;
       const aspect = width / height;
       // Proyectar las ocho esquinas del volumen real de la oficina sobre los
@@ -115,6 +114,11 @@ export function MiniOfficeHero() {
       camera.left = -halfWidth; camera.right = halfWidth;
       camera.top = halfHeight; camera.bottom = -halfHeight;
       camera.updateProjectionMatrix();
+    };
+    const resize = () => {
+      const width = element.clientWidth, height = element.clientHeight;
+      if (!width || !height) return;
+      fitCamera(width, height);
       // Con updateStyle=true, Three.js sincroniza CSS con el tamaño lógico
       // del host incluso si window.devicePixelRatio es 1.8 o 2.
       renderer.setSize(width, height, true);
@@ -146,7 +150,9 @@ export function MiniOfficeHero() {
         );
       }
       camera.lookAt(focus.x + panX, focus.y, focus.z);
-      resize();
+      // No recrear buffers de WebGL en cada movimiento del ratón.
+      fitCamera(element.clientWidth, element.clientHeight);
+      renderScene();
     };
     const onUp = (event: PointerEvent) => {
       dragStart = null;
