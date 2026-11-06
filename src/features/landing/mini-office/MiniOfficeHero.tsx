@@ -239,13 +239,17 @@ export function MiniOfficeHero() {
         renderedStatic = reduced.matches;
       }
       // Adapt resolution after sustained slow frames; never increase geometry or shadow lights.
-      if (!document.hidden && delta < .25 && !reduced.matches) {
+      if (!document.hidden && delta < 1 && !reduced.matches) {
         sampleTime += delta; sampleCount++;
         if (sampleCount >= T.performance.sampleFrames) {
           const fps = sampleCount / sampleTime;
           if (fps < (mobileCamera ? 26 : 45) && renderer.getPixelRatio() > T.performance.minDPR) {
             renderer.setPixelRatio(Math.max(T.performance.minDPR, renderer.getPixelRatio() - .15));
-            composer?.setPixelRatio(renderer.getPixelRatio()); resize();
+            composer?.setPixelRatio(renderer.getPixelRatio());
+            if (renderer.getPixelRatio() <= 1.1 && composer) {
+              for (const pass of composer.passes) if (pass instanceof UnrealBloomPass) pass.enabled = false;
+            }
+            resize();
           }
           sampleTime = 0; sampleCount = 0;
         }
