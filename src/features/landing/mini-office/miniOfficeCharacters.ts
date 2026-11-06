@@ -99,8 +99,9 @@ function face(head: THREE.Group, skin: THREE.Material, hair: THREE.Material, m: 
   }
 }
 
-export function createCharacters(root: THREE.Group, m: OfficeMaterials, spaceScale = { x: 1, z: 1 }): Character[] {
-  return style.map((s, index) => {
+export function createCharacters(root: THREE.Group, m: OfficeMaterials, spaceScale = { x: 1, z: 1 }, indices?: number[]): Character[] {
+  return style.flatMap((s, index) => {
+    if (indices && !indices.includes(index)) return [];
     const desk = desks[index]; const figure = new THREE.Group();
     figure.position.set(desk.x * spaceScale.x, 0, (desk.z - .67) * spaceScale.z);
     if (spaceScale.x !== 1) figure.scale.setScalar(.9);

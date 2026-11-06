@@ -1,9 +1,14 @@
-export type OfficeTarget = 'Jesús' | 'Cristina' | 'Apolo' | 'Zeus' | 'Hera' | 'Secretaria' | 'dashboard' | 'meeting' | 'printer' | 'coffee';
+export type OfficeTarget = 'Jesús' | 'Cristina' | 'Apolo' | 'Zeus' | 'Hera' | 'Secretaria' | 'dashboard' | 'meeting' | 'printer' | 'coffee' | 'lobby' | 'pergola' | 'monument' | 'car-dark' | 'car-silver';
 export type OfficeLink = { label: string; href: string };
 export type OfficeStory = { title: string; role: string; description: string; points: string[]; links: OfficeLink[] };
 
 /** Demonstration copy only. Links lead to modules already present in the public landing. */
 export const officeStories: Record<OfficeTarget, OfficeStory> = {
+  lobby: { title: 'Bienvenido al campus', role: 'Vestíbulo de acceso', description: 'Entra y conoce al equipo de esta oficina interactiva.', points: ['Inicia el recorrido o selecciona a uno de los seis profesionales.', 'Experiencia demostrativa: los indicadores no son datos reales.'], links: [] },
+  pergola: { title: 'Una pausa en el jardín', role: 'Zona de descanso', description: 'La pérgola invita a una breve pausa antes de continuar el recorrido.', points: ['Un visitante descansa unos segundos bajo la cubierta de nogal.'], links: [] },
+  monument: { title: 'Conoce Stack44', role: 'Campus corporativo', description: 'Explora una forma cercana de conocer la gestión del SG-SST.', points: ['Selecciona personas, espacios y pantallas.', 'El recorrido es opcional y puedes cerrarlo en cualquier momento.'], links: [{label:'Explorar módulos',href:'#modulos'}] },
+  'car-dark': { title: 'Llegada al campus', role: 'Parqueadero ejecutivo', description: 'Las luces de bienvenida se encienden suavemente al seleccionar el vehículo.', points: ['Vehículo de demostración, estacionado fuera de los senderos.'], links: [] },
+  'car-silver': { title: 'Bienvenida ejecutiva', role: 'Parqueadero ejecutivo', description: 'El sedán ilumina sus faros mientras conoces el campus.', points: ['Continúa hacia el vestíbulo para iniciar el recorrido.'], links: [] },
   'Jesús': {
     title: 'Bienvenido a Stack44', role: 'Jesús · Gerencia',
     description: 'Conoce cómo dirigir y supervisar el SG-SST desde un solo lugar.',

@@ -52,47 +52,6 @@ function planterBush(root: THREE.Object3D, m: OfficeMaterials, x: number, z: num
   }
 }
 
-function ornamentalTree(root: THREE.Object3D, m: OfficeMaterials, x: number, z: number, scale: number) {
-  const tree = new THREE.Group(); tree.position.set(x, -.49, z); tree.scale.setScalar(scale); root.add(tree);
-  cylinder(tree, .2, .27, .18, 0, .1, 0, m.travertine, 12);
-  cylinder(tree, .055, .07, 1.45, 0, .89, 0, m.walnutDark, 10);
-  for (let i = 0; i < 9; i++) {
-    const angle = i * 2.4;
-    const crown = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), i % 3 ? m.leaf : m.leafLight);
-    crown.position.set(Math.sin(angle) * .35, 1.65 + (i % 3) * .19, Math.cos(angle) * .3);
-    crown.scale.set(.38, .43, .35); crown.castShadow = true; tree.add(crown);
-  }
-}
-
-function exteriorGarden(root: THREE.Group, m: OfficeMaterials) {
-  // Narrow landscape band keeps the miniature office dominant in the frame.
-  for (const x of [-11.05, 11.05]) {
-    ornamentalTree(root, m, x, -5.7, .8);
-    ornamentalTree(root, m, x, 4.45, .68);
-    for (const z of [-3.6, -1.8, 0, 1.8, 3.15]) {
-      const shrub = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), z > 0 ? m.leafLight : m.leaf);
-      shrub.position.set(x, -.29, z); shrub.scale.set(.43, .3, .31); shrub.castShadow = true; root.add(shrub);
-    }
-  }
-  for (let i = 0; i < 32; i++) {
-    const x = -9.6 + i * .62;
-    const shrub = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), i % 3 ? m.leaf : m.leafLight);
-    shrub.position.set(x, -.35, 6.25 + (i % 3) * .08);
-    shrub.scale.set(.24 + (i % 4) * .035, .19, .22); shrub.castShadow = true; root.add(shrub);
-  }
-  for (let i = 0; i < 8; i++) {
-    const stone = cylinder(root, .32 + (i % 2) * .07, .34, .055, -.9 + i * .27, -.47, 6.6 + i * .055, m.travertine, 9);
-    stone.rotation.y = i * .7;
-  }
-  for (const [x, z] of [[-10.8, -.8], [10.95, 2.15], [-6.5, 6.2], [6.3, 6.35]] as const) {
-    for (let i = 0; i < 3; i++) {
-      const pebble = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 5), m.stone);
-      pebble.position.set(x + i * .15, -.42, z + (i % 2) * .12);
-      pebble.scale.set(.13 + i * .025, .055, .1); root.add(pebble);
-    }
-  }
-}
-
 function deskLamp(g: THREE.Group, m: OfficeMaterials, x: number, z: number) {
   cylinder(g, .11, .11, .025, x, 1.45, z, m.brass);
   cylinder(g, .018, .018, .47, x, 1.69, z, m.brass);
@@ -251,8 +210,6 @@ function screen(root: THREE.Group, m: OfficeMaterials, textures: THREE.Texture[]
 }
 
 export function createOfficeLayout(root: THREE.Group, m: OfficeMaterials, textures: THREE.Texture[], signal: AbortSignal): OfficeFixtures {
-  box(root, 24.0, .18, 16.1, 0, -.65, -.42, m.forest);
-  box(root, 23.8, .07, 15.9, 0, -.54, -.42, m.leaf);
   box(root, 20.25, .36, 12.0, 0, -.22, -.48, m.travertine);
   box(root, 20.45, .13, 12.2, 0, -.48, -.48, m.walnutDark);
   box(root, 19.95, .025, 11.66, 0, -.025, -.48, m.stone);
@@ -298,11 +255,11 @@ export function createOfficeLayout(root: THREE.Group, m: OfficeMaterials, textur
   foliage(root, m, -4.85, 0, -5.48, .82);
   foliage(root, m, 4.85, 0, -5.48, .92);
   const brandPanels = [
-    { x: .45, url: sisLogoUrl, crop: [.20, .11, .59, .70] as [number, number, number, number], width: 2.22, height: 1.61 },
+    { x: .45, url: sisLogoUrl, crop: [0, 0, 1, 1] as [number, number, number, number], width: 2.22, height: 1.61 },
   ];
   for (const panel of brandPanels) {
     box(root, panel.width + .08, panel.height + .08, .12, panel.x, 2.84, -6.14, m.brass);
-    box(root, panel.width, panel.height, .018, panel.x, 2.84, -6.068, m.cream);
+    box(root, panel.width, panel.height, .018, panel.x, 2.84, -6.068, m.walnutDark);
     const material = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false });
     const initial = logoPanelTexture(panel.url, panel.crop, signal, loaded => {
       textures.push(loaded); material.map = loaded; material.needsUpdate = true;
@@ -373,19 +330,21 @@ export function createOfficeLayout(root: THREE.Group, m: OfficeMaterials, textur
   box(root, .09, .035, 2.98, -6.75, 1.53, -2.92, m.brass);
   screen(root, m, textures, 'SALA DE JUNTAS · PHVA', -9.05, 2.05, -5.94, 1.58);
   // Glass front railing with low planted bays keeps faces and keyboards visible.
-  for (const [x, width] of [[-8.65, 2.25], [-4.3, 2.25], [0, 2.25], [4.3, 2.25], [8.65, 2.25]] as const) {
+  for (const [x, width] of [[-8.65, 2.25], [-4.3, 2.25], [4.3, 2.25], [8.65, 2.25]] as const) {
     box(root, width, .38, .48, x, .21, 5.21, m.cream);
     box(root, width - .16, .035, .39, x, .42, 5.21, m.soil);
     for (let i = 0; i < 7; i++) planterBush(root, m, x - width * .42 + i * width * .14, 5.21, i + Math.round(x * 2));
   }
-  for (const x of [-9.85, -6.6, -3.3, 0, 3.3, 6.6, 9.85]) {
+  for (const x of [-9.85, -6.6, -3.3, 3.3, 6.6, 9.85]) {
     box(root, .08, .9, .08, x, .52, 5.4, m.brass);
     box(root, .13, .11, .13, x, .99, 5.4, m.glow);
   }
-  box(root, 19.5, .055, .07, 0, .98, 5.4, m.brass);
-  box(root, 19.45, .76, .025, 0, .57, 5.37, m.glass);
+  for (const x of [-6.6, 6.6]) {
+    box(root, 6.5, .055, .07, x, .98, 5.4, m.brass);
+    box(root, 6.45, .76, .025, x, .57, 5.37, m.glass);
+  }
   foliage(root, m, -9.2, 0, 2.9, .75);
   foliage(root, m, 9.2, 0, -1.05, 1.15);
-  exteriorGarden(root, m);
+
   return { printerPaper, deliveredPaper, printerLight };
 }

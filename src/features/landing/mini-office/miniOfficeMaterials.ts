@@ -1,11 +1,9 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
-export const palette = {
-  walnut: 0x74482b, walnutDark: 0x321f17, travertine: 0xd8d0be,
-  cream: 0xf0e9da, forest: 0x264c39, brass: 0xd6a75b,
-  metal: 0x25292c, charcoal: 0x171b20, glass: 0xacc9c4,
-};
+import { campusTokens } from './campusDesignTokens';
+
+export const palette = campusTokens.colors;
 
 function surfaceTexture(base: [number, number, number], variation: number, grain = false) {
   const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256;
@@ -39,7 +37,7 @@ export function materials() {
     glass: new THREE.MeshPhysicalMaterial({ color: palette.glass, metalness: .18, roughness: .1, transparent: true, opacity: .36, depthWrite: false }),
     screen: new THREE.MeshBasicMaterial({ color: 0x102a2a }),
     white: make(0xffffff, .56), soil: make(0x2d3328), leaf: make(0x3b7849),
-    leafLight: make(0x73a44f), glow: new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffd99b).multiplyScalar(1.65), toneMapped: false }),
+    leafLight: make(0x73a44f), glow: new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffb550).multiplyScalar(1.7), toneMapped: false }),
     stone: make(0x969793, .84), fabric: make(0xb8ae9f, .96),
   };
   result.walnut.map = surfaceTexture([113, 70, 40], 19, true);

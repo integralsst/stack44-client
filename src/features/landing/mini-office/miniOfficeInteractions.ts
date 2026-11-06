@@ -23,6 +23,11 @@ export function createOfficeInteractions(architecture: THREE.Group, characters: 
       mesh.userData.officeTarget = 'dashboard'; targets.push(mesh);
     }
   }
+  addHit(architecture, 'lobby', new THREE.BoxGeometry(6.8, 2.6, 3.4), 0, 1.1, 7.25);
+  addHit(architecture, 'pergola', new THREE.BoxGeometry(4.3, 3, 4.5), -12.7, .6, -2.8);
+  addHit(architecture, 'monument', new THREE.BoxGeometry(4.9, 2.2, .5), -8.6, .2, 11.5);
+  addHit(architecture, 'car-dark', new THREE.BoxGeometry(4.4, 1.6, 2), 11.1, 0, 7.05);
+  addHit(architecture, 'car-silver', new THREE.BoxGeometry(4.4, 1.6, 2), 11.1, 0, 10.05);
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   return {
