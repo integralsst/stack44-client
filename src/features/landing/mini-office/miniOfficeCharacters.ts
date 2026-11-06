@@ -35,26 +35,24 @@ function limb(parent: THREE.Group, upperMat: THREE.Material, lowerMat: THREE.Mat
 }
 
 function face(head: THREE.Group, skin: THREE.Material, hair: THREE.Material, m: OfficeMaterials, index: number) {
-  cylinder(head, .33, .33, .48, 0, 0, 0, skin, 24);
+  // A clean cylindrical toy head with softened rims and printed features.
+  cylinder(head, .34, .34, .49, 0, 0, 0, skin, 32);
   for (const y of [-.225, .225]) {
-    const rim = new THREE.Mesh(new THREE.TorusGeometry(.314, .028, 6, 24), skin);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(.318, .024, 8, 32), skin);
     rim.rotation.x = Math.PI / 2; rim.position.y = y; head.add(rim);
   }
   cylinder(head, .13, .13, .09, 0, .285, 0, skin);
   for (const x of [-.13, .13]) {
-    oval(head, m.white, x, .055, .328, .047, .06, .014);
-    oval(head, m.charcoal, x + .008, .051, .344, .024, .035, .008);
-    const brow = box(head, .11, .022, .015, x, .166, .325, hair); brow.rotation.z = x < 0 ? -.12 : .12;
+    oval(head, m.charcoal, x, .045, .346, .033, .044, .008);
+    const brow = box(head, .092, .014, .008, x, .155, .338, hair); brow.rotation.z = x < 0 ? -.08 : .08;
   }
   const smile = new THREE.Mesh(
     new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(
       new THREE.Vector3(-.095, -.115, .33), new THREE.Vector3(0, -.19, .349), new THREE.Vector3(.095, -.115, .33)
     ), 12, .012, 5, false), m.walnutDark
   ); head.add(smile);
-  oval(head, skin, 0, -.045, .334, .052, .06, .035);
   const blush = new THREE.MeshStandardMaterial({ color: 0xc78d77, roughness: .9 });
-  for (const x of [-.235, .235]) oval(head, blush, x, -.095, .27, .047, .025, .01);
-  for (const x of [-.26, .26]) oval(head, skin, x, -.025, .08, .06, .1, .08);
+  for (const x of [-.235, .235]) oval(head, blush, x, -.09, .265, .032, .018, .006);
   cylinder(head, .35, .34, .14, 0, .285, -.015, hair, 20);
   if (index === 0) {
     for (let i = 0; i < 4; i++) {

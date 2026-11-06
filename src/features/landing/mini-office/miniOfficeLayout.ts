@@ -1,13 +1,13 @@
 import * as THREE from 'three';
 import { box, cylinder, softBox, type OfficeMaterials } from './miniOfficeMaterials';
-import { brandTexture, dashboardTexture } from './miniOfficeScreens';
+import { logoPanelTexture, nameplateTexture, dashboardTexture } from './miniOfficeScreens';
 
 export const desks = [
-  { name: 'Jesús', x: -2.2, z: -2.35, executive: true },
-  { name: 'Cristina', x: 2.2, z: -2.35, executive: true },
-  { name: 'Apolo', x: -3.45, z: 1.35, executive: false },
-  { name: 'Zeus', x: 0, z: 1.35, executive: false },
-  { name: 'Hera', x: 3.45, z: 1.35, executive: false },
+  { name: 'Jesús', x: -2.55, z: -3.0, executive: true },
+  { name: 'Cristina', x: 2.55, z: -3.0, executive: true },
+  { name: 'Apolo', x: -4.05, z: 1.55, executive: false },
+  { name: 'Zeus', x: 0, z: 1.55, executive: false },
+  { name: 'Hera', x: 4.05, z: 1.55, executive: false },
 ] as const;
 
 function foliage(root: THREE.Object3D, m: OfficeMaterials, x: number, y: number, z: number, scale = 1, hanging = false) {
@@ -48,6 +48,47 @@ function planterBush(root: THREE.Object3D, m: OfficeMaterials, x: number, z: num
   }
 }
 
+function ornamentalTree(root: THREE.Object3D, m: OfficeMaterials, x: number, z: number, scale: number) {
+  const tree = new THREE.Group(); tree.position.set(x, -.49, z); tree.scale.setScalar(scale); root.add(tree);
+  cylinder(tree, .2, .27, .18, 0, .1, 0, m.travertine, 12);
+  cylinder(tree, .055, .07, 1.45, 0, .89, 0, m.walnutDark, 10);
+  for (let i = 0; i < 9; i++) {
+    const angle = i * 2.4;
+    const crown = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 8), i % 3 ? m.leaf : m.leafLight);
+    crown.position.set(Math.sin(angle) * .35, 1.65 + (i % 3) * .19, Math.cos(angle) * .3);
+    crown.scale.set(.38, .43, .35); crown.castShadow = true; tree.add(crown);
+  }
+}
+
+function exteriorGarden(root: THREE.Group, m: OfficeMaterials) {
+  // Narrow landscape band keeps the miniature office dominant in the frame.
+  for (const x of [-11.05, 11.05]) {
+    ornamentalTree(root, m, x, -5.7, .8);
+    ornamentalTree(root, m, x, 4.45, .68);
+    for (const z of [-3.6, -1.8, 0, 1.8, 3.15]) {
+      const shrub = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), z > 0 ? m.leafLight : m.leaf);
+      shrub.position.set(x, -.29, z); shrub.scale.set(.43, .3, .31); shrub.castShadow = true; root.add(shrub);
+    }
+  }
+  for (let i = 0; i < 32; i++) {
+    const x = -9.6 + i * .62;
+    const shrub = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), i % 3 ? m.leaf : m.leafLight);
+    shrub.position.set(x, -.35, 6.25 + (i % 3) * .08);
+    shrub.scale.set(.24 + (i % 4) * .035, .19, .22); shrub.castShadow = true; root.add(shrub);
+  }
+  for (let i = 0; i < 8; i++) {
+    const stone = cylinder(root, .32 + (i % 2) * .07, .34, .055, -.9 + i * .27, -.47, 6.6 + i * .055, m.travertine, 9);
+    stone.rotation.y = i * .7;
+  }
+  for (const [x, z] of [[-10.8, -.8], [10.95, 2.15], [-6.5, 6.2], [6.3, 6.35]] as const) {
+    for (let i = 0; i < 3; i++) {
+      const pebble = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 5), m.stone);
+      pebble.position.set(x + i * .15, -.42, z + (i % 2) * .12);
+      pebble.scale.set(.13 + i * .025, .055, .1); root.add(pebble);
+    }
+  }
+}
+
 function deskLamp(g: THREE.Group, m: OfficeMaterials, x: number, z: number) {
   cylinder(g, .11, .11, .025, x, 1.45, z, m.brass);
   cylinder(g, .018, .018, .47, x, 1.69, z, m.brass);
@@ -56,7 +97,7 @@ function deskLamp(g: THREE.Group, m: OfficeMaterials, x: number, z: number) {
   box(g, .22, .01, .17, x - .38, 1.79, z, m.glow);
 }
 
-function workstation(root: THREE.Group, m: OfficeMaterials, x: number, z: number, executive: boolean, name: string) {
+function workstation(root: THREE.Group, m: OfficeMaterials, textures: THREE.Texture[], x: number, z: number, executive: boolean, name: string) {
   const g = new THREE.Group(); g.position.set(x, 0, z); root.add(g);
   const top = executive ? m.glass : m.travertine;
   softBox(g, 2.55, .12, 1.4, 0, 1.38, 0, top, .045);
@@ -79,6 +120,13 @@ function workstation(root: THREE.Group, m: OfficeMaterials, x: number, z: number
     box(g, 2.25, .5, .08, 0, .88, .61, m.walnutDark);
     box(g, 2.2, .045, .08, 0, .61, .66, m.glow);
   }
+  const plaqueY = executive ? .88 : .62;
+  const plaqueZ = executive ? .675 : .745;
+  const plaqueX = name === 'Cristina' ? -.58 : 0;
+  softBox(g, 1.26, .32, .045, plaqueX, plaqueY, plaqueZ, m.brass, .018);
+  const nameTexture = nameplateTexture(name); textures.push(nameTexture);
+  const plaque = new THREE.Mesh(new THREE.PlaneGeometry(1.18, .27), new THREE.MeshBasicMaterial({ map: nameTexture }));
+  plaque.position.set(plaqueX, plaqueY, plaqueZ + .027); g.add(plaque);
   // The employee sits at -Z; the keyboard is between them and the display.
   if (executive) {
     softBox(g, .98, .045, .62, 0, 1.47, -.03, m.metal, .02);
@@ -132,16 +180,29 @@ function workstation(root: THREE.Group, m: OfficeMaterials, x: number, z: number
 }
 
 function meeting(root: THREE.Group, m: OfficeMaterials) {
-  cylinder(root, .95, .95, .065, -6.35, 1.11, -1.35, m.glass, 24);
-  cylinder(root, .33, .4, 1.03, -6.35, .55, -1.35, m.brass, 16);
-  for (const [x, z, angle] of [[-7.3, -1.35, 1.57], [-5.4, -1.35, -1.57], [-6.35, -.18, 0]] as const) {
-    cylinder(root, .31, .31, .1, x, .63, z, m.fabric);
-    const back = box(root, .66, .66, .11, x, .98, z + .32, m.cream);
-    back.rotation.y = angle;
-    cylinder(root, .035, .035, .58, x, .31, z, m.metal);
+  softBox(root, 3.1, .025, 4.85, -6.35, .02, -2.4, m.fabric, .012);
+  box(root, 3.12, .025, .04, -6.35, .045, -4.82, m.brass);
+  box(root, 3.12, .025, .04, -6.35, .045, .02, m.brass);
+  cylinder(root, 1.11, 1.11, .075, -6.35, 1.13, -1.5, m.glass, 32);
+  const edge = new THREE.Mesh(new THREE.TorusGeometry(1.11, .027, 8, 40), m.brass);
+  edge.rotation.x = Math.PI / 2; edge.position.set(-6.35, 1.14, -1.5); root.add(edge);
+  cylinder(root, .31, .42, 1.04, -6.35, .57, -1.5, m.brass, 16);
+  const chairs = [
+    [-7.63, -1.5, Math.PI / 2], [-5.07, -1.5, -Math.PI / 2],
+    [-6.35, -.02, Math.PI], [-6.35, -3.02, 0],
+  ] as const;
+  for (const [x, z, angle] of chairs) {
+    const seat = new THREE.Group(); seat.position.set(x, 0, z); seat.rotation.y = angle; root.add(seat);
+    softBox(seat, .65, .13, .61, 0, .66, 0, m.cream, .055);
+    const back = softBox(seat, .7, .78, .13, 0, 1.05, .37, m.fabric, .06);
+    back.rotation.x = -.1;
+    cylinder(seat, .047, .047, .58, 0, .31, 0, m.metal);
+    for (const s of [-1, 1]) box(seat, .4, .04, .04, s * .19, .1, 0, m.metal);
   }
-  foliage(root, m, -6.35, 1.14, -1.35, .35);
-  box(root, 2.8, .04, .05, -6.35, .04, .7, m.brass);
+  foliage(root, m, -6.35, 1.17, -1.5, .35);
+  box(root, .68, .045, .43, -5.9, 1.2, -1.73, m.charcoal);
+  for (let i = 0; i < 3; i++) box(root, .43, .012, .05, -5.9, 1.23, -1.85 + i * .1, i === 0 ? m.brass : m.leaf);
+  foliage(root, m, -7.65, .02, -4.02, .6);
 }
 
 function coffee(root: THREE.Group, m: OfficeMaterials) {
@@ -185,86 +246,110 @@ function screen(root: THREE.Group, m: OfficeMaterials, textures: THREE.Texture[]
   mesh.position.set(x, y, z + .068); root.add(mesh);
 }
 
-export function createOfficeLayout(root: THREE.Group, m: OfficeMaterials, textures: THREE.Texture[]) {
-  box(root, 16.4, .36, 9.9, 0, -.22, -.46, m.travertine);
-  box(root, 16.6, .13, 10.1, 0, -.48, -.46, m.walnutDark);
-  box(root, 16.05, .025, 9.48, 0, -.025, -.46, m.stone);
-  const studs = new THREE.InstancedMesh(new THREE.CylinderGeometry(.055, .055, .025, 10), m.travertine, 500);
+export function createOfficeLayout(root: THREE.Group, m: OfficeMaterials, textures: THREE.Texture[], signal: AbortSignal) {
+  box(root, 24.0, .18, 16.1, 0, -.65, -.42, m.forest);
+  box(root, 23.8, .07, 15.9, 0, -.54, -.42, m.leaf);
+  box(root, 20.25, .36, 12.0, 0, -.22, -.48, m.travertine);
+  box(root, 20.45, .13, 12.2, 0, -.48, -.48, m.walnutDark);
+  box(root, 19.95, .025, 11.66, 0, -.025, -.48, m.stone);
+  const studs = new THREE.InstancedMesh(new THREE.CylinderGeometry(.055, .055, .025, 10), m.travertine, 900);
   const transform = new THREE.Object3D(); let count = 0;
-  for (let x = -7.7; x < 7.8; x += .55) for (let z = -4.95; z < 4.1; z += .65) {
+  for (let x = -9.75; x < 9.8; x += .55) for (let z = -6.05; z < 5.15; z += .65) {
     transform.position.set(x, .005, z); transform.updateMatrix(); studs.setMatrixAt(count++, transform.matrix);
   }
   studs.count = count; studs.instanceMatrix.needsUpdate = true; root.add(studs);
   // A compact open cutaway: back wall, low side walls and a slender roof frame.
-  box(root, 16.2, 3.75, .2, 0, 1.87, -5.29, m.walnutDark);
-  for (const x of [-8.02, 8.02]) {
-    box(root, .09, .38, 6.8, x, .19, -1.8, m.cream);
-    box(root, .045, .035, 6.8, x, .42, -1.8, m.brass);
+  box(root, 20.0, 3.75, .2, 0, 1.87, -6.49, m.walnutDark);
+  for (const x of [-9.98, 9.98]) {
+    box(root, .09, .38, 8.0, x, .19, -2.2, m.cream);
+    box(root, .045, .035, 8.0, x, .42, -2.2, m.brass);
   }
-  box(root, 16.5, .22, .32, 0, 3.8, -5.3, m.metal);
-  for (const x of [-8.05, 8.05]) box(root, .17, .15, 2.5, x, 3.8, -4.02, m.metal);
-  box(root, 16.1, .045, .08, 0, 3.63, -5.13, m.glow);
-  for (const x of [-6.8, -4.2, -1.7, .8, 3.3, 5.8]) {
-    cylinder(root, .12, .15, .12, x, 3.66, -4.65, m.metal);
-    cylinder(root, .075, .075, .012, x, 3.59, -4.65, m.glow);
+  box(root, 20.2, .22, .32, 0, 3.8, -6.5, m.metal);
+  for (const x of [-10.02, 10.02]) box(root, .17, .15, 2.5, x, 3.8, -5.22, m.metal);
+  box(root, 19.9, .045, .08, 0, 3.63, -6.33, m.glow);
+  for (const x of [-8.5, -5.8, -3.1, -.4, 2.3, 5, 7.7]) {
+    cylinder(root, .12, .15, .12, x, 3.66, -5.85, m.metal);
+    cylinder(root, .075, .075, .012, x, 3.59, -5.85, m.glow);
   }
   // Walnut slats, books, art and a three-dimensional brand panel.
-  box(root, 7.6, 3.35, .06, -.1, 1.85, -5.16, m.walnut);
-  for (let i = 0; i < 34; i++) box(root, .065, 3.35, .09, -3.76 + i * .22, 1.85, -5.1, m.walnutDark);
-  for (const x of [-7.2, -5.45, 5.22, 7.0]) {
-    box(root, 1.26, 2.3, .31, x, 1.56, -4.95, m.walnutDark);
-    for (const y of [.62, 1.27, 1.92, 2.56]) box(root, 1.2, .055, .36, x, y, -4.77, m.brass);
-    for (const y of [.59, 1.24, 1.89]) box(root, 1.17, .018, .045, x, y, -4.57, m.glow);
-    for (let i = 0; i < 6; i++) box(root, .09, .27 + (i % 3) * .08, .19, x - .42 + i * .16, .8, -4.73, i % 2 ? m.cream : m.forest);
+  box(root, 7.6, 3.35, .06, -.1, 1.85, -6.36, m.walnut);
+  for (let i = 0; i < 34; i++) box(root, .065, 3.35, .09, -3.76 + i * .22, 1.85, -6.3, m.walnutDark);
+  const bookColors = [0x315f4b, 0x375774, 0xf0ece3, 0xc7b79d, 0xc5a366, 0xa45d46, 0x777c7e, 0x25282c];
+  const books = bookColors.map(color => new THREE.MeshStandardMaterial({ color, roughness: .76 }));
+  for (const x of [-8.9, -6.85, 6.9, 8.9]) {
+    box(root, 1.47, 2.68, .31, x, 1.5, -6.15, m.walnutDark);
+    for (const y of [.52, 1.17, 1.82, 2.47]) box(root, 1.4, .055, .36, x, y, -5.97, m.brass);
+    for (const y of [.49, 1.14, 1.79]) box(root, 1.37, .018, .045, x, y, -5.77, m.glow);
+    for (let shelf = 0; shelf < 3; shelf++) for (let i = 0; i < 8; i++) {
+      const height = .29 + ((i + shelf) % 3) * .07;
+      box(root, .105 + (i % 2) * .02, height, .19, x - .51 + i * .145, .55 + shelf * .65 + height / 2, -5.92, books[(i * 3 + shelf * 5) % books.length]);
+    }
   }
   // Gold objects, ceramics and more greenery soften the long rear wall.
-  for (const x of [-7.2, 7.0]) {
+  for (const x of [-8.9, 8.9]) {
     const globe = new THREE.Mesh(new THREE.SphereGeometry(.17, 12, 8), m.brass);
-    globe.position.set(x, 2.83, -4.74); globe.castShadow = true; root.add(globe);
-    cylinder(root, .07, .09, .09, x, 2.65, -4.74, m.metal);
+    globe.position.set(x, 3.04, -5.94); globe.castShadow = true; root.add(globe);
+    cylinder(root, .07, .09, .09, x, 2.87, -5.94, m.metal);
   }
-  foliage(root, m, -4.6, 0, -4.14, .82);
-  foliage(root, m, 4.65, 0, -4.1, .92);
-  const brand = brandTexture(); textures.push(brand);
-  box(root, 2.85, 1.05, .12, -.2, 2.83, -4.94, m.charcoal);
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.68, .9), new THREE.MeshBasicMaterial({ map: brand }));
-  sign.position.set(-.2, 2.83, -4.867); root.add(sign);
-  screen(root, m, textures, 'CUMPLIMIENTO SG-SST', -6.42, 2.9, -4.73, 2.0);
-  screen(root, m, textures, 'SEGUIMIENTO PHVA', 4.46, 2.92, -4.74, 2.37);
+  foliage(root, m, -4.85, 0, -5.48, .82);
+  foliage(root, m, 4.85, 0, -5.48, .92);
+  const brandMaterial = new THREE.MeshBasicMaterial();
+  const brand = logoPanelTexture('/brands/stack44.png', [.27, .21, .48, .59], 'Stack44', signal, loaded => {
+    textures.push(loaded); brandMaterial.map = loaded; brandMaterial.needsUpdate = true;
+  }); textures.push(brand); brandMaterial.map = brand;
+  box(root, 2.85, 1.05, .12, -.2, 2.83, -6.14, m.charcoal);
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.68, .9), brandMaterial);
+  sign.position.set(-.2, 2.83, -6.067); root.add(sign);
+  screen(root, m, textures, 'CUMPLIMIENTO SG-SST', -6.05, 2.9, -5.94, 2.1);
+  screen(root, m, textures, 'SEGUIMIENTO PHVA', 5.28, 2.92, -5.94, 2.42);
+  const sisMaterial = new THREE.MeshBasicMaterial();
+  const sis = logoPanelTexture('/brands/sis.png', [.20, .11, .59, .70], 'SIS', signal, loaded => {
+    textures.push(loaded); sisMaterial.map = loaded; sisMaterial.needsUpdate = true;
+  }); textures.push(sis); sisMaterial.map = sis;
+  box(root, 2.05, 1.1, .09, -8.97, 3.08, -5.67, m.brass);
+  const sisArt = new THREE.Mesh(new THREE.PlaneGeometry(1.93, .98), sisMaterial);
+  sisArt.position.set(-8.97, 3.08, -5.616); root.add(sisArt);
   const cupCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(6.06, 2.69, -4.87), new THREE.Vector3(6.12, 2.43, -4.87),
-    new THREE.Vector3(6.56, 2.43, -4.87), new THREE.Vector3(6.65, 2.69, -4.87),
+    new THREE.Vector3(7.4, 2.69, -6.07), new THREE.Vector3(7.46, 2.43, -6.07),
+    new THREE.Vector3(7.9, 2.43, -6.07), new THREE.Vector3(7.99, 2.69, -6.07),
   ]);
   root.add(new THREE.Mesh(new THREE.TubeGeometry(cupCurve, 18, .028, 7, false), m.glow));
   const handle = new THREE.Mesh(new THREE.TorusGeometry(.13, .025, 7, 14, Math.PI * 1.3), m.glow);
-  handle.position.set(6.71, 2.56, -4.87); handle.rotation.z = -.55; root.add(handle);
-  for (const x of [6.16, 6.37, 6.58]) {
+  handle.position.set(8.05, 2.56, -6.07); handle.rotation.z = -.55; root.add(handle);
+  for (const x of [7.5, 7.71, 7.92]) {
     const steam = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([
-      new THREE.Vector3(x, 2.79, -4.87), new THREE.Vector3(x + .04, 2.93, -4.87),
-      new THREE.Vector3(x, 3.08, -4.87),
+      new THREE.Vector3(x, 2.79, -6.07), new THREE.Vector3(x + .04, 2.93, -6.07),
+      new THREE.Vector3(x, 3.08, -6.07),
     ]), 12, .013, 5, false), m.glow);
     root.add(steam);
   }
-  for (const x of [-7.64, -4.8, 4.85, 7.7]) foliage(root, m, x, 2.8, -4.82, .52, true);
-  desks.forEach(d => workstation(root, m, d.x, d.z, d.executive, d.name));
-  for (const x of [-1.73, 1.73]) {
-    box(root, .045, 1.2, 1.25, x, 1.46, 1.32, m.glass);
-    box(root, .055, .035, 1.29, x, 2.08, 1.32, m.brass);
-    for (const z of [.72, 1.92]) box(root, .045, 1.25, .045, x, 1.46, z, m.metal);
+  for (const x of [-9.56, -4.75, 4.7, 9.55]) foliage(root, m, x, 2.8, -5.99, .52, true);
+  desks.forEach(d => workstation(root, m, textures, d.x, d.z, d.executive, d.name));
+  for (const x of [-2.03, 2.03]) {
+    box(root, .045, 1.2, 1.25, x, 1.46, 1.52, m.glass);
+    box(root, .055, .035, 1.29, x, 2.08, 1.52, m.brass);
+    for (const z of [.92, 2.12]) box(root, .045, 1.25, .045, x, 1.46, z, m.metal);
   }
-  meeting(root, m); coffee(root, m);
+  const meetingRoom = new THREE.Group(); meetingRoom.position.set(-1.72, 0, -.38); root.add(meetingRoom); meeting(meetingRoom, m);
+  const cafe = new THREE.Group(); cafe.position.set(1.72, 0, -.38); root.add(cafe); coffee(cafe, m);
+  // The conference room is framed by low glazing, leaving its table and screen visible.
+  box(root, .045, 1.45, 2.95, -6.75, .77, -2.92, m.glass);
+  for (const z of [-4.4, -1.44]) box(root, .07, 1.5, .07, -6.75, .78, z, m.brass);
+  box(root, .09, .035, 2.98, -6.75, 1.53, -2.92, m.brass);
+  screen(root, m, textures, 'SALA DE JUNTAS · PHVA', -9.05, 2.05, -5.94, 1.58);
   // Glass front railing with low planted bays keeps faces and keyboards visible.
-  for (const [x, width] of [[-6.35, 2.3], [-2.1, 2.3], [2.1, 2.3], [6.35, 2.3]] as const) {
-    box(root, width, .38, .48, x, .21, 4.07, m.cream);
-    box(root, width - .16, .035, .39, x, .42, 4.07, m.soil);
-    for (let i = 0; i < 7; i++) planterBush(root, m, x - width * .42 + i * width * .14, 4.07, i + Math.round(x * 2));
+  for (const [x, width] of [[-8.65, 2.25], [-4.3, 2.25], [0, 2.25], [4.3, 2.25], [8.65, 2.25]] as const) {
+    box(root, width, .38, .48, x, .21, 5.21, m.cream);
+    box(root, width - .16, .035, .39, x, .42, 5.21, m.soil);
+    for (let i = 0; i < 7; i++) planterBush(root, m, x - width * .42 + i * width * .14, 5.21, i + Math.round(x * 2));
   }
-  for (const x of [-7.85, -4.85, -1.15, 1.15, 4.85, 7.85]) {
-    box(root, .08, .9, .08, x, .52, 4.25, m.brass);
-    box(root, .13, .11, .13, x, .99, 4.25, m.glow);
+  for (const x of [-9.85, -6.6, -3.3, 0, 3.3, 6.6, 9.85]) {
+    box(root, .08, .9, .08, x, .52, 5.4, m.brass);
+    box(root, .13, .11, .13, x, .99, 5.4, m.glow);
   }
-  box(root, 15.72, .055, .07, 0, .98, 4.25, m.brass);
-  box(root, 15.65, .76, .025, 0, .57, 4.22, m.glass);
-  foliage(root, m, -7.5, 0, 2.85, .75);
-  foliage(root, m, 7.5, 0, -1.05, 1.15);
+  box(root, 19.5, .055, .07, 0, .98, 5.4, m.brass);
+  box(root, 19.45, .76, .025, 0, .57, 5.37, m.glass);
+  foliage(root, m, -9.2, 0, 2.9, .75);
+  foliage(root, m, 9.2, 0, -1.05, 1.15);
+  exteriorGarden(root, m);
 }

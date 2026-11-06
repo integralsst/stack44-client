@@ -25,17 +25,36 @@ export function backdropTexture() {
   return texture(canvas);
 }
 
-export function brandTexture() {
+export function logoPanelTexture(url: string, crop: [number, number, number, number], label: string, signal: AbortSignal, onReady: (loaded: THREE.Texture) => void) {
   const canvas = document.createElement('canvas'); canvas.width = 768; canvas.height = 256;
   const c = canvas.getContext('2d')!;
   c.fillStyle = '#101516'; c.fillRect(0, 0, 768, 256);
-  c.fillStyle = '#d0a64a';
-  c.beginPath(); c.moveTo(58, 90); c.lineTo(124, 52); c.lineTo(190, 90); c.lineTo(124, 128); c.closePath(); c.fill();
-  c.fillStyle = '#ead58d';
-  c.beginPath(); c.moveTo(58, 104); c.lineTo(124, 142); c.lineTo(190, 104); c.lineTo(190, 132); c.lineTo(124, 170); c.lineTo(58, 132); c.closePath(); c.fill();
-  c.fillStyle = '#f8f3e7'; c.font = 'bold 92px Arial'; c.fillText('STACK', 224, 128);
-  c.fillStyle = '#d8a647'; c.fillText('44', 551, 128);
-  c.fillStyle = '#d6cfc1'; c.font = 'bold 34px Arial'; c.fillText('S G - S S T', 344, 184);
+  if (label === 'SIS') { c.fillStyle = '#d9edf2'; c.fillRect(31, 20, 218, 216); }
+  c.fillStyle = '#f4f0e8'; c.font = 'bold 69px Arial'; c.fillText(label, 267, 128);
+  c.fillStyle = '#d3b878'; c.font = 'bold 29px Arial'; c.fillText('SG-SST', 271, 178);
+  const result = texture(canvas);
+  const image = new Image();
+  image.onload = () => {
+    if (signal.aborted) return;
+    const [cx, cy, cw, ch] = crop;
+    c.drawImage(image, image.width * cx, image.height * cy, image.width * cw, image.height * ch, 38, 25, 205, 205);
+    // Swap in a fresh texture: some WebGL drivers do not upload a modified canvas consistently.
+    onReady(texture(canvas));
+  };
+  image.onerror = () => { if (!signal.aborted) console.error('No se pudo cargar el logo de la oficina', url); };
+  signal.addEventListener('abort', () => { image.onload = null; image.onerror = null; image.src = ''; }, { once: true });
+  image.src = url;
+  return result;
+}
+
+export function nameplateTexture(name: string) {
+  const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 128;
+  const c = canvas.getContext('2d')!;
+  c.fillStyle = '#17221f'; c.fillRect(0, 0, 512, 128);
+  c.fillStyle = '#cda969'; c.fillRect(13, 13, 486, 3);
+  c.fillRect(13, 111, 486, 3);
+  c.fillStyle = '#f7f3e8'; c.font = 'bold 69px Arial'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  c.fillText(name, 256, 66);
   return texture(canvas);
 }
 
@@ -46,7 +65,7 @@ export function dashboardTexture(title: string) {
   c.fillStyle = '#0e2a2d'; c.fillRect(22, 77, 724, 333);
   c.fillStyle = '#69d586'; c.fillRect(25, 26, 7, 26);
   c.fillStyle = '#f2f7ef'; c.font = 'bold 31px Arial'; c.fillText(title, 45, 52);
-  c.fillStyle = '#92a9a7'; c.font = '17px Arial'; c.fillText('DATOS DEMOSTRATIVOS · STACK44', 28, 103);
+  c.fillStyle = '#92a9a7'; c.font = '17px Arial'; c.fillText('DATOS DEMOSTRATIVOS · SG-SST', 28, 103);
   c.lineWidth = 22; c.strokeStyle = '#24454b'; c.beginPath(); c.arc(148, 250, 84, 0, Math.PI * 2); c.stroke();
   c.strokeStyle = '#68da87'; c.beginPath(); c.arc(148, 250, 84, -Math.PI / 2, Math.PI * 1.32); c.stroke();
   c.fillStyle = '#ffffff'; c.font = 'bold 60px Arial'; c.fillText('87%', 90, 270);

@@ -4,11 +4,11 @@ import type { Character } from './miniOfficeCharacters';
 const cycle = 120;
 type Event = { start: number; end: number; target: [number, number]; kind: 'meeting' | 'coffee' };
 const events: Record<string, Event> = {
-  Zeus: { start: 12, end: 42, target: [-5.0, -.7], kind: 'meeting' },
-  Hera: { start: 15, end: 43, target: [-6.35, .2], kind: 'meeting' },
-  Jesús: { start: 52, end: 81, target: [-5.0, -.7], kind: 'meeting' },
-  Cristina: { start: 55, end: 82, target: [-6.35, .2], kind: 'meeting' },
-  Apolo: { start: 90, end: 112, target: [5.35, -2.35], kind: 'coffee' },
+  Zeus: { start: 12, end: 42, target: [-7.0, -.43], kind: 'meeting' },
+  Hera: { start: 15, end: 43, target: [-9.05, -.43], kind: 'meeting' },
+  Jesús: { start: 52, end: 81, target: [-7.0, -.43], kind: 'meeting' },
+  Cristina: { start: 55, end: 82, target: [-9.05, -.43], kind: 'meeting' },
+  Apolo: { start: 90, end: 112, target: [6.64, -2.3], kind: 'coffee' },
 };
 const ease = (value: number) => {
   const t = THREE.MathUtils.clamp(value, 0, 1);
@@ -16,11 +16,10 @@ const ease = (value: number) => {
 };
 
 function route(character: Character, event: Event, target: [number, number]) {
-  const backRow = character.desk.z < -1;
   const offset = (character.name === 'Jesús' || character.name === 'Zeus' || character.name === 'Apolo' ? -1.6 : 1.6) * character.spaceScale.x;
   const sideX = character.desk.x + offset;
-  const corridorZ = -.65 * character.spaceScale.z;
-  const turnX = (event.kind === 'coffee' ? 5.15 : -5.1) * character.spaceScale.x;
+  const corridorZ = -.58 * character.spaceScale.z;
+  const turnX = (event.kind === 'coffee' ? 6.55 : -6.43) * character.spaceScale.x;
   const points: number[][] = [
     [character.desk.x, character.desk.z],
     [sideX, character.desk.z],
@@ -28,7 +27,7 @@ function route(character: Character, event: Event, target: [number, number]) {
     [turnX, corridorZ],
   ];
   if (event.kind === 'coffee') points.push([turnX, target[1]]);
-  else if (backRow) points.push([turnX, target[1]]);
+  else points.push([target[0], corridorZ]);
   points.push(target);
   return points;
 }
