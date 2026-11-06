@@ -1,3 +1,5 @@
+import { officeSlab } from './campusArchitecture';
+import type { LightSurfaces } from './campusLightSurfaces';
 import * as THREE from 'three';
 import stackLogo from '../../../assets/logostack44.png';
 import { box, softBox, cylinder, type OfficeMaterials } from './miniOfficeMaterials';
@@ -7,21 +9,54 @@ import { campusTokens as T } from './campusDesignTokens';
 import type { OfficeTarget } from './miniOfficeContent';
 
 /** Campus is built around the existing office coordinate system. Interior routes never move. */
-export function createCampus(root: THREE.Group, m: OfficeMaterials, textures: THREE.Texture[], signal: AbortSignal, mobile: boolean) {
+export function createCampus(root: THREE.Group, m: OfficeMaterials, textures: THREE.Texture[], signal: AbortSignal, mobile: boolean, light: LightSurfaces) {
   const make = (color: number, roughness = .8) => new THREE.MeshStandardMaterial({ color, roughness });
   const lavender = make(T.colors.lavender), olive = make(T.colors.olive);
-  const asphalt = make(T.colors.asphalt), turf = make(0x53663d);
+  const asphalt = new THREE.MeshStandardMaterial({color:0x343b3d,roughness:.38,metalness:.12}), turf = m.turf;
   function roundedSlab(width: number, depth: number, height: number, y: number, material: THREE.Material) {
-    const x = -width / 2, z = -depth / 2, r = 1.25;
+    const x = -width / 2, z = -depth / 2, r = 1.5;
     const shape = new THREE.Shape(); shape.moveTo(x+r,z); shape.lineTo(x+width-r,z);
-    shape.quadraticCurveTo(x+width,z,x+width,z+r); shape.lineTo(x+width,z+depth-r);
-    shape.quadraticCurveTo(x+width,z+depth,x+width-r,z+depth); shape.lineTo(x+r,z+depth);
-    shape.quadraticCurveTo(x,z+depth,x,z+depth-r); shape.lineTo(x,z+r); shape.quadraticCurveTo(x,z,x+r,z);
-    const mesh = new THREE.Mesh(new THREE.ExtrudeGeometry(shape,{depth:height,bevelEnabled:true,bevelSize:.045,bevelThickness:.035,bevelSegments:2,steps:1}), material);
+    shape.quadraticCurveTo(x+width,z,x+width,z+r); shape.lineTo(x+width,z+depth-2);
+    shape.quadraticCurveTo(x+width,z+depth-.35,x+width-1.7,z+depth-.35);
+    shape.lineTo(4.4,z+depth-.35); shape.quadraticCurveTo(3.8,z+depth-.35,3.8,z+depth+.05);
+    shape.lineTo(3.8,z+depth+.2); shape.quadraticCurveTo(3.8,z+depth+.5,3.4,z+depth+.5);
+    shape.lineTo(-3.4,z+depth+.5); shape.quadraticCurveTo(-3.8,z+depth+.5,-3.8,z+depth+.2);
+    shape.lineTo(-3.8,z+depth+.05); shape.quadraticCurveTo(-3.8,z+depth-.35,-4.4,z+depth-.35);
+    shape.lineTo(x+1.7,z+depth-.35); shape.quadraticCurveTo(x,z+depth-.35,x,z+depth-2);
+    shape.lineTo(x,z+r); shape.quadraticCurveTo(x,z,x+r,z);
+    const mesh = new THREE.Mesh(new THREE.ExtrudeGeometry(shape,{depth:height,bevelEnabled:true,bevelSize:.08,bevelThickness:.045,bevelSegments:3,steps:1}), material);
     mesh.rotation.x=-Math.PI/2; mesh.position.set(0,y,2.4); mesh.castShadow=true; mesh.receiveShadow=true; root.add(mesh);
   }
-  roundedSlab(T.dimensions.width,T.dimensions.depth,.42,-1.51,m.forest);
-  roundedSlab(31.8,23.8,.1,-1.09,turf);
+  roundedSlab(T.dimensions.width,T.dimensions.depth,.48,T.levels.baseBottom,m.foundation);
+  roundedSlab(31.88,23.88,.045,-1.2,m.brass);
+  roundedSlab(31.8,23.8,.16,-1.16,m.foundation);
+  roundedSlab(31.4,23.4,.075,-1.055,turf);
+  // Upper storey: recessed stone support, ventilated bronze reveals and a real stair opening.
+  officeSlab(root,20.08,11.86,-.99,T.levels.office-.545+.99,m.foundation);
+  for (const x of [-6,6]) {
+    box(root,8.8,.045,.045,x,.36,5.48,m.brass);
+    box(root,8.8,.025,.06,x,T.levels.office-.49,5.5,m.glow);
+    for (let i=0;i<5;i++) box(root,.035,1.45,.025,x-3.5+i*1.75,-.12,5.47,m.metal);
+    light.contact(root,x,-.976,5.65,10,1.9);
+  }
+  for (const x of [-10.08,10.08]) {
+    box(root,.055,1.5,11.4,x,-.1,-.48,m.foundation);
+    box(root,.065,.025,11.6,x,T.levels.office-.49,-.48,m.glow);
+  }
+  // Internal flight is below the cutout, beyond the rear edge of the lobby canopy.
+  for(let i=0;i<T.stairs.innerCount;i++) {
+    const top=T.levels.office-i*(T.levels.office-T.levels.lobby)/T.stairs.innerCount;
+    const z=T.stairs.innerStartZ+i*T.stairs.innerTread;
+    box(root,3,top-T.levels.lobby+.12,T.stairs.innerTread+.02,0,(top+T.levels.lobby-.12)/2,z,m.travertine);
+    box(root,2.88,.022,.018,0,top-.04,z+T.stairs.innerTread/2,m.glow);
+    light.wash(root,0,top+.005,z,3.1,.6);
+  }
+  box(root,3,.18,.35,0,T.levels.lobby-.09,5.5,m.travertine);
+  for(const x of [-1.6,1.6]) {
+    const topStart=T.levels.office+.85, topEnd=T.levels.lobby+.85;
+    const rail=new THREE.Mesh(new THREE.TubeGeometry(new THREE.LineCurve3(new THREE.Vector3(x,topStart,3.55),new THREE.Vector3(x,topEnd,5.55)),1,.025,8,false),m.brass);root.add(rail);
+    for(let i=0;i<3;i++) {const t=i/2;const floor=THREE.MathUtils.lerp(T.levels.office,T.levels.lobby,t);cylinder(root,.022,.022,.85,x,floor+.425,3.55+t*2,m.brass);}
+  }
   // Stone promenades: continuous accessible spine and two curved garden walks.
   softBox(root, 7.8, .13, 8.7, 0, -.91, 9.65, m.travertine);
   softBox(root, 28.8, .09, 2, 0, -.94, 7.3, m.travertine);
@@ -47,10 +82,10 @@ export function createCampus(root: THREE.Group, m: OfficeMaterials, textures: TH
   // Joints keep large stone slabs tactile without adding separate tiles.
   for (let z = 5.7; z < 14; z += .62) box(root, 7.65, .008, .015, 0, -.837, z, m.fabric);
   for (let x = -3.5; x < 3.8; x += .7) box(root, .015, .008, 8.4, x, -.837, 9.65, m.fabric);
-  box(root,19.8,.025,.04,0,-.43,5.6,m.glow);
-  const lobby = new THREE.Group(); lobby.position.set(0, -.12, 7.25); root.add(lobby);
+
+  const lobby = new THREE.Group(); lobby.position.set(0, T.levels.lobby, 7.25); root.add(lobby);
   lobby.userData.officeAction = 'lobby';
-  softBox(lobby, 7, .2, 3.4, 0, -.12, 0, m.travertine);
+  softBox(lobby, 7, .2, 3.4, 0, -.1, 0, m.travertine);
   for (const x of [-3.25, -2.3, 2.3, 3.25]) {
     box(lobby, .16, 2.55, .22, x, 1.23, .93, m.metal);
     box(lobby, .045, 2.32, .025, x + .12, 1.2, 1.07, m.glow);
@@ -64,27 +99,36 @@ export function createCampus(root: THREE.Group, m: OfficeMaterials, textures: TH
     box(lobby, 2.2, 2.3, .045, x, 1.15, .96, m.glass);
     for (const edge of [-1.1, 1.1]) box(lobby, .035, 2.32, .07, x + edge, 1.16, 1, m.brass);
     box(lobby, 2.2, .04, .07, x, 2.31, 1, m.brass);
-    cylinder(lobby, .025, .025, .58, x < 0 ? -.15 : .15, 1.1, 1.08, m.brass);
+    cylinder(lobby, .027, .027, .65, x < 0 ? -.17 : .17, 1.1, 1.14, m.brass);
+    for (const y of [.83,1.37]) { const mount=box(lobby,.035,.035,.14,x<0?-.17:.17,y,1.07,m.brass); mount.castShadow=false; }
   }
   for (const x of [-3.25, 3.25]) box(lobby, .03, 2.3, 2.35, x, 1.15, -.2, m.glass);
   // Open-backed vestibule connects to an actual gap in the office balustrade.
-  softBox(lobby, 7.1, .2, 3.6, 0, 2.5, -.12, m.metal);
+  softBox(lobby, 7.1, .115, 3.6, 0, 2.55, -.12, m.metal);
+  box(lobby,7.06,.025,.035,0,2.5,1.69,m.brass);
+  box(lobby,6.6,.045,3.15,0,2.46,-.12,m.walnutDark);
   box(lobby, 6.85, .035, .04, 0, 2.37, 1.63, m.glow);
-  for (let x = -3.3; x <= 3.3; x += .17) box(lobby, .075, .07, 3.4, x, 2.64, -.12, m.walnut);
-  softBox(lobby, 4.4, .12, .75, 0, 2.45, 1.85, m.walnut);
+  for (let x = -3.3; x <= 3.3; x += .2) box(lobby, .065, .045, 3.4, x, 2.64, -.12, m.walnut);
+  softBox(lobby, 4.4, .065, .75, 0, 2.49, 1.85, m.walnut);
   box(lobby, 4.3, .025, .035, 0, 2.37, 2.2, m.glow);
   for (const x of [-2.75, 2.75]) {
-    cylinder(root, .4, .3, .7, x, -.48, 9.05, m.cream, 20);
+    cylinder(root, .4, .3, .7, x, -.35, 9.05, m.cream, 20);
     for (let i = 0; i < 9; i++) {
       const leaf = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), i % 2 ? m.leaf : olive);
       const a = i * 2.4; leaf.position.set(x + Math.sin(a) * .22, .2 + i % 3 * .17, 9.05 + Math.cos(a) * .22);
       leaf.scale.set(.14, .65, .1); leaf.rotation.z = Math.sin(a) * .45; root.add(leaf);
     }
   }
-  for (let i = 0; i < 4; i++) {
-    const z = 9.4 + i * .65, y = -.2 - i * .18;
-    softBox(root, 4.7, .2 + (3 - i) * .18, .72, 0, y - (.2 + (3 - i) * .18) / 2, z, m.travertine);
-    box(root, 4.45, .035, .035, 0, y - .05, z + .36, m.glow);
+  box(root,4.7,.18,.32,0,T.levels.lobby-.09,9.03,m.travertine);
+  light.contact(root,0,-.83,9.5,8.5,4.4);
+  light.wash(lobby,0,.012,.8,6.8,3.3);
+  for (let i = 0; i < T.stairs.frontCount; i++) {
+    const z=T.stairs.frontStartZ+i*T.stairs.frontTread;
+    const top=T.levels.lobby-(i+1)*T.stairs.frontRiser;
+    const height=top-T.levels.promenade;
+    softBox(root,4.7,height,T.stairs.frontTread+.025,0,T.levels.promenade+height/2,z,m.travertine);
+    box(root,4.45,.024,.025,0,top-.045,z+T.stairs.frontTread/2,m.glow);
+    light.wash(root,0,top-T.stairs.frontRiser+.008,z+.43,4.5,.9);
   }
   // Pergola with fine walnut battens, cream upholstery and warm underside.
   const pergola = new THREE.Group(); pergola.position.set(-12.7, -.85, -2.8); root.add(pergola);
@@ -122,6 +166,8 @@ export function createCampus(root: THREE.Group, m: OfficeMaterials, textures: TH
     }
   }
   function tree(x: number, z: number, size: number) {
+    light.contact(root,x,-.971,z,size*3.4,size*3.4);
+    light.wash(root,x,-.966,z,size*2.1,size*2.1);
     cylinder(root, .13, .2, 2.6 * size, x, -.95 + 1.3 * size, z, m.walnut, 9);
     for (let i = 0; i < 4; i++) {
       const branch = cylinder(root, .055, .09, 1.3 * size, x + Math.sin(i * 1.57) * .3 * size, .7 * size, z + Math.cos(i * 1.57) * .3 * size, m.walnut, 7);
@@ -129,7 +175,7 @@ export function createCampus(root: THREE.Group, m: OfficeMaterials, textures: TH
     }
     for (let i = 0; i < (mobile ? 18 : 29); i++) {
       const a = i * 2.399, r = Math.sqrt(i / 29) * size * 1.17;
-      balls.push({ p: [x + Math.sin(a) * r, -.9 + 3.1 * size + Math.sin(i * 8.1) * .5 * size, z + Math.cos(a) * r], s: [.55 * size, .5 * size, .51 * size], color: [0x365a35, 0x4c6c3c, 0x718245][i % 3] });
+      balls.push({ p: [x + Math.sin(a) * r, -.9 + 3.1 * size + Math.sin(i * 8.1) * .5 * size, z + Math.cos(a) * r], s: [(.47+(i%4)*.035) * size, (.42+(i%3)*.05) * size, (.48+(i%5)*.018) * size], color: [0x284530, 0x49633b, 0x748348][i % 3] });
     }
   }
   for (const [x, z, s] of [[-14,-6.8,1],[-14,3.2,1],[-14,9.6,.95],[-10.6,-7.5,1.25],[12.5,-6.6,1.12],[14,-1,1],[8.5,11.7,.74],[13.7,12,.6]] ) tree(x,z,s);
@@ -152,12 +198,12 @@ export function createCampus(root: THREE.Group, m: OfficeMaterials, textures: TH
   gradient.addColorStop(0,'rgba(255,181,70,.55)'); gradient.addColorStop(.3,'rgba(255,169,56,.2)'); gradient.addColorStop(1,'rgba(255,169,56,0)');
   poolContext.fillStyle=gradient; poolContext.fillRect(0,0,64,64);
   const poolTexture=new THREE.CanvasTexture(poolCanvas); poolTexture.colorSpace=THREE.SRGBColorSpace; textures.push(poolTexture);
-  const poolMaterial = new THREE.MeshBasicMaterial({ map:poolTexture, transparent:true, opacity:.6, depthWrite:false, blending:THREE.AdditiveBlending });
+  const poolMaterial = new THREE.MeshBasicMaterial({ map:poolTexture, transparent:true, opacity:1, depthWrite:false, blending:THREE.AdditiveBlending });
   for (const [x,z] of [[-14.5,6],[-11,2],[-10,8],[-5,10.5],[-4,13],[4,13],[4,9.8],[7.2,7],[10.5,4],[14.7,8],[14,-5],[-13,-6],[10.5,12],[-10.2,12.7]]) {
     cylinder(root, .085, .12, .93, x, -.45, z, m.metal);
     cylinder(root, .105, .105, .22, x, .02, z, m.glow);
     cylinder(root, .12, .12, .045, x, .15, z, m.brass);
-    const pool = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 1.7), poolMaterial); pool.rotation.x = -Math.PI / 2; pool.position.set(x,-.855,z); root.add(pool);
+    const pool = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4), poolMaterial); pool.rotation.x = -Math.PI / 2; pool.position.set(x,-.83,z); root.add(pool);
   }
   // Exactly one Stack44 logo; no copy or repeated branding in the miniature.
   const monument = new THREE.Group(); monument.position.set(-8.6, -.85, 11.5); root.add(monument);
@@ -174,21 +220,25 @@ export function createCampus(root: THREE.Group, m: OfficeMaterials, textures: TH
     const flag = box(root,.95,2,.035,x+.49,2.3,-5.5,m.fabric); flag.material = lavender;
     const finial = new THREE.Mesh(new THREE.SphereGeometry(.085,8,6),m.brass); finial.position.set(x,3.55,-5.5); root.add(finial);
   }
+  const carWashes: THREE.Mesh[] = [];
   const carLights: THREE.MeshStandardMaterial[] = [];
   softBox(root, 5.9, .08, 6.3, 11.1, -.87, 8.6, asphalt);
   for (const z of [5.6,8.6,11.6]) box(root, 5.5, .012, .045, 11.1, -.818, z, m.cream);
   box(root,.045,.012,5.9,13.85,-.818,8.6,m.cream);
+  const lightSurfacesWash=(x:number,z:number)=>{ const patch=light.wash(root,x,-.807,z,3.5,1.2); patch.material=patch.material.clone(); return patch; };
   function car(z: number, color: number, target: OfficeTarget) {
     const g = new THREE.Group(); g.position.set(11.1,-.8,z); root.add(g); g.userData.officeAction = target;
-    const paint = new THREE.MeshStandardMaterial({color,roughness:.26,metalness:.48});
+    const paint = new THREE.MeshPhysicalMaterial({color,roughness:T.surfaces.carRoughness,metalness:T.surfaces.carMetalness,clearcoat:T.surfaces.carClearcoat,clearcoatRoughness:.12,envMapIntensity:1.4});
+    light.contact(root,11.1,-.815,z,5.3,2.5);
     softBox(g,4.3,.58,1.9,0,.64,0,paint,.19);
     const cabin = new THREE.Shape(); cabin.moveTo(-1.3,.85); cabin.lineTo(-.85,1.47); cabin.lineTo(.68,1.47); cabin.lineTo(1.3,.85); cabin.closePath();
     const cabinMesh = new THREE.Mesh(new THREE.ExtrudeGeometry(cabin,{depth:1.55,bevelEnabled:true,bevelSize:.05,bevelThickness:.045,bevelSegments:2,steps:1}),m.charcoal);
     cabinMesh.position.z=-.775; cabinMesh.castShadow=true; g.add(cabinMesh);
     softBox(g,1.48,.085,1.55,-.08,1.5,0,paint);
-    const windshield = box(g,.045,.49,1.43,1.12,1.14,0,m.glass); windshield.rotation.z = .3;
+    const windshield = box(g,.045,.73,1.4,1.0,1.17,0,m.carGlass); windshield.rotation.z = Math.PI/4;
     for (const side of [-1,1]) {
-      box(g,1.45,.39,.025,-.06,1.16,side*.83,m.glass);
+      const sideWindow=new THREE.Shape();sideWindow.moveTo(-1.14,.93);sideWindow.lineTo(-.8,1.4);sideWindow.lineTo(.62,1.4);sideWindow.lineTo(1.08,.93);sideWindow.closePath();
+      const windowMesh=new THREE.Mesh(new THREE.ShapeGeometry(sideWindow),m.carGlass);windowMesh.position.z=side*.835; if(side<0)windowMesh.rotation.y=Math.PI;g.add(windowMesh);
       box(g,.06,.5,.04,-.18,1.14,side*.85,paint);
       softBox(g,.3,.13,.22,.68,1.04,side*1.03,paint);
       for (const x of [-1.34,1.34]) {
@@ -197,6 +247,7 @@ export function createCampus(root: THREE.Group, m: OfficeMaterials, textures: TH
         for (let i=0;i<5;i++) { const spoke=box(g,.035,.35,.02,x,.36,side*1.055,m.brass); spoke.rotation.z=i*Math.PI/5; }
       }
       const light = new THREE.MeshStandardMaterial({color:0xffe4ae,emissive:0xffd399,emissiveIntensity:.12}); carLights.push(light);
+      const wash=lightSurfacesWash(11.1+3.3,z+side*.57); carWashes.push(wash);
       box(g,.035,.13,.47,2.16,.73,side*.57,light);
       box(g,.035,.1,.5,-2.16,.75,side*.6,new THREE.MeshStandardMaterial({color:0x822b24,emissive:0x8f2b14,emissiveIntensity:.3}));
     }
@@ -217,7 +268,7 @@ export function createCampus(root: THREE.Group, m: OfficeMaterials, textures: TH
   const visitorRoot = new THREE.Group(); root.add(visitorRoot);
   const visitors = createCharacters(visitorRoot,m,{x:1,z:1},[0,1,3,4]);
   const routes = [
-    [new THREE.Vector3(-.9,-.95,13),new THREE.Vector3(-.9,-.84,11.5),new THREE.Vector3(-.9,-.3,9.6),new THREE.Vector3(-.9,-.12,8.4)],
+    [new THREE.Vector3(-.9,T.levels.promenade,13),new THREE.Vector3(-.9,T.levels.promenade,11.8),new THREE.Vector3(-.9,T.levels.lobby,9.05),new THREE.Vector3(-.9,T.levels.lobby,8.4)],
     [new THREE.Vector3(-12.5,-.85,3.6),new THREE.Vector3(-12.8,-.85,5.2),new THREE.Vector3(-10.9,-.85,7.1),new THREE.Vector3(-10.1,-.85,7.5)],
     [new THREE.Vector3(7,-.85,7.3),new THREE.Vector3(8.3,-.85,7.3)],
     [new THREE.Vector3(-12.2,-.85,2.5),new THREE.Vector3(-12.2,-.85,3.1)],
@@ -226,6 +277,7 @@ export function createCampus(root: THREE.Group, m: OfficeMaterials, textures: TH
   let restUntil = -1;
   let activeCar: OfficeTarget | null = null;
   return {
+    dynamicRoots: [visitorRoot],
     activate(target: OfficeTarget, elapsed: number) { if(target==='pergola') restUntil=elapsed+T.motion.restSeconds; activeCar=target; },
     update(elapsed: number, delta: number, reduced: boolean) {
       for (let i=0;i<visitors.length;i++) {
@@ -233,6 +285,10 @@ export function createCampus(root: THREE.Group, m: OfficeMaterials, textures: TH
         const phase=reduced ? .35 : (elapsed/(duration*2)+i*.17)%1;
         const t=phase<.5 ? phase*2 : 2-phase*2;
         actor.root.position.copy(curve.getPoint(t)); actor.root.scale.setScalar(.82);
+        if(i===0) {
+          const z=actor.root.position.z;
+          actor.root.position.y=z<9.1?T.levels.lobby:Math.max(T.levels.promenade,T.levels.lobby-(Math.floor((z-(T.stairs.frontStartZ-T.stairs.frontTread/2))/T.stairs.frontTread)+1)*T.stairs.frontRiser);
+        }
         const tangent=curve.getTangent(t).multiplyScalar(phase<.5?1:-1);
         actor.root.rotation.y=Math.atan2(tangent.x,tangent.z);
         actor.hip.position.y=1.02;
@@ -248,7 +304,7 @@ export function createCampus(root: THREE.Group, m: OfficeMaterials, textures: TH
         actor.hip.position.y=.75; actor.hip.rotation.x=!reduced && elapsed<restUntil ? -.1*Math.sin((restUntil-elapsed)/T.motion.restSeconds*Math.PI) : 0; actor.leftThigh.rotation.x=actor.rightThigh.rotation.x=-Math.PI/2;
         actor.leftShin.rotation.x=actor.rightShin.rotation.x=Math.PI/2;
       }
-      carLights.forEach((light,i)=> { const enabled=activeCar===(i<2?'car-dark':'car-silver'); light.emissiveIntensity=reduced ? (enabled?2:.12) : THREE.MathUtils.lerp(light.emissiveIntensity,enabled?2:.12,1-Math.exp(-delta*T.motion.carFade)); });
+      carLights.forEach((light,i)=> { const enabled=activeCar===(i<2?'car-dark':'car-silver'); light.emissiveIntensity=reduced ? (enabled?2:.12) : THREE.MathUtils.lerp(light.emissiveIntensity,enabled?2:.12,1-Math.exp(-delta*T.motion.carFade)); (carWashes[i].material as THREE.MeshBasicMaterial).opacity=light.emissiveIntensity*.27; });
     },
   };
 }

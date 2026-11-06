@@ -1,3 +1,4 @@
+import { officeSlab } from './campusArchitecture';
 import * as THREE from 'three';
 import sisLogoUrl from '../../../../referencias-diseno/sis-logo.png';
 import { box, cylinder, softBox, type OfficeMaterials } from './miniOfficeMaterials';
@@ -210,15 +211,27 @@ function screen(root: THREE.Group, m: OfficeMaterials, textures: THREE.Texture[]
 }
 
 export function createOfficeLayout(root: THREE.Group, m: OfficeMaterials, textures: THREE.Texture[], signal: AbortSignal): OfficeFixtures {
-  box(root, 20.25, .36, 12.0, 0, -.22, -.48, m.travertine);
-  box(root, 20.45, .13, 12.2, 0, -.48, -.48, m.walnutDark);
-  box(root, 19.95, .025, 11.66, 0, -.025, -.48, m.stone);
+  officeSlab(root,20.25,12,-.4,.36,m.travertine);
+  officeSlab(root,20.45,12.2,-.545,.13,m.metal);
+  officeSlab(root,19.95,11.66,-.0375,.025,m.stone);
   const studs = new THREE.InstancedMesh(new THREE.CylinderGeometry(.055, .055, .025, 10), m.travertine, 900);
   const transform = new THREE.Object3D(); let count = 0;
   for (let x = -9.75; x < 9.8; x += .55) for (let z = -6.05; z < 5.15; z += .65) {
+    if (Math.abs(x)<1.65 && z>3.45) continue;
     transform.position.set(x, .005, z); transform.updateMatrix(); studs.setMatrixAt(count++, transform.matrix);
   }
   studs.count = count; studs.instanceMatrix.needsUpdate = true; root.add(studs);
+  const joints=new THREE.InstancedMesh(new THREE.BoxGeometry(1,1,1),m.fabric,70);
+  let jointCount=0;
+  for(let x=-9.5;x<10;x+=.85) {
+    const depth=Math.abs(x)<1.7?9.55:11.6;
+    transform.position.set(x,-.006,Math.abs(x)<1.7?-1.25:-.48); transform.scale.set(.012,.004,depth); transform.updateMatrix(); joints.setMatrixAt(jointCount++,transform.matrix);
+  }
+  for(let z=-5.9;z<5.3;z+=.72) {
+    if(z>3.5) for(const x of [-5.8,5.8]) { transform.position.set(x,-.006,z);transform.scale.set(8.3,.004,.012);transform.updateMatrix();joints.setMatrixAt(jointCount++,transform.matrix); }
+    else { transform.position.set(0,-.006,z);transform.scale.set(19.8,.004,.012);transform.updateMatrix();joints.setMatrixAt(jointCount++,transform.matrix); }
+  }
+  joints.count=jointCount; joints.receiveShadow=true; root.add(joints);
   // A compact open cutaway: back wall, low side walls and a slender roof frame.
   box(root, 20.0, 3.75, .2, 0, 1.87, -6.49, m.walnutDark);
   for (const x of [-9.98, 9.98]) {

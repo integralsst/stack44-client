@@ -1,3 +1,8 @@
+import { createLightSurfaces } from './campusLightSurfaces';
+import { batchCampusStatics } from './campusStaticBatch';
+import { cinematicPass, studioReflectionCards } from './campusCinematic';
+import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
+import { desks } from './miniOfficeLayout';
 import { createCampus } from './miniOfficeCampus';
 import { campusTokens as T } from './campusDesignTokens';
 import { useEffect, useRef, useState } from 'react';
@@ -35,24 +40,32 @@ export function MiniOfficeHero() {
     const camera = new THREE.OrthographicCamera();
     const mobileCamera = window.innerWidth < 700;
     camera.zoom = 1;
-    camera.position.set(mobileCamera ? 0 : 11, 25, mobileCamera ? 30 : 38);
+    camera.position.fromArray(mobileCamera ? T.camera.mobile : T.camera.desktop);
     camera.lookAt(0, 1.35, -.4);
     const world = new THREE.Group(); scene.add(world);
     const m = materials(); const textures: THREE.Texture[] = [];
     const assetController = new AbortController();
     const backdrop = backdropTexture(); textures.push(backdrop); scene.background = backdrop;
-    const architecture = new THREE.Group(); world.add(architecture);
+    const architecture = new THREE.Group(); architecture.name='office-upper-level'; architecture.position.y=T.levels.office; world.add(architecture);
+    const exterior = new THREE.Group(); exterior.name='campus-ground-level'; world.add(exterior);
+    const lightSurfaces=createLightSurfaces(textures);
     const spaceScale = { x: 1, z: 1 };
     architecture.scale.set(spaceScale.x, 1, spaceScale.z);
     const fixtures = createOfficeLayout(architecture, m, textures, assetController.signal);
-    const campus = createCampus(architecture, m, textures, assetController.signal, mobileCamera);
-    const characters = createCharacters(world, m, spaceScale);
+    const campus = createCampus(exterior, m, textures, assetController.signal, mobileCamera, lightSurfaces);
+    const characters = createCharacters(architecture, m, spaceScale);
     const behavior = new OfficeBehaviorController();
+    for(const desk of desks) {
+      lightSurfaces.contact(architecture,desk.x,.018,desk.z,3.2,2.1);
+      lightSurfaces.wash(architecture,desk.x,.023,desk.z+.25,2.8,1.4);
+    }
+    const batchedMeshes=batchCampusStatics(architecture,[...characters.map(c=>c.root),fixtures.printerPaper,fixtures.deliveredPaper,fixtures.printerLight])
+      +batchCampusStatics(exterior,campus.dynamicRoots);
 
     // Encuadre basado en límites reales del diorama. No incluir el suelo de
     // 200x200: forma parte de scene, no de world.
     const worldBounds = new THREE.Box3().setFromObject(world);
-    if (mobileCamera) worldBounds.set(new THREE.Vector3(-9, -1.5, -7), new THREE.Vector3(9, 4.5, 11));
+    if (mobileCamera) worldBounds.set(new THREE.Vector3(-9, -1.7, -7), new THREE.Vector3(9, 5.4, 11.8));
     const focus = worldBounds.getCenter(new THREE.Vector3());
     const viewFocus = focus.clone();
     const desiredFocus = focus.clone();
@@ -61,43 +74,53 @@ export function MiniOfficeHero() {
     const cameraOffset = camera.position.clone().sub(originalFocus);
     camera.position.copy(focus).add(cameraOffset);
     camera.lookAt(focus);
-    const interactions = createOfficeInteractions(architecture, characters, mobileCamera);
+    const interactions = createOfficeInteractions(architecture, characters, mobileCamera, exterior);
 
-    const ambient = new THREE.HemisphereLight(0xffe9c6, 0x395c50, .6); scene.add(ambient);
-    const sun = new THREE.DirectionalLight(0xffe5ba, 1.5);
-    sun.position.set(-6, 13, 11); sun.castShadow = true;
-    sun.shadow.mapSize.set(mobileCamera ? 1024 : 2048, mobileCamera ? 1024 : 2048);
-    sun.shadow.camera.left = -23; sun.shadow.camera.right = 23;
-    sun.shadow.camera.top = 23; sun.shadow.camera.bottom = -23;
-    sun.shadow.bias = -.0005; sun.shadow.radius = 3; scene.add(sun);
-    const fill = new THREE.DirectionalLight(0xa8c9bf, .5);
-    fill.position.set(10, 8, -6); scene.add(fill);
-    for (const x of (mobileCamera ? [-6, 0, 6] : [-8, -4.1, 0, 4.1, 8])) {
-      const warm = new THREE.PointLight(0xffbe73, 8, 6, 2);
-      warm.position.set(x, 3.35, -4.45); scene.add(warm);
+    RectAreaLightUniformsLib.init();
+    const ambient = new THREE.HemisphereLight(0xcbd9e7, 0x343e34, T.lighting.ambient); scene.add(ambient);
+    const sun = new THREE.DirectionalLight(0xffe4c5, T.lighting.key);
+    sun.position.set(-10,18,12); sun.castShadow=true;
+    sun.shadow.mapSize.set(mobileCamera?1024:2048,mobileCamera?1024:2048);
+    sun.shadow.camera.left=-21; sun.shadow.camera.right=21; sun.shadow.camera.top=21; sun.shadow.camera.bottom=-21;
+    sun.shadow.camera.far=65; sun.shadow.bias=-.00018; sun.shadow.normalBias=.018; sun.shadow.radius=4; scene.add(sun);
+    const fill=new THREE.DirectionalLight(0xc5deed,.4); fill.position.set(12,9,-4); scene.add(fill);
+    const wallWash=new THREE.RectAreaLight(T.lighting.warm,1.8,18,.5);
+    wallWash.position.set(0,T.levels.office+3.3,-5.4);wallWash.lookAt(0,T.levels.office+1.7,-6.5);scene.add(wallWash);
+    for(const [x,y,z,intensity,distance] of [[0,1.9,8,14,6],[-12.7,1,-2.8,8,5]]) {
+      const lamp=new THREE.PointLight(T.lighting.warm,intensity,distance,2); lamp.position.set(x,y,z); scene.add(lamp);
     }
-    for (const [x, y, z, intensity, distance] of [[0, 1.7, 8, 12, 6], [-12.7, 1.5, -2.8, 8, 5], [-13, -.3, 8.5, 4, 4], [12, -.3, -4, 4, 4]]) {
-      const light = new THREE.PointLight(T.lighting.warm, intensity, distance, 2); light.position.set(x,y,z); scene.add(light);
+    for(const [x,z] of [[-14,9.6],[14,-1]]) {
+      const uplight=new THREE.SpotLight(T.lighting.warm,mobileCamera?15:22,7,.58,.85,2);
+      uplight.position.set(x+.18,-.8,z+.25); uplight.target.position.set(x,2,z);
+      scene.add(uplight,uplight.target);
     }
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: T.colors.studio, roughness: .62 }));
-    ground.rotation.x = -Math.PI / 2; ground.position.y = -1.53; ground.receiveShadow = true; scene.add(ground);
+    // Broad real light gives the timber, faces and vehicles soft, readable highlights.
+    const officeSoftbox=new THREE.RectAreaLight(0xffe5c1,1.0,18,6);
+    officeSoftbox.position.set(0,T.levels.office+5,0); officeSoftbox.lookAt(0,T.levels.office,0); scene.add(officeSoftbox);
+    const stepLight=new THREE.RectAreaLight(T.lighting.warm,2.8,4.3,.5);
+    stepLight.position.set(0,.08,9.15); stepLight.lookAt(0,-.6,11.4); scene.add(stepLight);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: T.colors.studio, roughness: .8, envMapIntensity: .12 }));
+    ground.rotation.x = -Math.PI / 2; ground.position.y = -1.78; ground.receiveShadow = true; scene.add(ground);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobileCamera ? T.performance.mobileDPR : T.performance.desktopDPR));
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = T.lighting.exposure;
     const pmrem = new THREE.PMREMGenerator(renderer);
     const studio = new RoomEnvironment();
+    studioReflectionCards(studio);
     const environment = pmrem.fromScene(studio);
     studio.dispose();
     scene.environment = environment.texture;
     scene.environmentIntensity = T.lighting.environment;
-    const composer = mobileCamera ? null : new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { samples: 4 }));
+    const composer = mobileCamera ? null : new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { samples: 4, type: THREE.HalfFloatType }));
     if (composer) {
       composer.addPass(new RenderPass(scene, camera));
-      composer.addPass(new UnrealBloomPass(new THREE.Vector2(1, 1), T.lighting.bloom, .28, 1.05));
+      composer.addPass(new UnrealBloomPass(new THREE.Vector2(1, 1), T.lighting.bloom, .32, T.lighting.bloomThreshold));
+      composer.addPass(cinematicPass());
       composer.addPass(new OutputPass());
     }
-    const renderScene = () => { if (composer) composer.render(); else renderer.render(scene, camera); };
+    renderer.info.autoReset=false;
+    const renderScene = () => { renderer.info.reset(); if (composer) composer.render(); else renderer.render(scene, camera); };
     // MUY IMPORTANTE: pixelRatio solo afecta la resolución interna del canvas.
     // El tamaño CSS siempre debe coincidir con el host; de lo contrario un
     // Retina 2x dibuja un canvas 2x más grande y recorta la oficina.
@@ -129,7 +152,7 @@ export function MiniOfficeHero() {
           }
         }
       }
-      const margin = aspect < .8 ? 1.06 : 1.04;
+      const margin = aspect < .8 ? 1.04 : T.camera.margin;
       const halfHeight = Math.max(halfProjectedHeight, halfProjectedWidth / aspect) * margin;
       const halfWidth = halfHeight * aspect;
       camera.left = -halfWidth; camera.right = halfWidth;
@@ -203,15 +226,15 @@ export function MiniOfficeHero() {
       if (actor) behavior.greet(actor.name, elapsed);
       if (!reduced.matches && (target === 'printer' || target === 'coffee' || target === 'meeting'))
         behavior.request(target, elapsed, characters);
-      const point = actor ? actor.root.position.clone().add(new THREE.Vector3(0, 1.2, 0))
-        : target === 'printer' ? new THREE.Vector3(-9 * spaceScale.x, 1, .9 * spaceScale.z)
-          : target === 'coffee' ? new THREE.Vector3(8.2 * spaceScale.x, 1, -3.5 * spaceScale.z)
-            : target === 'meeting' ? new THREE.Vector3(-8 * spaceScale.x, 1, -2 * spaceScale.z)
+      const point = actor ? actor.root.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 1.2, 0))
+        : target === 'printer' ? new THREE.Vector3(-9 * spaceScale.x, T.levels.office+1, .9 * spaceScale.z)
+          : target === 'coffee' ? new THREE.Vector3(8.2 * spaceScale.x, T.levels.office+1, -3.5 * spaceScale.z)
+            : target === 'meeting' ? new THREE.Vector3(-8 * spaceScale.x, T.levels.office+1, -2 * spaceScale.z)
               : target === 'lobby' ? new THREE.Vector3(0, 1.1, 7.3)
                 : target === 'pergola' ? new THREE.Vector3(-12.7, .8, -2.8)
                   : target === 'monument' ? new THREE.Vector3(-8.6, .3, 11.5)
                     : target.startsWith('car-') ? new THREE.Vector3(11.1, .2, 8.5)
-                      : new THREE.Vector3(0, 2.6, -5.9 * spaceScale.z);
+                      : new THREE.Vector3(0, T.levels.office+2.6, -5.9 * spaceScale.z);
       desiredFocus.copy(focus).lerp(point, mobileCamera ? .12 : .25);
       renderedStatic = false;
     };
@@ -239,7 +262,7 @@ export function MiniOfficeHero() {
         renderedStatic = reduced.matches;
       }
       // Adapt resolution after sustained slow frames; never increase geometry or shadow lights.
-      if (!document.hidden && delta < 1 && !reduced.matches) {
+      if (!document.hidden && delta < 1 && !reduced.matches && elapsed > T.performance.warmupSeconds) {
         sampleTime += delta; sampleCount++;
         if (sampleCount >= T.performance.sampleFrames) {
           const fps = sampleCount / sampleTime;
@@ -259,6 +282,16 @@ export function MiniOfficeHero() {
     frame = requestAnimationFrame(tick);
     const visibility = () => { last = performance.now(); };
     document.addEventListener('visibilitychange', visibility);
+    if(import.meta.env.DEV && new URLSearchParams(location.search).has('campusQA')) {
+      renderer.domElement.addEventListener('campus:inspect',event=>{
+        const request=event as CustomEvent<{reply:(value:unknown)=>void}>;
+        request.detail.reply({elapsed,levels:T.levels,batchedMeshes,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,
+          quality:{dpr:renderer.getPixelRatio(),bloom:composer?.passes.some(p=>p instanceof UnrealBloomPass&&p.enabled)??false},
+          targets:interactions.project(camera,renderer.domElement),zoom:camera.zoom,
+          actors:characters.map(c=>({name:c.name,state:c.state,local:c.root.position.toArray(),world:c.root.getWorldPosition(new THREE.Vector3()).toArray(),cup:c.coffeeCup.visible,documents:c.documents.visible})),
+          paper:fixtures.printerPaper.visible,delivered:fixtures.deliveredPaper.visible});
+      });
+    }
     const onLost = (event: Event) => { event.preventDefault(); setFailed(true); };
     renderer.domElement.addEventListener('webglcontextlost', onLost);
     return () => {
@@ -283,13 +316,14 @@ export function MiniOfficeHero() {
       clearOfficeGeometryCache();
       const ownedTextures = new Set(textures);
       materials.forEach(material => {
-        if ('map' in material && material.map instanceof THREE.Texture) ownedTextures.add(material.map);
+        for(const value of Object.values(material)) if(value instanceof THREE.Texture) ownedTextures.add(value);
         material.dispose();
       });
       ownedTextures.forEach(texture => texture.dispose());
       ground.material.dispose();
       environment.dispose(); pmrem.dispose();
-      composer?.dispose();
+      if(composer) { composer.passes.forEach(pass=>pass.dispose()); composer.dispose(); }
+      sun.shadow.dispose();
       renderer.dispose(); renderer.domElement.remove();
       selectScene.current = () => {};
     };

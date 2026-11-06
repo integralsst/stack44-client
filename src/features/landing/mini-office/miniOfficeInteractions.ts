@@ -3,7 +3,7 @@ import type { Character } from './miniOfficeCharacters';
 import type { OfficeTarget } from './miniOfficeContent';
 
 /** Separate hit geometry keeps invisible furniture out of the raycast and enlarges mobile targets. */
-export function createOfficeInteractions(architecture: THREE.Group, characters: Character[], mobile: boolean) {
+export function createOfficeInteractions(architecture: THREE.Group, characters: Character[], mobile: boolean, exterior: THREE.Group = architecture) {
   const material = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
   const targets: THREE.Mesh[] = [];
   const addHit = (parent: THREE.Object3D, target: OfficeTarget, geometry: THREE.BufferGeometry, x: number, y: number, z: number) => {
@@ -23,14 +23,19 @@ export function createOfficeInteractions(architecture: THREE.Group, characters: 
       mesh.userData.officeTarget = 'dashboard'; targets.push(mesh);
     }
   }
-  addHit(architecture, 'lobby', new THREE.BoxGeometry(6.8, 2.6, 3.4), 0, 1.1, 7.25);
-  addHit(architecture, 'pergola', new THREE.BoxGeometry(4.3, 3, 4.5), -12.7, .6, -2.8);
-  addHit(architecture, 'monument', new THREE.BoxGeometry(4.9, 2.2, .5), -8.6, .2, 11.5);
-  addHit(architecture, 'car-dark', new THREE.BoxGeometry(4.4, 1.6, 2), 11.1, 0, 7.05);
-  addHit(architecture, 'car-silver', new THREE.BoxGeometry(4.4, 1.6, 2), 11.1, 0, 10.05);
+  addHit(exterior, 'lobby', new THREE.BoxGeometry(6.8, 2.6, 3.4), 0, 1.1, 7.25);
+  addHit(exterior, 'pergola', new THREE.BoxGeometry(4.3, 3, 4.5), -12.7, .6, -2.8);
+  addHit(exterior, 'monument', new THREE.BoxGeometry(4.9, 2.2, .5), -8.6, .2, 11.5);
+  addHit(exterior, 'car-dark', new THREE.BoxGeometry(4.4, 1.6, 2), 11.1, 0, 7.05);
+  addHit(exterior, 'car-silver', new THREE.BoxGeometry(4.4, 1.6, 2), 11.1, 0, 10.05);
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
   return {
+    project(camera:THREE.Camera,canvas:HTMLCanvasElement) {
+      const bounds=canvas.getBoundingClientRect();
+      return targets.map(hit=>{ const world=hit.getWorldPosition(new THREE.Vector3()); const p=world.clone().project(camera);
+        return {target:hit.userData.officeTarget as OfficeTarget,x:bounds.left+(p.x+1)*bounds.width/2,y:bounds.top+(1-p.y)*bounds.height/2,world:world.toArray()}; });
+    },
     pick(clientX: number, clientY: number, canvas: HTMLCanvasElement, camera: THREE.Camera): OfficeTarget | null {
       const bounds = canvas.getBoundingClientRect();
       pointer.set(((clientX - bounds.left) / bounds.width) * 2 - 1, -((clientY - bounds.top) / bounds.height) * 2 + 1);
