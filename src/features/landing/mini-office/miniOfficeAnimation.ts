@@ -8,7 +8,7 @@ const events: Record<string, Event> = {
   Hera: { start: 15, end: 43, target: [-9.05, -.43], kind: 'meeting' },
   Jesús: { start: 52, end: 81, target: [-7.0, -.43], kind: 'meeting' },
   Cristina: { start: 55, end: 82, target: [-9.05, -.43], kind: 'meeting' },
-  Apolo: { start: 90, end: 112, target: [6.64, -2.3], kind: 'coffee' },
+  Apolo: { start: 90, end: 118, target: [6.64, -2.3], kind: 'coffee' },
 };
 const ease = (value: number) => {
   const t = THREE.MathUtils.clamp(value, 0, 1);
@@ -84,7 +84,7 @@ export function updateCharacters(characters: Character[], elapsed: number, reduc
           : follow(inward, ease((moment - duration + 10.08) / 8));
         desiredYaw = Math.atan2(next.x - position.x, next.y - position.y);
       } else if (sit < .5) {
-        if (event.kind === 'coffee') desiredYaw = Math.PI;
+        if (event.kind === 'coffee') desiredYaw = .55;
         else desiredYaw = character.name === 'Zeus' || character.name === 'Jesús' ? -1.0 : 2.15;
       }
     } else character.state = 'WORKING';
@@ -103,6 +103,16 @@ export function updateCharacters(characters: Character[], elapsed: number, reduc
     character.rightArm.rotation.x = -sit * .88 + (walking ? stride * .7 : 0) - talking * .6 - typing;
     character.leftForearm.rotation.x = -sit * .42 - talking * .5;
     character.rightForearm.rotation.x = -sit * .42;
+    const coffee = character.state === 'COFFEE_BREAK';
+    character.coffeeCup.visible = coffee;
+    if (coffee) {
+      const sip = (Math.sin(time * 2.1) + 1) * .5;
+      character.rightArm.rotation.x = -1.18 - sip * .23;
+      character.rightForearm.rotation.x = -.82 - sip * .16;
+      character.coffeeCup.rotation.x = -character.rightArm.rotation.x - character.rightForearm.rotation.x;
+      character.leftArm.rotation.x = -.18;
+    }
+    character.head.rotation.x = coffee ? Math.sin(time * 2.1) * .035 : 0;
     character.head.rotation.y = reducedMotion ? 0 : Math.sin(time * .78 + character.desk.x) * .065;
     character.head.rotation.z = reducedMotion ? 0 : Math.sin(time * 1.05 + character.desk.z) * .023;
   }

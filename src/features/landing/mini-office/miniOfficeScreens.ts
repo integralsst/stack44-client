@@ -25,19 +25,16 @@ export function backdropTexture() {
   return texture(canvas);
 }
 
-export function logoPanelTexture(url: string, crop: [number, number, number, number], label: string, signal: AbortSignal, onReady: (loaded: THREE.Texture) => void) {
-  const canvas = document.createElement('canvas'); canvas.width = 768; canvas.height = 256;
+export function logoPanelTexture(url: string, crop: [number, number, number, number], signal: AbortSignal, onReady: (loaded: THREE.Texture) => void) {
+  const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512;
   const c = canvas.getContext('2d')!;
-  c.fillStyle = '#101516'; c.fillRect(0, 0, 768, 256);
-  if (label === 'SIS') { c.fillStyle = '#d9edf2'; c.fillRect(31, 20, 218, 216); }
-  c.fillStyle = '#f4f0e8'; c.font = 'bold 69px Arial'; c.fillText(label, 267, 128);
-  c.fillStyle = '#d3b878'; c.font = 'bold 29px Arial'; c.fillText('SG-SST', 271, 178);
+  // The canvas stays transparent. The framed surface behind it supplies the matte.
   const result = texture(canvas);
   const image = new Image();
   image.onload = () => {
     if (signal.aborted) return;
     const [cx, cy, cw, ch] = crop;
-    c.drawImage(image, image.width * cx, image.height * cy, image.width * cw, image.height * ch, 38, 25, 205, 205);
+    c.drawImage(image, image.width * cx, image.height * cy, image.width * cw, image.height * ch, 44, 44, 424, 424);
     // Swap in a fresh texture: some WebGL drivers do not upload a modified canvas consistently.
     onReady(texture(canvas));
   };

@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import sisLogoUrl from '../../../../referencias-diseno/sis-logo.png';
 import { box, cylinder, softBox, type OfficeMaterials } from './miniOfficeMaterials';
 import { logoPanelTexture, nameplateTexture, dashboardTexture } from './miniOfficeScreens';
 
@@ -293,22 +294,23 @@ export function createOfficeLayout(root: THREE.Group, m: OfficeMaterials, textur
   }
   foliage(root, m, -4.85, 0, -5.48, .82);
   foliage(root, m, 4.85, 0, -5.48, .92);
-  const brandMaterial = new THREE.MeshBasicMaterial();
-  const brand = logoPanelTexture('/brands/stack44.png', [.27, .21, .48, .59], 'Stack44', signal, loaded => {
-    textures.push(loaded); brandMaterial.map = loaded; brandMaterial.needsUpdate = true;
-  }); textures.push(brand); brandMaterial.map = brand;
-  box(root, 2.85, 1.05, .12, -.2, 2.83, -6.14, m.charcoal);
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.68, .9), brandMaterial);
-  sign.position.set(-.2, 2.83, -6.067); root.add(sign);
+  const brandPanels = [
+    { x: -.88, url: '/brands/stack44.png', crop: [.27, .21, .48, .59] as [number, number, number, number] },
+    { x: .88, url: sisLogoUrl, crop: [.20, .11, .59, .70] as [number, number, number, number] },
+  ];
+  for (const panel of brandPanels) {
+    box(root, 1.48, 1.24, .12, panel.x, 2.84, -6.14, m.brass);
+    box(root, 1.40, 1.16, .018, panel.x, 2.84, -6.068, m.cream);
+    const material = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false });
+    const initial = logoPanelTexture(panel.url, panel.crop, signal, loaded => {
+      textures.push(loaded); material.map = loaded; material.needsUpdate = true;
+    });
+    textures.push(initial); material.map = initial;
+    const logo = new THREE.Mesh(new THREE.PlaneGeometry(1.06, 1.06), material);
+    logo.position.set(panel.x, 2.84, -6.052); root.add(logo);
+  }
   screen(root, m, textures, 'CUMPLIMIENTO SG-SST', -6.05, 2.9, -5.94, 2.1);
   screen(root, m, textures, 'SEGUIMIENTO PHVA', 5.28, 2.92, -5.94, 2.42);
-  const sisMaterial = new THREE.MeshBasicMaterial();
-  const sis = logoPanelTexture('/brands/sis.png', [.20, .11, .59, .70], 'SIS', signal, loaded => {
-    textures.push(loaded); sisMaterial.map = loaded; sisMaterial.needsUpdate = true;
-  }); textures.push(sis); sisMaterial.map = sis;
-  box(root, 2.05, 1.1, .09, -8.97, 3.08, -5.67, m.brass);
-  const sisArt = new THREE.Mesh(new THREE.PlaneGeometry(1.93, .98), sisMaterial);
-  sisArt.position.set(-8.97, 3.08, -5.616); root.add(sisArt);
   const cupCurve = new THREE.CatmullRomCurve3([
     new THREE.Vector3(7.4, 2.69, -6.07), new THREE.Vector3(7.46, 2.43, -6.07),
     new THREE.Vector3(7.9, 2.43, -6.07), new THREE.Vector3(7.99, 2.69, -6.07),
@@ -324,6 +326,15 @@ export function createOfficeLayout(root: THREE.Group, m: OfficeMaterials, textur
     root.add(steam);
   }
   for (const x of [-9.56, -4.75, 4.7, 9.55]) foliage(root, m, x, 2.8, -5.99, .52, true);
+  // Shared material zones make the management pair and three-person team read as departments.
+  softBox(root, 9.55, .025, 3.72, 0, .018, -3.22, m.fabric, .012);
+  for (const x of [-4.78, 4.78]) {
+    box(root, .05, 1.12, 2.95, x, .62, -3.18, m.glass);
+    for (const z of [-4.63, -1.72]) box(root, .07, 1.18, .07, x, .62, z, m.brass);
+    box(root, .065, .035, 2.97, x, 1.19, -3.18, m.brass);
+  }
+  box(root, 11.5, .02, 3.34, 0, .006, 1.55, m.travertine);
+  for (const x of [-5.74, 5.74]) box(root, .04, .024, 3.34, x, .02, 1.55, m.brass);
   desks.forEach(d => workstation(root, m, textures, d.x, d.z, d.executive, d.name));
   for (const x of [-2.03, 2.03]) {
     box(root, .045, 1.2, 1.25, x, 1.46, 1.52, m.glass);

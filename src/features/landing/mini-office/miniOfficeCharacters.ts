@@ -7,6 +7,7 @@ export type Character = {
   name: string; root: THREE.Group; hip: THREE.Group; head: THREE.Group;
   leftThigh: THREE.Group; rightThigh: THREE.Group; leftShin: THREE.Group; rightShin: THREE.Group;
   leftArm: THREE.Group; rightArm: THREE.Group; leftForearm: THREE.Group; rightForearm: THREE.Group;
+  coffeeCup: THREE.Group;
   desk: { x: number; z: number }; spaceScale: { x: number; z: number }; state: Behavior;
 };
 
@@ -139,9 +140,16 @@ export function createCharacters(root: THREE.Group, m: OfficeMaterials, spaceSca
     const rLeg = limb(hip, pants, pants, skin, .21, false);
     const lArm = limb(hip, jacket, shirt, skin, -.52, true);
     const rArm = limb(hip, jacket, shirt, skin, .52, true);
+    const coffeeCup = new THREE.Group(); coffeeCup.position.set(0, -.39, .09); coffeeCup.visible = false;
+    rArm.lower.add(coffeeCup);
+    cylinder(coffeeCup, .09, .078, .16, 0, .035, 0, m.cream, 16);
+    cylinder(coffeeCup, .072, .072, .012, 0, .121, 0, m.walnutDark, 16);
+    const cupHandle = new THREE.Mesh(new THREE.TorusGeometry(.055, .015, 6, 12, Math.PI * 1.5), m.brass);
+    cupHandle.position.set(.095, .04, 0); cupHandle.rotation.y = Math.PI / 2; coffeeCup.add(cupHandle);
     return { name: s.name, root: figure, hip, head,
       leftThigh: lLeg.pivot, rightThigh: rLeg.pivot, leftShin: lLeg.lower, rightShin: rLeg.lower,
       leftArm: lArm.pivot, rightArm: rArm.pivot, leftForearm: lArm.lower, rightForearm: rArm.lower,
+      coffeeCup,
       desk: { x: desk.x * spaceScale.x, z: (desk.z - .67) * spaceScale.z }, spaceScale, state: 'WORKING' };
   });
 }

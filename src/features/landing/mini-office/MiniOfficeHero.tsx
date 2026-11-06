@@ -59,8 +59,8 @@ export function MiniOfficeHero() {
       const warm = new THREE.PointLight(0xffbe73, 8, 6, 2);
       warm.position.set(x, 3.35, -4.45); scene.add(warm);
     }
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.ShadowMaterial({ color: 0x000000, opacity: .32 }));
-    ground.rotation.x = -Math.PI / 2; ground.position.y = -.55; ground.receiveShadow = true; scene.add(ground);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: 0x101b19, roughness: 1 }));
+    ground.rotation.x = -Math.PI / 2; ground.position.y = -.755; ground.receiveShadow = true; scene.add(ground);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, window.innerWidth < 700 ? 1.3 : 1.8));
     renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -166,7 +166,7 @@ export function MiniOfficeHero() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0, elapsed = 0, last = performance.now(), renderedStatic = false;
     const tick = (now: number) => {
-      const delta = Math.min((now - last) / 1000, .1); last = now;
+      const delta = THREE.MathUtils.clamp((now - last) / 1000, 0, .1); last = now;
       if (!document.hidden && (!reduced.matches || !renderedStatic)) {
         elapsed += delta;
         updateCharacters(characters, elapsed, reduced.matches);
