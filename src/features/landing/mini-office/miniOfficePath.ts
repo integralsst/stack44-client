@@ -10,7 +10,7 @@ export class MotionPath {
   constructor(points:readonly Point[], radius=.16) {
     const clean=points.filter((p,i)=>!i||Math.hypot(p[0]-points[i-1][0],p[1]-points[i-1][1])>.0001);
     const rounded:Point[]=[clean[0]];
-    for(let i=1;i<clean.length-1;i++) {
+    for(let i=1;radius>0&&i<clean.length-1;i++) {
       const a=clean[i-1],b=clean[i],c=clean[i+1];
       const ab=Math.hypot(b[0]-a[0],b[1]-a[1]),bc=Math.hypot(c[0]-b[0],c[1]-b[1]);
       const r=Math.min(radius,ab*.25,bc*.25);
@@ -19,12 +19,12 @@ export class MotionPath {
       rounded.push([ax,az]);
       for(let j=1;j<=5;j++){const t=j/5,u=1-t;rounded.push([u*u*ax+2*u*t*b[0]+t*t*cx,u*u*az+2*u*t*b[1]+t*t*cz]);}
     }
-    rounded.push(clean[clean.length-1]);this.points=rounded;
+    if(radius<=0)rounded.push(...clean.slice(1));else rounded.push(clean[clean.length-1]);this.points=rounded;
     let length=0;for(let i=1;i<rounded.length;i++){length+=Math.hypot(rounded[i][0]-rounded[i-1][0],rounded[i][1]-rounded[i-1][1]);this.lengths.push(length);}this.length=length;
   }
   sample(distance:number,out:PathSample) {
     const d=Math.max(0,Math.min(this.length,distance));let i=0;
-    while(i<this.lengths.length-1&&d>this.lengths[i])i++;
+    let hi=this.lengths.length-1;while(i<hi){const mid=(i+hi)>>1;if(d>this.lengths[mid])i=mid+1;else hi=mid;}
     const a=this.points[i],b=this.points[i+1],start=i?this.lengths[i-1]:0,length=this.lengths[i]-start;
     const t=length>0?(d-start)/length:0;out.x=a[0]+(b[0]-a[0])*t;out.z=a[1]+(b[1]-a[1])*t;out.yaw=Math.atan2(b[0]-a[0],b[1]-a[1]);return out;
   }

@@ -16,13 +16,14 @@ const root=new THREE.Group(),chars=createCharacters(root,m),controller=new Offic
 const fixtures={printerPaper:new THREE.Group(),deliveredPaper:new THREE.Group(),printerLight:new THREE.Mesh()};
 const outdoor=new THREE.Group(),textures:THREE.Texture[]=[];const campus=createCampus(outdoor,m,textures,new AbortController().signal,false,createLightSurfaces(textures));
 const all=[...chars,...campus.actors],history=new Map<string,{x:number,z:number,angles:number[],yaw:number,feet:THREE.Vector3[],support:boolean[]}>();
-const sole=new THREE.Vector3(),point=new THREE.Vector3();let worstSlip:any=null;let movingFrames=0,maxSlip=0,maxGroundError=0,minSeparation=Infinity,stops=0,turns=0;
+const sole=new THREE.Vector3(),point=new THREE.Vector3();let worstSlip:any=null;let maxTravelPerFrame=0;let movingFrames=0,maxSlip=0,maxGroundError=0,minSeparation=Infinity,stops=0,turns=0;
 const boxes=[...chars.map(c=>({name:c.name,x:c.desk.x,z:c.desk.z+.67,w:2.55,d:1.4})),{name:'printer',x:-9.05,z:.87,w:1.55,d:.84}];
 const violations:string[]=[];let parkMotion=0;
 for(let frame=0;frame<=360*60;frame++){
  const t=frame/60;updateCharacters(chars,t,false,controller,fixtures);campus.update(t,1/60,false);
  for(const c of all){c.root.updateWorldMatrix(true,true);const old=history.get(c.name),angles=[c.leftThigh.rotation.x,c.rightThigh.rotation.x,c.leftShin.rotation.x,c.rightShin.rotation.x];const g=c.locomotion;
   if(old){const ds=Math.hypot(c.root.position.x-old.x,c.root.position.z-old.z),joint=angles.reduce((sum,v,i)=>sum+Math.abs(v-old.angles[i]),0);
+   maxTravelPerFrame=Math.max(maxTravelPerFrame,ds);assert(ds<.05,'Position jump '+c.name+' '+ds+' at '+t);
    const transition=c.state==='STANDING_UP'||c.state==='SITTING';
    if(ds>.0001&&!transition){movingFrames++;if(c.name==='Visitante parqueadero')parkMotion++;if(joint<1e-6)violations.push(c.name+' moved without gait at '+t);}
    const dy=Math.abs(Math.atan2(Math.sin(c.root.rotation.y-old.yaw),Math.cos(c.root.rotation.y-old.yaw)));if(dy>.002)turns++;assert(dy<.4,'Abrupt rotation '+c.name+' '+dy);
@@ -56,7 +57,7 @@ const cadence=[];for(const fps of [30,60,120])for(const speed of [.25,.5,1]){con
  const frames=Math.round(2.7/speed*fps);for(let i=1;i<=frames;i++){c.root.position.x=2.7*i/frames;c.locomotion.pathDistance=c.root.position.x;applyLocomotion(c,i/fps,true,0,()=>-.0125);}cadence.push(c.locomotion.cycleDistance);
  const before=c.locomotion.phase;for(let j=1;j<=fps;j++)applyLocomotion(c,(frames+j)/fps,false,0,()=>-.0125);assert.equal(c.locomotion.phase,before,'No phantom steps when stopped');}
 assert(Math.max(...cadence)-Math.min(...cadence)<1e-6);
-const report={worstSlip,movingFrames,parkMotion,maxStanceDriftPerFrame:maxSlip,maxFloorPenetration:maxGroundError,minCharacterSeparation:minSeparation,stops,turns,cyclesAtEqualDistance:cadence,violations:violations.slice(0,30),violationCount:violations.length};
+const report={maxTravelPerFrame,worstSlip,movingFrames,parkMotion,maxStanceDriftPerFrame:maxSlip,maxFloorPenetration:maxGroundError,minCharacterSeparation:minSeparation,stops,turns,cyclesAtEqualDistance:cadence,violations:violations.slice(0,30),violationCount:violations.length};
 fs.writeFileSync('docs/design/captures-v3/motion-unit.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
 assert.equal(violations.length,0,'Motion or collision regressions, see report');assert(maxSlip<.005,'Planted foot drift exceeds 5 mm/frame');assert(maxGroundError<.015,'Foot below floor');
 console.log('PASS: distance cadence, all walking rigs, plant/stop/turn/seat/return, furniture and actor clearance.');

@@ -1,20 +1,21 @@
 import * as THREE from 'three';
-import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { campusTokens as T } from './campusDesignTokens';
 
-/** Gentle scene-linear split tone; OutputPass applies ACES and sRGB afterwards. */
+/** Scene-linear grade fused into Three's output pass: one HDR read instead of two. */
 export function cinematicPass() {
-  return new ShaderPass({
-    uniforms: { tDiffuse: {value:null}, saturation:{value:T.lighting.editorialSaturation}, vignette:{value:T.lighting.vignette} },
-    vertexShader:'varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
-    fragmentShader:`uniform sampler2D tDiffuse; uniform float saturation; uniform float vignette; varying vec2 vUv;
-      void main(){ vec4 sampleColor=texture2D(tDiffuse,vUv); vec3 c=sampleColor.rgb;
+  const pass=new OutputPass(),source=pass.material.fragmentShader;
+  if(!source.includes('// tone mapping')||!source.includes('uniform sampler2D tDiffuse;'))throw new Error('Revisar el adaptador cinematográfico al actualizar Three.js.');
+  pass.uniforms.saturation={value:T.lighting.editorialSaturation};pass.uniforms.vignette={value:T.lighting.vignette};
+  pass.material.fragmentShader=source.replace('uniform sampler2D tDiffuse;','uniform sampler2D tDiffuse; uniform float saturation; uniform float vignette;')
+    .replace('// tone mapping',`vec3 c=gl_FragColor.rgb;
       float l=dot(c,vec3(.2126,.7152,.0722));
       c=mix(vec3(l),c,saturation);
       c*=mix(vec3(.95,1.0,1.065),vec3(1.025,1.0,.965),smoothstep(.02,.8,l));
       c*=1.0-vignette*smoothstep(.22,.75,length(vUv-.5));
-      gl_FragColor=vec4(max(c,vec3(0.0)),sampleColor.a); }`,
-  });
+      gl_FragColor.rgb=max(c,vec3(0.0));
+      // tone mapping`);
+  return pass;
 }
 
 export function studioReflectionCards(studio:THREE.Scene) {

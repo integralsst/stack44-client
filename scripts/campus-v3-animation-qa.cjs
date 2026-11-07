@@ -26,7 +26,8 @@ const inspect=page=>page.evaluate(()=>new Promise(resolve=>document.querySelecto
   await page.emulateMedia({reducedMotion:'reduce'});await page.waitForTimeout(100);const frozen=await inspect(page);await page.waitForTimeout(200);const frozenAfter=await inspect(page);
   assert.deepEqual(frozenAfter.actors.map(c=>[c.local,c.legs]),frozen.actors.map(c=>[c.local,c.legs]));assert.deepEqual(frozenAfter.visitors.map(c=>[c.local,c.legs]),frozen.visitors.map(c=>[c.local,c.legs]));
   await page.emulateMedia({reducedMotion:'no-preference'});await page.waitForTimeout(250);const resumed=await inspect(page);assert(resumed.visitors.some((c,i)=>Math.hypot(c.local[0]-frozen.visitors[i].local[0],c.local[2]-frozen.visitors[i].local[2])>.001));
-  fs.writeFileSync(dir+'animation-browser.json',JSON.stringify({visible,counts,stalled,errors,snapshots},null,2));assert.equal(errors.length,0,JSON.stringify(errors));
+  fs.writeFileSync(dir+'animation-browser.json',JSON.stringify({visible,counts,stalled,errors,sampleCount:snapshots.length},null,2));assert.equal(errors.length,0,JSON.stringify(errors));
+  fs.writeFileSync(dir+'motion-samples.ndjson',snapshots.map(s=>JSON.stringify({elapsed:s.elapsed,actors:s.actors.map(({name,state,local,legs,gait})=>({name,state,local,legs,gait})),visitors:s.visitors})).join('\n')+'\n');
   console.log(JSON.stringify({visible,counts,stalled,errors,video:'walks.webm'},null,2));
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exit(1)});

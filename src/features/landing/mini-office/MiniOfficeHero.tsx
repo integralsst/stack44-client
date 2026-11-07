@@ -1,7 +1,7 @@
 import { createLightSurfaces } from './campusLightSurfaces';
-import { batchCampusStatics } from './campusStaticBatch';
+import { batchCharacterBones, batchCampusStatics } from './campusStaticBatch';
 import { cinematicPass, studioReflectionCards } from './campusCinematic';
-import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js';
+import {prepareAreaTables} from './campusAreaTables';
 import { desks } from './miniOfficeLayout';
 import { createCampus } from './miniOfficeCampus';
 import { campusTokens as T } from './campusDesignTokens';
@@ -11,7 +11,6 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { clearOfficeGeometryCache, materials } from './miniOfficeMaterials';
 import { createOfficeLayout } from './miniOfficeLayout';
 import { createCharacters } from './miniOfficeCharacters';
@@ -34,14 +33,18 @@ export function MiniOfficeHero() {
     const setupStarted=performance.now();
     let firstRenderMs:number|null=null, firstActivityMs:number|null=null;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mobileCamera = window.innerWidth < 700;
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+      renderer = new THREE.WebGLRenderer({ antialias: mobileCamera, alpha: false, powerPreference: 'high-performance' });
     } catch { queueMicrotask(() => setFailed(true)); return; }
+    let cancelled=false,disposeScene:(()=>void)|undefined;
+    const initialize=async()=>{
+    await prepareAreaTables(renderer.extensions.has('OES_texture_float_linear'));
+    if(cancelled)return;
     const scene = new THREE.Scene();
     scene.fog = new THREE.Fog(T.colors.studio, 65, 110);
     const camera = new THREE.OrthographicCamera();
-    const mobileCamera = window.innerWidth < 700;
     camera.zoom = 1;
     camera.position.fromArray(mobileCamera ? T.camera.mobile : T.camera.desktop);
     camera.lookAt(0, 1.35, -.4);
@@ -68,6 +71,7 @@ export function MiniOfficeHero() {
     const batchedMeshes=batchCampusStatics(architecture,[...characters.map(c=>c.root),fixtures.printerPaper,fixtures.deliveredPaper,fixtures.printerLight,...(fixtures.chairs?.values()??[])])
       +batchCampusStatics(exterior,campus.dynamicRoots);
     fixtures.chairs?.forEach(chair=>batchCampusStatics(chair,[]));
+    let batchedRigMeshes=0;for(const actor of [...characters,...campus.actors])batchedRigMeshes+=batchCharacterBones(actor.root);
 
     // Encuadre basado en límites reales del diorama. No incluir el suelo de
     // 200x200: forma parte de scene, no de world.
@@ -83,7 +87,7 @@ export function MiniOfficeHero() {
     camera.lookAt(focus);
     const interactions = createOfficeInteractions(architecture, characters, mobileCamera, exterior);
 
-    RectAreaLightUniformsLib.init();
+
     const ambient = new THREE.HemisphereLight(0xcbd9e7, 0x343e34, T.lighting.ambient); scene.add(ambient);
     const sun = new THREE.DirectionalLight(0xffe4c5, T.lighting.key);
     sun.position.set(-10,18,12); sun.castShadow=true;
@@ -124,7 +128,6 @@ export function MiniOfficeHero() {
       composer.addPass(new RenderPass(scene, camera));
       composer.addPass(new UnrealBloomPass(new THREE.Vector2(1, 1), T.lighting.bloom, .32, T.lighting.bloomThreshold));
       composer.addPass(cinematicPass());
-      composer.addPass(new OutputPass());
     }
     renderer.info.autoReset=false;
     const renderScene = () => { renderer.info.reset(); if (composer) composer.render(); else renderer.render(scene, camera); if(firstRenderMs===null) firstRenderMs=performance.now(); };
@@ -259,10 +262,9 @@ export function MiniOfficeHero() {
         if (!reduced.matches) {
           camera.zoom = THREE.MathUtils.lerp(camera.zoom, desiredZoom, 1 - Math.exp(-delta * T.motion.cameraDamping));
           camera.updateProjectionMatrix();
-          const previous = viewFocus.clone();
+          const oldX=viewFocus.x,oldY=viewFocus.y,oldZ=viewFocus.z;
           viewFocus.lerp(desiredFocus, Math.min(1, delta * 1.9));
-          camera.position.add(viewFocus.sub(previous));
-          viewFocus.add(previous);
+          camera.position.x+=viewFocus.x-oldX;camera.position.y+=viewFocus.y-oldY;camera.position.z+=viewFocus.z-oldZ;
           camera.lookAt(viewFocus.x + panX, viewFocus.y, viewFocus.z);
         }
         renderScene();
@@ -292,7 +294,7 @@ export function MiniOfficeHero() {
     if(import.meta.env.DEV && new URLSearchParams(location.search).has('campusQA')) {
       renderer.domElement.addEventListener('campus:inspect',event=>{
         const request=event as CustomEvent<{reply:(value:unknown)=>void}>;
-        request.detail.reply({elapsed,timing:{setupStarted,firstRenderMs,firstActivityMs},levels:T.levels,batchedMeshes,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,
+        request.detail.reply({elapsed,timing:{setupStarted,firstRenderMs,firstActivityMs},levels:T.levels,batchedMeshes,batchedRigMeshes,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,
           quality:{dpr:renderer.getPixelRatio(),bloom:composer?.passes.some(p=>p instanceof UnrealBloomPass&&p.enabled)??false},
           targets:interactions.project(camera,renderer.domElement),zoom:camera.zoom,
           actors:characters.map(c=>({name:c.name,state:c.state,phase:c.actionPhase,hipY:c.hip.position.y,legs:[c.leftThigh.rotation.x,c.rightThigh.rotation.x,c.leftShin.rotation.x,c.rightShin.rotation.x],gait:{distance:c.locomotion.distance,phase:c.locomotion.phase,speed:c.locomotion.speed,moving:c.locomotion.moving},local:c.root.position.toArray(),world:c.root.getWorldPosition(new THREE.Vector3()).toArray(),cup:c.coffeeCup.visible,documents:c.documents.visible})),
@@ -302,7 +304,7 @@ export function MiniOfficeHero() {
     }
     const onLost = (event: Event) => { event.preventDefault(); setFailed(true); };
     renderer.domElement.addEventListener('webglcontextlost', onLost);
-    return () => {
+    disposeScene = () => {
       reduced.removeEventListener('change', onMotionChange);
       cancelAnimationFrame(frame); observer.disconnect(); assetController.abort();
       element.removeEventListener('pointerdown', onDown);
@@ -335,6 +337,9 @@ export function MiniOfficeHero() {
       renderer.dispose(); renderer.domElement.remove();
       selectScene.current = () => {};
     };
+    };
+    void initialize().catch(error=>{if(!cancelled){renderer.dispose();setFailed(true);console.error('Campus initialization failed',error);}});
+    return ()=>{cancelled=true;if(disposeScene)disposeScene();else renderer.dispose();};
   }, []);
   const close = () => { setTourIndex(null); selectScene.current(null); };
   const changeTour = (index: number | null) => {

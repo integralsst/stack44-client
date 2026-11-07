@@ -1,0 +1,21 @@
+{
+  "source": "three 0.187.0 / RectAreaLightTexturesLib",
+  "dimensions": [
+    64,
+    64,
+    4
+  ],
+  "encoding": "lossless byte-plane shuffle + gzip",
+  "tables": {
+    "f32": {
+      "bytes": 131072,
+      "gzipBytes": 90331,
+      "sha256": "8e897cb72bfa6a20f7737d21bc9e9d6d47bb1405c2cb067aabe4b02a8ba68263"
+    },
+    "f16": {
+      "bytes": 65536,
+      "gzipBytes": 40046,
+      "sha256": "de13346ddf530f99127993fc850985997dcdadbdf5b3ea820072eb78b4c7c428"
+    }
+  }
+}

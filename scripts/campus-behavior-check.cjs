@@ -35,6 +35,14 @@ for(let end=time+100;time<end;time+=.1){update(time);if(actor('Zeus').state==='M
 assert(both);assert.equal(actor('Zeus').state,'WORKING');assert.equal(actor('Hera').state,'WORKING');
 controller.greet('Jesús',time);assert(controller.isGreeting('Jesús',time+1));assert(!controller.isGreeting('Jesús',time+4));
 updateCharacters(actors,200,true,controller,fixtures);assert(!fixtures.printerPaper.visible);
+// A request made while returning runs after the active job, without a position jump.
+const repeatActors=createCharacters(new THREE.Group(),m as never),repeat=new OfficeBehaviorController({automatic:false});
+const repeatFixtures={printerPaper:new THREE.Group(),deliveredPaper:new THREE.Group(),printerLight:new THREE.Mesh()};
+repeat.request('printer',0,repeatActors);let outputs=0,lastPaper=false,lastX=repeatActors[5].root.position.x,lastZ=repeatActors[5].root.position.z;
+for(let i=0;i<85*60;i++){const t=i/60;if(i===31*60)repeat.request('printer',t,repeatActors);updateCharacters(repeatActors,t,false,repeat,repeatFixtures);
+ const a=repeatActors[5];assert(Math.hypot(a.root.position.x-lastX,a.root.position.z-lastZ)<.05);lastX=a.root.position.x;lastZ=a.root.position.z;
+ if(repeatFixtures.printerPaper.visible&&!lastPaper)outputs++;lastPaper=repeatFixtures.printerPaper.visible;}
+assert.equal(outputs,2,'Returning request must not be silently lost or restart in mid-route');
 const slabRoot=new THREE.Group();slabRoot.position.y=T.levels.office;
 const slab=officeSlab(slabRoot,20.25,12,-.4,.36,material);slabRoot.updateMatrixWorld(true);
 const ray=new THREE.Raycaster(new THREE.Vector3(0,5,4.8),new THREE.Vector3(0,-1,0));

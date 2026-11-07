@@ -8,12 +8,16 @@ type Job={outEnd:number;activityEnd:number;returnStart:number;returnEnd:number;k
 type Pending={kind:OfficeAction;names:readonly string[];requestedAt:number};
 const MAIN=['Zeus','Hera'] as const,EXEC=['Jesús','Cristina'] as const,PRINT=['Secretaria'] as const,COFFEE=['Apolo'] as const;
 
+function travel(job:Job,path:MotionPath,time:number,duration:number){
+  const r=job.result;r.path=path;r.pathDistance=travelDistance(time,path.length,duration);path.sample(r.pathDistance,job.sample);r.position.set(job.sample.x,job.sample.z);r.yaw=job.sample.yaw;r.walking=true;
+}
+
 /** One scheduler owns every activity. Shared left circulation is reserved, never teleported through. */
 export class OfficeBehaviorController {
   private jobs=new Map<string,Job>();
   private pending:Pending[]=[];
   private greeted=new Map<string,number>();
-  private lastLeftEnd=0;
+  private lastEnd:Record<OfficeAction,number>={printer:0,coffee:0,meeting:0};
   private automatic:boolean;
   private schedule=[{at:.18,kind:'printer' as OfficeAction,names:PRINT,cycle:-1},{at:6,kind:'coffee' as OfficeAction,names:COFFEE,cycle:-1},
     {at:42,kind:'meeting' as OfficeAction,names:MAIN,cycle:-1},{at:82,kind:'meeting' as OfficeAction,names:EXEC,cycle:-1}];
@@ -28,15 +32,18 @@ export class OfficeBehaviorController {
     }
   }
   private busyUntil(kind:OfficeAction){let end=0;for(const job of this.jobs.values())if(kind==='meeting'||job.kind==='meeting'||(kind==='coffee')===(job.kind==='coffee'))end=Math.max(end,job.start+job.duration);return end;}
-  request(kind:OfficeAction,time:number,characters:Character[],names:readonly string[]=kind==='printer'?PRINT:kind==='coffee'?COFFEE:MAIN){
+  request(kind:OfficeAction,time:number,characters:Character[],names:readonly string[]=kind==='printer'?PRINT:kind==='coffee'?COFFEE:MAIN,repeat=true){
     this.prune(time);
-    if(names.some(name=>this.jobs.has(name))||this.pending.some(p=>p.kind===kind&&p.names[0]===names[0]))return;
-    this.pending.push({kind,names,requestedAt:time});this.flush(time,characters);
+    const active=names.some(name=>this.jobs.has(name));
+    if(active&&(!repeat||names.every(name=>{const job=this.jobs.get(name);return job&&time<job.start+job.activityEnd;})))return;
+    if(this.pending.some(p=>p.kind===kind&&p.names[0]===names[0]))return;
+    const entry={kind,names,requestedAt:time};if(repeat)this.pending.unshift(entry);else this.pending.push(entry);this.flush(time,characters);
   }
   private flush(time:number,characters:Character[]){
     for(let i=0;i<this.pending.length;){
       const p=this.pending[i];if(this.busyUntil(p.kind)>time||p.names.some(name=>this.jobs.has(name))){i++;continue;}
-      const start=Math.max(p.requestedAt,p.kind==='coffee'?0:this.lastLeftEnd);
+      const available=p.kind==='meeting'?Math.max(this.lastEnd.printer,this.lastEnd.coffee,this.lastEnd.meeting):Math.max(this.lastEnd[p.kind],this.lastEnd.meeting);
+      const start=Math.max(p.requestedAt,available);
       if(start>time){i++;continue;}
       const created:Job[]=[];
       p.names.forEach((name,index)=>{const actor=characters.find(c=>c.name===name);if(actor)created.push(this.createJob(p.kind,start+(p.kind==='meeting'?index*1.5:0),actor));});
@@ -44,7 +51,7 @@ export class OfficeBehaviorController {
         const sharedEnd=Math.max(...created.map(job=>job.start+job.activityEnd));
         created.forEach((job,index)=>{job.activityEnd=sharedEnd-job.start;job.returnStart=job.activityEnd+index*1.5;job.returnEnd=job.returnStart+walkingDuration(job.inward);job.duration=job.returnEnd+2;});
       }
-      if(p.kind!=='coffee')this.lastLeftEnd=this.busyUntil(p.kind);
+      this.lastEnd[p.kind]=Math.max(...created.map(job=>job.start+job.duration));
       this.pending.splice(i,1);
     }
   }
@@ -72,7 +79,7 @@ export class OfficeBehaviorController {
   }
   updateRoutine(time:number,characters:Character[],reduced:boolean){
     if(reduced)return;this.prune(time);
-    if(this.automatic){const cycle=Math.floor(time/180);for(const event of this.schedule){const due=cycle*180+event.at;if(time>=due&&event.cycle!==cycle){event.cycle=cycle;this.request(event.kind,due,characters,event.names);}}}
+    if(this.automatic){const cycle=Math.floor(time/180);for(const event of this.schedule){const due=cycle*180+event.at;if(time>=due&&event.cycle!==cycle){event.cycle=cycle;this.request(event.kind,due,characters,event.names,false);}}}
     this.flush(time,characters);
   }
   pose(name:string,time:number):DirectedPose|null{
@@ -82,13 +89,13 @@ export class OfficeBehaviorController {
     r.phase=phase;r.sit=0;r.walking=false;r.path=null;r.pathDistance=0;r.yaw=0;r.state='WALKING';
     if(phase<0){r.position.set(...job.from);r.sit=job.startSit;r.state='WORKING';return r;}
     const {outEnd,activityEnd,returnStart,returnEnd}=job;
-    const travel=(path:MotionPath,t:number,duration:number)=>{r.path=path;r.pathDistance=travelDistance(t,path.length,duration);path.sample(r.pathDistance,job.sample);r.position.set(job.sample.x,job.sample.z);r.yaw=job.sample.yaw;r.walking=true;};
+
     if(phase<2){const t=smooth(phase/2);r.sit=job.startSit*(1-t);r.position.set(THREE.MathUtils.lerp(job.from[0],job.exit[0],t),THREE.MathUtils.lerp(job.from[1],job.exit[1],t));r.state='STANDING_UP';}
-    else if(phase<outEnd)travel(job.outward,phase-2,outEnd-2);
+    else if(phase<outEnd)travel(job,job.outward,phase-2,outEnd-2);
     else if(phase<(printer?activityEnd:returnStart)){job.outward.sample(job.outward.length,job.sample);r.position.set(job.sample.x,job.sample.z);r.state=printer?'PRINTING':job.kind==='coffee'?'COFFEE_BREAK':'MEETING';r.yaw=printer?Math.PI:job.kind==='coffee'?2.3:job.actor==='Zeus'||job.actor==='Jesús'?-1:2.15;}
-    else if(printer&&phase<24){travel(job.delivery,phase-15,9);r.state='DELIVERING';}
+    else if(printer&&phase<24){travel(job,job.delivery,phase-15,9);r.state='DELIVERING';}
     else if(printer&&phase<28){job.delivery.sample(job.delivery.length,job.sample);r.position.set(job.sample.x,job.sample.z);r.yaw=2.47;r.state='DELIVERING';}
-    else if(phase<returnEnd){travel(job.inward,phase-returnStart,returnEnd-returnStart);r.state='RETURNING_TO_DESK';}
+    else if(phase<returnEnd){travel(job,job.inward,phase-returnStart,returnEnd-returnStart);r.state='RETURNING_TO_DESK';}
     else {const t=smooth((phase-returnEnd)/2);r.position.set(THREE.MathUtils.lerp(job.exit[0],job.desk[0],t),THREE.MathUtils.lerp(job.exit[1],job.desk[1],t));r.sit=t;r.state='SITTING';}
     return r;
   }

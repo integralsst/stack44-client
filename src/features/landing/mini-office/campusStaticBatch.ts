@@ -27,3 +27,23 @@ export function batchCampusStatics(root: THREE.Group, dynamicRoots: THREE.Object
   }
   return removed;
 }
+
+/** Rigid pieces on the SAME bone may merge; bone parents and transforms never merge. */
+export function batchCharacterBones(root:THREE.Group){
+  root.updateWorldMatrix(true,true);let removed=0;
+  const visit=(group:THREE.Object3D)=>{
+    for(const child of [...group.children])if(!(child instanceof THREE.Mesh))visit(child);
+    const buckets=new Map<THREE.Material,THREE.Mesh[]>();
+    for(const child of group.children)if(child instanceof THREE.Mesh&&!(child instanceof THREE.InstancedMesh)&&!Array.isArray(child.material)&&!child.material.transparent){
+      const bucket=buckets.get(child.material)??[];bucket.push(child);buckets.set(child.material,bucket);
+    }
+    const inverse=group.matrixWorld.clone().invert();
+    for(const [material,meshes] of buckets){
+      if(meshes.length<2)continue;
+      const copies=meshes.map(mesh=>(mesh.geometry.index?mesh.geometry.toNonIndexed():mesh.geometry.clone()).applyMatrix4(new THREE.Matrix4().multiplyMatrices(inverse,mesh.matrixWorld)));
+      const geometry=mergeGeometries(copies,false);copies.forEach(g=>g.dispose());if(!geometry)continue;
+      const mesh=new THREE.Mesh(geometry,material);mesh.name='rig-rigid-parts';mesh.castShadow=meshes.some(m=>m.castShadow);mesh.receiveShadow=meshes.some(m=>m.receiveShadow);group.add(mesh);
+      meshes.forEach(m=>m.removeFromParent());removed+=meshes.length-1;
+    }
+  };visit(root);return removed;
+}

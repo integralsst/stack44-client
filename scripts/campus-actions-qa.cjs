@@ -17,21 +17,21 @@ const dir=process.env.CAMPUS_QA_DIR||'docs/design/captures/';
   await page.getByRole('button',{name:'Cerrar panel',exact:true}).click({force:true});
   await page.locator('details').evaluate(e=>e.open=false);
  }
- async function capture(name,ms){await page.clock.fastForward(ms);await page.clock.runFor(32); const state=await inspect(); phases.push({name,...state});
-  const secretary=state.actors.find(a=>a.name==='Secretaria');
-  if(name==='printing')assert(state.paper&&secretary.state==='PRINTING',JSON.stringify({elapsed:state.elapsed,paper:state.paper,secretary}));
-  if(name==='carrying')assert(secretary.documents&&secretary.state==='DELIVERING');
-  if(name==='delivery')assert(state.delivered&&!secretary.documents);
-  if(name==='returned')assert.equal(secretary.state,'WORKING');
-  if(name==='coffee')assert(state.actors.find(a=>a.name==='Apolo').cup);
-  if(name==='meeting')assert(state.actors.find(a=>a.name==='Zeus').state==='MEETING');
-  assert(state.actors.every(a=>a.world[1]>=state.levels.office-.001));
-  await page.screenshot({path:dir+name+'.png'}); }
- await select('Impresora');await capture('printing',9000);await capture('carrying',11000);await capture('delivery',7000);await capture('returned',12000);
- await select('Café');await capture('coffee',12000);await page.clock.fastForward(19000);
- await select('Sala de juntas');await capture('meeting',12000);await page.clock.fastForward(19000);
- await select('Pérgola');await capture('pergola-rest',1000);
- await select('Vehículo oscuro');await capture('car-lights',1200);
+ async function until(predicate){
+  for(let i=0;i<320;i++){const s=await inspect();if(predicate(s))return s;await page.clock.fastForward(500);await page.clock.runFor(17);}
+  throw new Error('Activity did not reach expected state');
+ }
+ async function capture(name,predicate){const state=await until(predicate);phases.push({name,...state});assert(state.actors.every(a=>a.world[1]>=state.levels.office-.001));await page.screenshot({path:dir+name+'.png'});}
+ await select('Impresora');
+ await capture('printing',s=>s.paper&&s.actors.find(a=>a.name==='Secretaria').state==='PRINTING');
+ await capture('carrying',s=>s.actors.find(a=>a.name==='Secretaria').state==='DELIVERING'&&s.actors.find(a=>a.name==='Secretaria').documents);
+ await capture('delivery',s=>s.delivered&&!s.actors.find(a=>a.name==='Secretaria').documents);
+ await capture('returned',s=>s.actors.find(a=>a.name==='Secretaria').state==='WORKING');
+ await select('Café');await capture('coffee',s=>s.actors.find(a=>a.name==='Apolo').cup);
+ await until(s=>s.actors.find(a=>a.name==='Apolo').state==='WORKING');
+ await select('Sala de juntas');await capture('meeting',s=>s.actors.find(a=>a.name==='Zeus').state==='MEETING'&&s.actors.find(a=>a.name==='Hera').state==='MEETING');
+ await select('Pérgola');await page.clock.fastForward(1000);await page.clock.runFor(17);await capture('pergola-rest',()=>true);
+ await select('Vehículo oscuro');await page.clock.fastForward(1200);await page.clock.runFor(17);await capture('car-lights',()=>true);
  // Initial camera and reduced motion make pixel clicks repeatable.
  await page.clock.resume();await page.emulateMedia({reducedMotion:'reduce'});await page.reload({waitUntil:'networkidle'});await page.locator('details').waitFor();await page.waitForTimeout(1000);
  const picks=[];

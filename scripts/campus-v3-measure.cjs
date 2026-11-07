@@ -1,6 +1,6 @@
 const {chromium}=require('playwright-core');
 const fs=require('node:fs');
-const phase=process.argv.includes('--baseline')?'baseline':'final';
+const phase=process.argv.includes('--baseline')?'baseline':process.argv.includes('--checkpoint')?'checkpoint':'final';
 const prod=process.env.CAMPUS_PROD_URL||'http://127.0.0.1:5175/';
 const out='docs/design/captures-v3/';
 function firstRenderProbe(){
@@ -31,7 +31,7 @@ const inspect=page=>page.evaluate(()=>new Promise(resolve=>document.querySelecto
    const context=await browser.newContext({viewport:{width:1672,height:941},deviceScaleFactor:1});const page=await context.newPage();
    const cdp=await context.newCDPSession(page);await cdp.send('Network.enable');await cdp.send('Network.setCacheDisabled',{cacheDisabled:true});await page.addInitScript(firstRenderProbe);
    await page.goto(prod,{waitUntil:'networkidle'});await page.waitForFunction(()=>window.__campusMeasure.firstPresentationProxyMs);
-   const m=await page.evaluate(()=>({...window.__campusMeasure,jsBytes:performance.getEntriesByType('resource').filter(r=>r.name.includes('.js')).reduce((sum,r)=>sum+r.encodedBodySize,0)}));
+   const m=await page.evaluate(()=>({...window.__campusMeasure,jsBytes:performance.getEntriesByType('resource').filter(r=>r.name.includes('.js')).reduce((sum,r)=>sum+r.encodedBodySize,0),ltcBytes:performance.getEntriesByType('resource').filter(r=>r.name.includes('campus-ltc-')).reduce((sum,r)=>sum+r.encodedBodySize,0)}));
    const clickStart=await page.evaluate(()=>performance.now());await page.getByRole('button',{name:'Explorar campus',exact:true}).click();await page.getByRole('dialog').waitFor();m.interactionMs=await page.evaluate(start=>performance.now()-start,clickStart);report.loads.push(m);await context.close();
   }
   const page=await browser.newPage({viewport:{width:1672,height:941},deviceScaleFactor:1});await page.addInitScript(firstRenderProbe);
