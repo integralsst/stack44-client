@@ -1,0 +1,59 @@
+{
+  "definition": "Alternating production builds; cold HTTP cache; localhost, no throttle. Context-to-first-draw includes scene construction, LUT fetch, shaders and first GPU submission, not only JS CPU initialization. Input latency excludes Playwright scheduling and ends at next RAF after dialog insertion.",
+  "results": [
+    {
+      "version": "V2",
+      "run": 0,
+      "contextReadyMs": 350.60000002384186,
+      "firstRenderMs": 622.7000000476837,
+      "firstPresentationProxyMs": 623.3000000715256,
+      "contextToFirstDrawMs": 272.10000002384186,
+      "inputToDialogNextRAFMs": 32.700000047683716
+    },
+    {
+      "version": "V3",
+      "run": 0,
+      "contextReadyMs": 345.7000000476837,
+      "firstRenderMs": 593.6000000238419,
+      "firstPresentationProxyMs": 594.5,
+      "contextToFirstDrawMs": 247.89999997615814,
+      "inputToDialogNextRAFMs": 32.799999952316284
+    },
+    {
+      "version": "V3",
+      "run": 1,
+      "contextReadyMs": 343.5,
+      "firstRenderMs": 592.5999999046326,
+      "firstPresentationProxyMs": 593.5999999046326,
+      "contextToFirstDrawMs": 249.09999990463257,
+      "inputToDialogNextRAFMs": 34.299999952316284
+    },
+    {
+      "version": "V2",
+      "run": 1,
+      "contextReadyMs": 346.2000000476837,
+      "firstRenderMs": 603.3999999761581,
+      "firstPresentationProxyMs": 604,
+      "contextToFirstDrawMs": 257.1999999284744,
+      "inputToDialogNextRAFMs": 32.800000071525574
+    },
+    {
+      "version": "V2",
+      "run": 2,
+      "contextReadyMs": 342.89999997615814,
+      "firstRenderMs": 593.6000000238419,
+      "firstPresentationProxyMs": 594.2999999523163,
+      "contextToFirstDrawMs": 250.70000004768372,
+      "inputToDialogNextRAFMs": 35.39999997615814
+    },
+    {
+      "version": "V3",
+      "run": 2,
+      "contextReadyMs": 340,
+      "firstRenderMs": 588.2000000476837,
+      "firstPresentationProxyMs": 589.2000000476837,
+      "contextToFirstDrawMs": 248.20000004768372,
+      "inputToDialogNextRAFMs": 32.200000047683716
+    }
+  ]
+}

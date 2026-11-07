@@ -1,3 +1,4 @@
+import {campusTokens as T} from './campusDesignTokens';
 import * as THREE from 'three';
 import type {Character} from './miniOfficeCharacters';
 import type {MotionPath,PathSample} from './miniOfficePath';
@@ -12,7 +13,7 @@ export function createLocomotion():Locomotion {
 }
 const angle=(a:number,b:number)=>Math.atan2(Math.sin(b-a),Math.cos(b-a));
 export function turnTowards(current:number,target:number,dt:number) {const change=angle(current,target)*(1-Math.exp(-Math.max(0,dt)*10));return current+THREE.MathUtils.clamp(change,-4*dt,4*dt);}
-const CYCLE=.9, UPPER=.43, LOWER=.61, SOLE=.06;
+const CYCLE=T.motion.gaitCycle, UPPER=.43, LOWER=.61, SOLE=.06;
 
 function groundForFoot(ground:Ground,x:number,z:number,yaw:number,scale:number){
   // Sample toe/heel too: an entire sole stays above step edges.

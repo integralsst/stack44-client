@@ -87,26 +87,29 @@ export function createCampus(root: THREE.Group, m: OfficeMaterials, textures: TH
 
   const lobby = new THREE.Group(); lobby.position.set(0, T.levels.lobby, 7.25); root.add(lobby);
   lobby.userData.officeAction = 'lobby';
-  softBox(lobby, 7, .2, 3.4, 0, -.1, 0, m.travertine);
+  const entranceGlass=m.glass.clone();
+  entranceGlass.color.setHex(0x91b0b5); entranceGlass.opacity=T.surfaces.lobbyGlassOpacity;
+  entranceGlass.envMapIntensity=T.surfaces.lobbyGlassEnvironment;
+  softBox(lobby, 7, .2, 3.4, 0, -.1, 0, m.stone);
   for (const x of [-3.25, -2.3, 2.3, 3.25]) {
-    box(lobby, .16, 2.55, .22, x, 1.23, .93, m.metal);
+    box(lobby, .2, 2.55, .22, x, 1.23, .93, m.metal);
     box(lobby, .045, 2.32, .025, x + .12, 1.2, 1.07, m.glow);
     box(lobby, .2, 2.55, .22, x, 1.23, -1.4, m.walnutDark);
   }
   for (const x of [-2.75, 2.75]) {
-    box(lobby, .85, 2.3, .035, x, 1.15, .96, m.glass);
+    box(lobby, .85, 2.3, .035, x, 1.15, .96, entranceGlass);
     box(lobby, .9, .08, .075, x, .06, 1, m.brass);
   }
   for (const x of [-1.12, 1.12]) {
-    box(lobby, 2.2, 2.3, .045, x, 1.15, .96, m.glass);
+    box(lobby, 2.2, 2.3, .045, x, 1.15, .96, entranceGlass);
     for (const edge of [-1.1, 1.1]) box(lobby, .035, 2.32, .07, x + edge, 1.16, 1, m.brass);
     box(lobby, 2.2, .04, .07, x, 2.31, 1, m.brass);
     cylinder(lobby, .027, .027, .65, x < 0 ? -.17 : .17, 1.1, 1.14, m.brass);
     for (const y of [.83,1.37]) { const mount=box(lobby,.035,.035,.14,x<0?-.17:.17,y,1.07,m.brass); mount.castShadow=false; }
   }
-  for (const x of [-3.25, 3.25]) box(lobby, .03, 2.3, 2.35, x, 1.15, -.2, m.glass);
+  for (const x of [-3.25, 3.25]) box(lobby, .03, 2.3, 2.35, x, 1.15, -.2, entranceGlass);
   // Open-backed vestibule connects to an actual gap in the office balustrade.
-  softBox(lobby, 7.1, .115, 3.6, 0, 2.55, -.12, m.metal);
+  softBox(lobby, 7.1, .15, 3.6, 0, 2.55, -.12, m.metal);
   box(lobby,7.06,.025,.035,0,2.5,1.69,m.brass);
   box(lobby,6.6,.045,3.15,0,2.46,-.12,m.walnutDark);
   box(lobby, 6.85, .035, .04, 0, 2.37, 1.63, m.glow);
@@ -123,7 +126,9 @@ export function createCampus(root: THREE.Group, m: OfficeMaterials, textures: TH
   }
   box(root,4.7,.18,.32,0,T.levels.lobby-.09,9.03,m.travertine);
   light.contact(root,0,-.83,9.5,8.5,4.4);
-  light.wash(lobby,0,.012,.8,6.8,3.3);
+  const vestibuleWash=light.wash(lobby,0,.012,.8,6.8,3.3);
+  const vestibuleWashMaterial=(vestibuleWash.material as THREE.MeshBasicMaterial).clone();
+  vestibuleWashMaterial.opacity=T.lighting.lobbyWashOpacity; vestibuleWash.material=vestibuleWashMaterial;
   for (let i = 0; i < T.stairs.frontCount; i++) {
     const z=T.stairs.frontStartZ+i*T.stairs.frontTread;
     const top=T.levels.lobby-(i+1)*T.stairs.frontRiser;
@@ -189,10 +194,19 @@ export function createCampus(root: THREE.Group, m: OfficeMaterials, textures: TH
   for (let i = 0; i < 18; i++) bush(14.6, -7.3 + i * .63, .42, i);
   function instances(items: typeof balls, geometry: THREE.BufferGeometry, material: THREE.Material) {
     const mesh = new THREE.InstancedMesh(geometry, material, items.length); const obj = new THREE.Object3D();
-    items.forEach((item, i) => { obj.position.fromArray(item.p); obj.scale.fromArray(item.s); obj.updateMatrix(); mesh.setMatrixAt(i, obj.matrix); mesh.setColorAt(i, new THREE.Color(item.color)); });
+    items.forEach((item, i) => { obj.position.fromArray(item.p); obj.scale.fromArray(item.s); obj.rotation.set(0,i*2.399,Math.sin(i*1.7)*.12); obj.updateMatrix(); mesh.setMatrixAt(i, obj.matrix); mesh.setColorAt(i, new THREE.Color(item.color)); });
     mesh.castShadow = true; mesh.receiveShadow = true; root.add(mesh);
   }
-  instances(balls, new THREE.SphereGeometry(1, mobile ? 8 : 12, mobile ? 6 : 9), make(0xffffff));
+  // One shared lobed silhouette; no extra vertices or per-frame deformation.
+  const crown=new THREE.SphereGeometry(1,mobile?8:12,mobile?6:9);
+  const vertices=crown.getAttribute('position');
+  for(let i=0;i<vertices.count;i++) {
+    const x=vertices.getX(i),y=vertices.getY(i),z=vertices.getZ(i);
+    const radius=1+.055*Math.sin(x*5+y*3)*Math.cos(z*4-y*2);
+    vertices.setXYZ(i,x*radius,y*radius,z*radius);
+  }
+  crown.computeVertexNormals();
+  instances(balls,crown,make(0xffffff));
   instances(flowers, new THREE.IcosahedronGeometry(1, 1), make(0xffffff));
   // Bollards use luminous diffusers and ground pools, not dozens of dynamic lights.
   const poolCanvas = document.createElement('canvas'); poolCanvas.width=64; poolCanvas.height=64;
@@ -230,7 +244,7 @@ export function createCampus(root: THREE.Group, m: OfficeMaterials, textures: TH
   const lightSurfacesWash=(x:number,z:number)=>{ const patch=light.wash(root,x,-.807,z,3.5,1.2); patch.material=patch.material.clone(); return patch; };
   function car(z: number, color: number, target: OfficeTarget) {
     const g = new THREE.Group(); g.position.set(11.1,-.8,z); root.add(g); g.userData.officeAction = target;
-    const paint = new THREE.MeshPhysicalMaterial({color,roughness:T.surfaces.carRoughness,metalness:T.surfaces.carMetalness,clearcoat:T.surfaces.carClearcoat,clearcoatRoughness:.12,envMapIntensity:1.4});
+    const paint = new THREE.MeshPhysicalMaterial({color,roughness:T.surfaces.carRoughness,metalness:T.surfaces.carMetalness,clearcoat:T.surfaces.carClearcoat,clearcoatRoughness:T.surfaces.carClearcoatRoughness,envMapIntensity:1.4});
     light.contact(root,11.1,-.815,z,5.3,2.5);
     softBox(g,4.3,.58,1.9,0,.64,0,paint,.19);
     const cabin = new THREE.Shape(); cabin.moveTo(-1.3,.85); cabin.lineTo(-.85,1.47); cabin.lineTo(.68,1.47); cabin.lineTo(1.3,.85); cabin.closePath();

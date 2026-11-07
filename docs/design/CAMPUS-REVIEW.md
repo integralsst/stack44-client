@@ -1,3 +1,78 @@
+# Revisión V3 — movimiento natural, rendimiento y acabado, 7 de noviembre de 2026
+
+Continuidad: rama `feat/premium-campus`, PR **#157 Draft**, base limpia `5862a77`. Se conservaron instrucciones de AGENTS, PNG originales, seis identidades, oficina elevada, funcionalidades y rutas de la landing. Sin nuevos personajes, edificios ni dependencias de runtime. No se fusiona ni se publica directamente a producción.
+
+## Problemas encontrados y cambios
+
+**A — Inicio:** la muestra V2 tardaba 11.77 s desde el primer render en anunciar una primera actividad. Las rutinas esperaban demasiado y el entorno inicial parecía detenido. El programador ahora inicia impresión a .18 s del reloj de escena, saludo inicial y café escalonado, independientemente del calentamiento de rendimiento. La pose inicial se prepara antes de dibujar. La medición de movimiento físico y la observación de estados se separan abajo.
+
+**B — Caminatas:** el visitante del parqueadero se desplazaba con su marcha desactivada; las oscilaciones dependían del tiempo global. Se reemplazaron por cadencia según distancia, apoyo anclado y dos segmentos IK, con tobillos que mantienen suela nivelada y muestreo de punta/talón sobre escalones. Rutas suavizadas, aceleración/frenado, giros acotados, torso independiente y sillas recogidas durante salida/regreso. Se corrigieron cruces de reunión, rutas junto a impresora y entrega, y reservas de pasillos. Una solicitud en espera ya no arranca con un timestamp pasado al quedar libre la sala. Solicitar otra impresión cuando la primera regresa permite una repetición sin salto.
+
+**C — Rendimiento/carga:** agrupación adicional de piezas rígidas bajo cada hueso (215 mallas de envío menos en el conjunto real), sin fusionar articulaciones. Rutas preparadas, búsqueda binaria, muestras y vectores reutilizados. Se sacaron los grandes literales LTC del JS a tablas binarias originales sin pérdida, cargadas una vez y verificadas bit a bit. Se retiró el MSAA redundante del canvas de escritorio, manteniendo MSAA 4 HDR; gradación editorial incorporada al OutputPass evita otra pasada completa. Iluminación, bloom, sombras y contenido premium permanecen.
+
+**D — Acabado:** tres prioridades revisadas contra la imagen aprobada: lobby plano, copas demasiado uniformes y escala móvil. Se moderaron el punto y la difusión del acceso, se afinó el cristal, el tono mineral, las jambas y la fascia; copas compartidas ligeramente lobuladas y rotadas, sin añadir geometría; pintura menos especular. Móvil acerca el recorte inicial y centra el objetivo al seleccionar, con exploración lateral, teclado y reduced-motion conservados. El refinamiento es deliberadamente sutil; la mejora principal V3 está en actividad y fluidez.
+
+## Evidencia visual y animada nueva
+
+- [V2 base fresca, 1672×941](captures-v3/baseline-reference.png) → [V3 final, misma resolución](captures-v3/after-reference.png).
+- [Escritorio final](captures-v3/after-desktop.png), [landing completa](captures-v3/desktop-full.png), [móvil final](captures-v3/after-mobile.png), [selección móvil de secretaria](captures-v3/mobile-secretary-focus.png).
+- [Basamento](captures-v3/basement.png), [lobby](captures-v3/lobby.png), [escaleras](captures-v3/stairs.png), [jardín](captures-v3/garden.png), [parqueadero](captures-v3/parking.png), [transición](captures-v3/desktop-transition.png).
+- [Caminatas, vídeo WebM de 9 s](captures-v3/walks.webm), [fotograma](captures-v3/early-walk.png), [auditoría de movimiento](captures-v3/animation-browser.json), [muestras originales NDJSON](captures-v3/motion-samples.ndjson).
+- [Impresión](captures-v3/printing.png), [transporte](captures-v3/carrying.png), [entrega](captures-v3/delivery.png), [regreso](captures-v3/returned.png), [café](captures-v3/coffee.png), [reunión](captures-v3/meeting.png), [pérgola](captures-v3/pergola-rest.png), [faros](captures-v3/car-lights.png).
+
+La base se capturó antes de editar, con V2 conservada en un build inmutable local. Vistas generales comparables: 1672×941, navegador DPR 1, misma dirección ortográfica, iluminación estable y poses iniciales mediante reduced-motion. Las poses V3 corrigen apoyos y el encuadre móvil cambia explícitamente; no son diferencias de píxeles con rigs idénticos. Detalles son recortes de la implementación, no renders sustitutivos. Las vistas native Metal finales se generan con `campus-v3-visual-qa.cjs`; las imágenes `desktop.png/mobile.png` de QA funcional usan SwiftShader y **no acreditan calidad ni FPS de hardware**.
+
+Primera comparación D: cristal/floor del lobby aún parecía blanco plano; se volvió a revisar y oscureció el piso mineral, afinando perfiles. Después se repitieron capturas de detalles. El lobby conserva menos articulación y transparencia aparente que la referencia; no se marca equivalencia lograda.
+
+## Medición comparable V2 → V3
+
+Fuentes: [baseline-metrics.json](captures-v3/baseline-metrics.json), [final-metrics.json](captures-v3/final-metrics.json), [prueba alternada de carga](captures-v3/paired-readiness.json). Chrome headless nativo, ANGLE Metal **Apple M4**, sin throttling. FPS: viewport 1672×941, DPR efectivo 1, bloom activo, 5 s de calentamiento + 10 s de muestra, sin otro Chrome de QA simultáneo. Draw calls/triángulos son un fotograma observado, pueden variar con visibilidad/estado.
+
+| Indicador | V2 base fresca | V3 final |
+| --- | ---: | ---: |
+| FPS escritorio | 55.12 | **60.09** |
+| p95 / p99 frame | 33.3 / 33.4 ms | **16.7 / 16.8 ms** |
+| Draw calls escritorio | 1,062 | **741** (−30.2%) |
+| Triángulos escritorio | 774,787 | 785,398 (+1.4%, pies articulados) |
+| Navegación → primer dibujo, mediana de 3 cargas frías locales | 602.7 ms | 596.0 ms |
+| JS transferido en esas cargas | 427,781 B | 329,127 B |
+| LTC separado transferido | incluido en JS | 90,331 B |
+| JS + LTC | 427,781 B | 419,458 B (−1.9%) |
+| Chunk 3D minificado / gzip | 918.30 / 280.82 kB | 680.79 / 182.15 kB, **más LTC** |
+| Viewport móvil emulado, FPS / p95 | 60.10 / 16.7 ms | 60.04 / 16.7 ms |
+
+El formato FP16 comprimido cuesta 40.05 kB y raw FP32 cuesta 131.07 kB cuando falta descompresión nativa; la reducción total anterior corresponde al formato FP32 comprimido que cargó este M4. PNG originales y otros recursos no se incluyen en JS+LTC. No se oculta el coste de las tablas separadas.
+
+Una prueba adicional alternó tres cargas de cada build para reducir sesgo de orden: mediana navegación→primer dibujo **603.4→592.6 ms**; contexto WebGL preparado→primer dibujo **257.2→248.2 ms**. Esta segunda medida incluye construcción, solicitud LTC, compilación y primer envío gráfico, no solo tiempo CPU. Clic real→siguiente RAF tras insertar panel: mediana **32.8→32.8 ms**. La prueba principal registró además 50.9→45.1 ms de extremo a extremo de automatización, incluyendo espera de Playwright; no se interpreta como latencia pura de la app. La pequeña mejora de carga en localhost no acredita mejora bajo redes reales ni en hardware lento.
+
+Inicio: el sondeo comparable de estados registró **11,765.7→535.6 ms** después del primer dibujo. Ese sondeo termina después de network-idle y no localiza el primer movimiento exacto. La auditoría física separada exige levantarse más de .02 unidades antes de 1 s, además de verificar el cambio de estado. La muestra final detectó el levantamiento físico a **382.4 ms** desde el primer render completado; inicialización desde setup hasta ese render **270.3 ms** en desarrollo. El resultado exacto está en `animation-browser.json`; el test determinista verifica movimiento significativo antes de .8 s. Ninguno espera al calentamiento gráfico de 5 s. Con reduced-motion no se exige movimiento.
+
+Las muestras finitas del M4 cumplen el objetivo de escritorio, sin garantizar 60 FPS en todos los equipos. Móvil 390×844, navegador DPR 2 / efectivo 1.2 y sin bloom, está **emulado sobre GPU de escritorio**. Falta medir un teléfono físico compatible para certificar 30 FPS sostenidos.
+
+## Pruebas y alcance real
+
+- Build (TypeScript + Vite), `npx tsc -b`, ESLint del campus y `git diff --check`: correctos; continúa advertencia de chunk >500 kB.
+- Lint global: **68 errores y 11 advertencias existentes fuera del campus**. No se declara verde el lint del frontend completo.
+- `campus-v3-startup-check.cjs`: actividad significativa antes de .8 s, desfase entre rutinas y reduced-motion estático.
+- `campus-v3-motion-check.cjs`: rigs reales durante 360 s a 60 Hz, nueve combinaciones de velocidad/FPS 30/60/120, distancia/cadencia coherente, caminar/parar/girar/sentarse/levantarse/escaleras/regresar. **78,318 frames móviles auditados**, ningún desplazamiento con piernas inmóviles; separación mínima entre protagonistas .925 unidades, máximo avance por frame .02086. Deslizamiento de apoyo y penetración del modelo de suelo quedan bajo tolerancia, con residuos numéricos ~10⁻¹⁵. No son una garantía universal: obstáculos usan envolventes simplificadas y recorridos finitos, no física general ni barrido exhaustivo de cualquier clic posible.
+- `campus-behavior-check.cjs`: identidades, papel, documentos, entrega a Jesús, regreso, café, juntas, saludos, reduced-motion y repetición en retorno sin teletransporte.
+- `campus-v3-render-check.cjs`: LUT FP32/FP16 idénticas bit a bit a Three.js; batching mantiene triángulos y jerarquía de articulaciones.
+- `campus-v3-animation-qa.cjs`: Chrome nativo, movimiento físico inicial, posición contra articulaciones, parqueadero corregido, pausa y reanudación por reduced-motion, vídeo y errores de consola.
+- `campus-v3-compat-qa.cjs`: carga FP16 y fallback sin DecompressionStream en navegador, selección móvil de secretaria/Hera/pérgola/vehículo centrada. [Resultados](captures-v3/compatibility.json).
+- `campus-qa.cjs`: 15 objetivos por teclado/menú, recorrido de 7 pasos, /login, scroll y gesto táctil sobre canvas; sin overflow ni errores. [Resultados](captures-v3/qa.json).
+- `campus-actions-qa.cjs`: seis personajes y cinco espacios por raycast, estados efectivos afirmados antes de cada captura de rutinas; sin errores. [Resultados](captures-v3/actions-qa.json).
+- No se modificaron PNG ni duplicaron marcas; siguen un SIS trasero y un Stack44 en monumento. Inspector QA solo en desarrollo, nunca en producción.
+
+## Evaluación editorial y pendientes
+
+Revisión manual provisional sobre escala del DNA: arquitectura **22/25**, composición **18/20**, materiales **12/15**, iluminación **12/15**, personajes/interacción **14/15**, móvil/accesibilidad/rendimiento **7/10**: **85/100**. Es juicio editorial con las capturas enlazadas, **no test automático ni aprobación del usuario; objetivo ≥90 pendiente**.
+
+Las tres diferencias principales restantes son profundidad/articulación del lobby, riqueza del rebote y contactos respecto al render offline, y siluetas aún estilizadas de copas/vehículos. Mejoró la variación vegetal sin aumentar vértices, pero no equivale al concepto. El vídeo muestra la marcha procedural; falta juicio visual del usuario sobre naturalidad y un teléfono físico para validar rendimiento, carga y gestos reales. No añadir densidad para ocultar estas diferencias ni sacrificar la actividad al perseguir fidelidad offline. PR #157 debe continuar Draft hasta revisión y aprobación.
+
+---
+
+# Archivo V2 — evidencia histórica, no validación de V3
+
 # Revisión V2 — campus cinematográfico, 6 de noviembre de 2026
 
 Rama conservada: `feat/premium-campus`. PR conservado: **#157**, en borrador. Punto de partida limpio: `af45336`. No se crean personajes, módulos o edificios; no se modifican los PNG de marca, las rutas funcionales ni producción.

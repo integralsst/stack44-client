@@ -76,7 +76,7 @@ export function MiniOfficeHero() {
     // Encuadre basado en límites reales del diorama. No incluir el suelo de
     // 200x200: forma parte de scene, no de world.
     const worldBounds = new THREE.Box3().setFromObject(world);
-    if (mobileCamera) worldBounds.set(new THREE.Vector3(-9, -1.7, -7), new THREE.Vector3(9, 5.4, 11.8));
+    if (mobileCamera) worldBounds.set(new THREE.Vector3(-T.camera.mobileHalfWidth, -1.7, -7), new THREE.Vector3(T.camera.mobileHalfWidth, 5.4, 11.8));
     const focus = worldBounds.getCenter(new THREE.Vector3());
     const viewFocus = focus.clone();
     const desiredFocus = focus.clone();
@@ -97,7 +97,7 @@ export function MiniOfficeHero() {
     const fill=new THREE.DirectionalLight(0xc5deed,.4); fill.position.set(12,9,-4); scene.add(fill);
     const wallWash=new THREE.RectAreaLight(T.lighting.warm,1.8,18,.5);
     wallWash.position.set(0,T.levels.office+3.3,-5.4);wallWash.lookAt(0,T.levels.office+1.7,-6.5);scene.add(wallWash);
-    for(const [x,y,z,intensity,distance] of [[0,1.9,8,14,6],[-12.7,1,-2.8,8,5]]) {
+    for(const [x,y,z,intensity,distance] of [[0,1.9,8,T.lighting.lobbyIntensity,6],[-12.7,1,-2.8,8,5]]) {
       const lamp=new THREE.PointLight(T.lighting.warm,intensity,distance,2); lamp.position.set(x,y,z); scene.add(lamp);
     }
     for(const [x,z] of [[-14,9.6],[14,-1]]) {
@@ -185,6 +185,7 @@ export function MiniOfficeHero() {
     let panX = 0;
     const onDown = (event: PointerEvent) => {
       if (event.target !== renderer.domElement) return;
+      if(mobileCamera) desiredFocus.copy(viewFocus);
       dragStart = { x: event.clientX, y: event.clientY, angle: orbit, pan: panX };
       // Capturar solo el ratón: gestos verticales en móvil deben desplazar
       // la landing y no quedar atrapados dentro del canvas Three.js.
@@ -196,7 +197,7 @@ export function MiniOfficeHero() {
         return;
       }
       if (mobileCamera) {
-        panX = THREE.MathUtils.clamp(dragStart.pan - (event.clientX - dragStart.x) * .025, -6, 6);
+        panX = THREE.MathUtils.clamp(dragStart.pan - (event.clientX - dragStart.x) * .025, -13-viewFocus.x, 13-viewFocus.x);
         camera.position.x = viewFocus.x + cameraOffset.x + panX;
       } else {
         orbit = THREE.MathUtils.clamp(dragStart.angle + (event.clientX - dragStart.x) * .002, .12, 1.02);
@@ -229,7 +230,14 @@ export function MiniOfficeHero() {
     selectScene.current = (target) => {
       setSelected(target);
       if (target) campus.activate(target, elapsed);
-      if (!target) { desiredZoom = 1; desiredFocus.copy(focus); renderedStatic = false; return; }
+      if (!target) {
+        desiredZoom=1; desiredFocus.copy(focus);
+        if(mobileCamera) {
+          camera.position.x-=panX; panX=0;
+          if(reduced.matches) { camera.position.x+=focus.x-viewFocus.x; viewFocus.copy(focus); camera.zoom=1; camera.updateProjectionMatrix(); camera.lookAt(viewFocus); }
+        }
+        renderedStatic=false; return;
+      }
       desiredZoom = mobileCamera ? 1.08 : 1.12;
       const actor = characters.find(character => character.name === target);
       if (actor) behavior.greet(actor.name, elapsed);
@@ -245,6 +253,14 @@ export function MiniOfficeHero() {
                     : target.startsWith('car-') ? new THREE.Vector3(11.1, .2, 8.5)
                       : new THREE.Vector3(0, T.levels.office+2.6, -5.9 * spaceScale.z);
       desiredFocus.copy(focus).lerp(point, mobileCamera ? .12 : .25);
+      if(mobileCamera) {
+        // Reframe the selected person/space, including desks beyond the initial crop.
+        desiredFocus.x=point.x; camera.position.x-=panX; panX=0;
+        if(reduced.matches) {
+          camera.position.x+=desiredFocus.x-viewFocus.x; viewFocus.x=desiredFocus.x;
+          camera.lookAt(viewFocus); camera.updateProjectionMatrix();
+        }
+      }
       renderedStatic = false;
     };
     const onMotionChange = () => { renderedStatic = false; };

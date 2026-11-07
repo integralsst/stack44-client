@@ -1,3 +1,4 @@
+import {campusTokens as T} from './campusDesignTokens';
 import * as THREE from 'three';
 import type {Character,Behavior} from './miniOfficeCharacters';
 import {MotionPath,seatExit,aisleX,smooth,travelDistance,walkingDuration,type Point,type PathSample} from './miniOfficePath';
@@ -19,7 +20,7 @@ export class OfficeBehaviorController {
   private greeted=new Map<string,number>();
   private lastEnd:Record<OfficeAction,number>={printer:0,coffee:0,meeting:0};
   private automatic:boolean;
-  private schedule=[{at:.18,kind:'printer' as OfficeAction,names:PRINT,cycle:-1},{at:6,kind:'coffee' as OfficeAction,names:COFFEE,cycle:-1},
+  private schedule=[{at:T.motion.firstRoutine,kind:'printer' as OfficeAction,names:PRINT,cycle:-1},{at:6,kind:'coffee' as OfficeAction,names:COFFEE,cycle:-1},
     {at:42,kind:'meeting' as OfficeAction,names:MAIN,cycle:-1},{at:82,kind:'meeting' as OfficeAction,names:EXEC,cycle:-1}];
   deliveredUntil=0;
   constructor(options:{automatic?:boolean}={}){this.automatic=options.automatic??true;}
@@ -79,7 +80,7 @@ export class OfficeBehaviorController {
   }
   updateRoutine(time:number,characters:Character[],reduced:boolean){
     if(reduced)return;this.prune(time);
-    if(this.automatic){const cycle=Math.floor(time/180);for(const event of this.schedule){const due=cycle*180+event.at;if(time>=due&&event.cycle!==cycle){event.cycle=cycle;this.request(event.kind,due,characters,event.names,false);}}}
+    if(this.automatic){const cycle=Math.floor(time/T.motion.routineCycle);for(const event of this.schedule){const due=cycle*T.motion.routineCycle+event.at;if(time>=due&&event.cycle!==cycle){event.cycle=cycle;this.request(event.kind,due,characters,event.names,false);}}}
     this.flush(time,characters);
   }
   pose(name:string,time:number):DirectedPose|null{
