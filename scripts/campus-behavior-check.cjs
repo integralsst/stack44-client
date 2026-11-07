@@ -14,7 +14,7 @@ import {OfficeBehaviorController} from './src/features/landing/mini-office/miniO
 import {updateCharacters} from './src/features/landing/mini-office/miniOfficeAnimation';
 const material = new THREE.MeshStandardMaterial();
 const m = new Proxy({}, {get:()=>material});
-const root=new THREE.Group(), actors=createCharacters(root,m as never), controller=new OfficeBehaviorController();
+const root=new THREE.Group(), actors=createCharacters(root,m as never), controller=new OfficeBehaviorController({automatic:false});
 const fixtures={printerPaper:new THREE.Group(),deliveredPaper:new THREE.Group(),printerLight:new THREE.Mesh()};
 root.position.y=T.levels.office;
 const actor=(name:string)=>actors.find(a=>a.name===name)!;
@@ -27,11 +27,13 @@ update(20);assert.equal(actor('Secretaria').state,'DELIVERING');assert(actor('Se
 update(27);assert(fixtures.deliveredPaper.visible);assert(!actor('Secretaria').documents.visible);
 update(39);assert.equal(actor('Secretaria').state,'WORKING');
 assert(actor('Secretaria').root.position.distanceTo(new THREE.Vector3(actor('Secretaria').desk.x,0,actor('Secretaria').desk.z))<.001);
-controller.request('coffee',40,actors);update(52);assert.equal(actor('Apolo').state,'COFFEE_BREAK');assert(actor('Apolo').coffeeCup.visible);
-update(71);assert.equal(actor('Apolo').state,'WORKING');
-controller.request('meeting',72,actors);update(84);assert.equal(actor('Zeus').state,'MEETING');assert.equal(actor('Hera').state,'MEETING');
-update(103);assert.equal(actor('Zeus').state,'WORKING');assert.equal(actor('Hera').state,'WORKING');
-controller.greet('Jesús',104);assert(controller.isGreeting('Jesús',105));assert(!controller.isGreeting('Jesús',108));
+let time=40;controller.request('coffee',time,actors);
+while(time<100&&actor('Apolo').state!=='COFFEE_BREAK'){time+=.1;update(time);}assert(actor('Apolo').coffeeCup.visible);
+while(time<130&&actor('Apolo').state!=='WORKING'){time+=.1;update(time);}assert.equal(actor('Apolo').state,'WORKING');
+controller.request('meeting',time,actors);let both=false;
+for(let end=time+100;time<end;time+=.1){update(time);if(actor('Zeus').state==='MEETING'&&actor('Hera').state==='MEETING')both=true;if(both&&actor('Zeus').state==='WORKING'&&actor('Hera').state==='WORKING')break;}
+assert(both);assert.equal(actor('Zeus').state,'WORKING');assert.equal(actor('Hera').state,'WORKING');
+controller.greet('Jesús',time);assert(controller.isGreeting('Jesús',time+1));assert(!controller.isGreeting('Jesús',time+4));
 updateCharacters(actors,200,true,controller,fixtures);assert(!fixtures.printerPaper.visible);
 const slabRoot=new THREE.Group();slabRoot.position.y=T.levels.office;
 const slab=officeSlab(slabRoot,20.25,12,-.4,.36,material);slabRoot.updateMatrixWorld(true);

@@ -65,8 +65,9 @@ export function MiniOfficeHero() {
       lightSurfaces.contact(architecture,desk.x,.018,desk.z,3.2,2.1);
       lightSurfaces.wash(architecture,desk.x,.023,desk.z+.25,2.8,1.4);
     }
-    const batchedMeshes=batchCampusStatics(architecture,[...characters.map(c=>c.root),fixtures.printerPaper,fixtures.deliveredPaper,fixtures.printerLight])
+    const batchedMeshes=batchCampusStatics(architecture,[...characters.map(c=>c.root),fixtures.printerPaper,fixtures.deliveredPaper,fixtures.printerLight,...(fixtures.chairs?.values()??[])])
       +batchCampusStatics(exterior,campus.dynamicRoots);
+    fixtures.chairs?.forEach(chair=>batchCampusStatics(chair,[]));
 
     // Encuadre basado en límites reales del diorama. No incluir el suelo de
     // 200x200: forma parte de scene, no de world.
@@ -294,7 +295,8 @@ export function MiniOfficeHero() {
         request.detail.reply({elapsed,timing:{setupStarted,firstRenderMs,firstActivityMs},levels:T.levels,batchedMeshes,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,
           quality:{dpr:renderer.getPixelRatio(),bloom:composer?.passes.some(p=>p instanceof UnrealBloomPass&&p.enabled)??false},
           targets:interactions.project(camera,renderer.domElement),zoom:camera.zoom,
-          actors:characters.map(c=>({name:c.name,state:c.state,local:c.root.position.toArray(),world:c.root.getWorldPosition(new THREE.Vector3()).toArray(),cup:c.coffeeCup.visible,documents:c.documents.visible})),
+          actors:characters.map(c=>({name:c.name,state:c.state,phase:c.actionPhase,hipY:c.hip.position.y,legs:[c.leftThigh.rotation.x,c.rightThigh.rotation.x,c.leftShin.rotation.x,c.rightShin.rotation.x],gait:{distance:c.locomotion.distance,phase:c.locomotion.phase,speed:c.locomotion.speed,moving:c.locomotion.moving},local:c.root.position.toArray(),world:c.root.getWorldPosition(new THREE.Vector3()).toArray(),cup:c.coffeeCup.visible,documents:c.documents.visible})),
+          visitors:campus.actors.map(c=>({name:c.name,state:c.state,local:c.root.position.toArray(),legs:[c.leftThigh.rotation.x,c.rightThigh.rotation.x,c.leftShin.rotation.x,c.rightShin.rotation.x],gait:{distance:c.locomotion.distance,phase:c.locomotion.phase,moving:c.locomotion.moving}})),
           paper:fixtures.printerPaper.visible,delivered:fixtures.deliveredPaper.visible});
       });
     }

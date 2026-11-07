@@ -13,7 +13,7 @@ export const desks = [
   { name: 'Secretaria', x: -8.35, z: 3.55, executive: false },
 ] as const;
 
-export type OfficeFixtures = { printerPaper: THREE.Group; deliveredPaper: THREE.Group; printerLight: THREE.Mesh };
+export type OfficeFixtures = { printerPaper: THREE.Group; deliveredPaper: THREE.Group; printerLight: THREE.Mesh; chairs?:Map<string,THREE.Group> };
 
 function foliage(root: THREE.Object3D, m: OfficeMaterials, x: number, y: number, z: number, scale = 1, hanging = false) {
   const group = new THREE.Group(); group.position.set(x, y, z); group.scale.setScalar(scale); root.add(group);
@@ -131,16 +131,18 @@ function workstation(root: THREE.Group, m: OfficeMaterials, textures: THREE.Text
     for (let i = 0; i < 3; i++) box(g, .37, .05, .31, -.93, 1.48 + i * .052, .3, i === 1 ? m.brass : m.forest);
   }
   if (name === 'Hera') foliage(g, m, .97, 1.46, .3, .34);
+  const chair=new THREE.Group();g.add(chair);
   // Chair with a low seat, curved silhouette and five-spoke base.
-  cylinder(g, .43, .43, .08, 0, .76, -.67, m.charcoal);
-  const back = softBox(g, .85, .73, .12, 0, 1.14, -1.08, executive ? m.charcoal : m.fabric, .055);
+  cylinder(chair, .43, .43, .08, 0, .76, -.67, m.charcoal);
+  const back = softBox(chair, .85, .73, .12, 0, 1.14, -1.08, executive ? m.charcoal : m.fabric, .055);
   back.rotation.x = -.08;
-  cylinder(g, .045, .045, .67, 0, .38, -.67, m.metal);
+  cylinder(chair, .045, .045, .67, 0, .38, -.67, m.metal);
   for (let i = 0; i < 5; i++) {
     const a = i * Math.PI * 2 / 5;
-    const spoke = box(g, .5, .045, .045, Math.sin(a) * .21, .08, -.67 + Math.cos(a) * .21, m.metal);
+    const spoke = box(chair, .5, .045, .045, Math.sin(a) * .21, .08, -.67 + Math.cos(a) * .21, m.metal);
     spoke.rotation.y = a;
   }
+  return chair;
 }
 
 function meeting(root: THREE.Group, m: OfficeMaterials) {
@@ -308,7 +310,8 @@ export function createOfficeLayout(root: THREE.Group, m: OfficeMaterials, textur
   }
   box(root, 11.5, .02, 3.34, 0, .006, 1.55, m.travertine);
   for (const x of [-5.74, 5.74]) box(root, .04, .024, 3.34, x, .02, 1.55, m.brass);
-  desks.forEach(d => workstation(root, m, textures, d.x, d.z, d.executive, d.name));
+  const chairs=new Map<string,THREE.Group>();
+  desks.forEach(d => chairs.set(d.name,workstation(root, m, textures, d.x, d.z, d.executive, d.name)));
   for (const x of [-2.03, 2.03]) {
     box(root, .045, 1.2, 1.25, x, 1.46, 1.52, m.glass);
     box(root, .055, .035, 1.29, x, 2.08, 1.52, m.brass);
@@ -359,5 +362,5 @@ export function createOfficeLayout(root: THREE.Group, m: OfficeMaterials, textur
   foliage(root, m, -9.2, 0, 2.9, .75);
   foliage(root, m, 9.2, 0, -1.05, 1.15);
 
-  return { printerPaper, deliveredPaper, printerLight };
+  return { printerPaper, deliveredPaper, printerLight, chairs };
 }

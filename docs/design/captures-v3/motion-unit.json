@@ -1,0 +1,43 @@
+{
+  "worstSlip": {
+    "name": "Visitante jardín",
+    "time": 167.15,
+    "root": [
+      -12.839658988930523,
+      -0.8799999999999999,
+      4.933729327423722
+    ],
+    "hipY": 0.9999999999999997,
+    "foot": [
+      -13.0141798911236,
+      -0.8800000000000001,
+      4.928563267630783
+    ],
+    "anchor": [
+      -13.014179891123602,
+      -0.88,
+      4.928563267630784
+    ],
+    "phase": 0.2670578423068619
+  },
+  "movingFrames": 77014,
+  "parkMotion": 17853,
+  "maxStanceDriftPerFrame": 3.985994439185401e-15,
+  "maxFloorPenetration": 5.065392549852277e-16,
+  "minCharacterSeparation": 0.9251580977232086,
+  "stops": 133444,
+  "turns": 22731,
+  "cyclesAtEqualDistance": [
+    2.7,
+    2.7,
+    2.7,
+    2.7,
+    2.7,
+    2.7,
+    2.7,
+    2.7,
+    2.7
+  ],
+  "violations": [],
+  "violationCount": 0
+}

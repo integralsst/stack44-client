@@ -1,5 +1,7 @@
 import { officeSlab } from './campusArchitecture';
 import type { LightSurfaces } from './campusLightSurfaces';
+import {MotionPath,smooth} from './miniOfficePath';
+import {applyLocomotion,turnTowards} from './miniOfficeLocomotion';
 import * as THREE from 'three';
 import stackLogo from '../../../assets/logostack44.png';
 import { box, softBox, cylinder, type OfficeMaterials } from './miniOfficeMaterials';
@@ -268,41 +270,55 @@ export function createCampus(root: THREE.Group, m: OfficeMaterials, textures: TH
   const visitorRoot = new THREE.Group(); root.add(visitorRoot);
   const visitors = createCharacters(visitorRoot,m,{x:1,z:1},[0,1,3,4]);
   const routes = [
-    [new THREE.Vector3(-.9,T.levels.promenade,13),new THREE.Vector3(-.9,T.levels.promenade,11.8),new THREE.Vector3(-.9,T.levels.lobby,9.05),new THREE.Vector3(-.9,T.levels.lobby,8.4)],
+    [new THREE.Vector3(-.9,T.levels.promenade,13),new THREE.Vector3(-.9,T.levels.promenade,11.8),new THREE.Vector3(-.9,T.levels.lobby,9.05),new THREE.Vector3(-.9,T.levels.lobby,8.7)],
     [new THREE.Vector3(-12.5,-.85,3.6),new THREE.Vector3(-12.8,-.85,5.2),new THREE.Vector3(-10.9,-.85,7.1),new THREE.Vector3(-10.1,-.85,7.5)],
     [new THREE.Vector3(7,-.85,7.3),new THREE.Vector3(8.3,-.85,7.3)],
     [new THREE.Vector3(-12.2,-.85,2.5),new THREE.Vector3(-12.2,-.85,3.1)],
   ];
   const curves = routes.map(points=>new THREE.CatmullRomCurve3(points,false,'centripetal'));
+  const paths=curves.map(curve=>new MotionPath(Array.from({length:65},(_,i)=>{const p=curve.getPoint(i/64);return [p.x,p.z] as const;}),0));
+  const reverse=paths.map(path=>path.reverse()),sample={x:0,z:0,yaw:0};
+  const visitorNames=['Visitante lobby','Visitante jardín','Visitante parqueadero','Visitante pérgola'];
+  visitors.forEach((actor,i)=>{actor.name=visitorNames[i];actor.root.scale.setScalar(.82);});
+  const outdoorGround=(x:number,z:number)=>{
+    if(Math.abs(x)<2.5&&z<11.61&&z>=9.1)return Math.max(T.levels.promenade,T.levels.lobby-(Math.floor((z-9.1)/T.stairs.frontTread)+1)*T.stairs.frontRiser);
+    if(Math.abs(x)<3.5&&z<9.1&&z>5.5)return T.levels.lobby;
+    if(Math.abs(x)<3.9)return -.845;
+    return x>5&&z>6.3&&z<8.3?-.895:-.88;
+  };
   let restUntil = -1;
   let activeCar: OfficeTarget | null = null;
   return {
+    actors:visitors,
+    groundAt:outdoorGround,
     dynamicRoots: [visitorRoot],
     activate(target: OfficeTarget, elapsed: number) { if(target==='pergola') restUntil=elapsed+T.motion.restSeconds; activeCar=target; },
     update(elapsed: number, delta: number, reduced: boolean) {
-      for (let i=0;i<visitors.length;i++) {
-        const actor=visitors[i], curve=curves[i], duration=curve.getLength()/T.motion.visitorSpeed;
-        const phase=reduced ? .35 : (elapsed/(duration*2)+i*.17)%1;
-        const t=phase<.5 ? phase*2 : 2-phase*2;
-        actor.root.position.copy(curve.getPoint(t)); actor.root.scale.setScalar(.82);
-        if(i===0) {
-          const z=actor.root.position.z;
-          actor.root.position.y=z<9.1?T.levels.lobby:Math.max(T.levels.promenade,T.levels.lobby-(Math.floor((z-(T.stairs.frontStartZ-T.stairs.frontTread/2))/T.stairs.frontTread)+1)*T.stairs.frontRiser);
+      for(let i=0;i<visitors.length;i++) {
+        const actor=visitors[i];
+        if(reduced&&actor.animationTime!==null)continue;
+        const dt=actor.animationTime===null?0:Math.max(0,elapsed-actor.animationTime),initial=actor.animationTime===null;actor.animationTime=elapsed;
+        if(i===3){
+          actor.root.position.set(-13.84,-.85,-3.1);actor.root.rotation.y=0;actor.hip.position.y=.95;
+          actor.hip.rotation.x=0;actor.state='SITTING';applyLocomotion(actor,elapsed,false,1,()=>-.825);
+          actor.torso.rotation.x=!reduced&&elapsed<restUntil?-.1*Math.sin((restUntil-elapsed)/T.motion.restSeconds*Math.PI):0;
+          continue;
         }
-        const tangent=curve.getTangent(t).multiplyScalar(phase<.5?1:-1);
-        actor.root.rotation.y=Math.atan2(tangent.x,tangent.z);
-        actor.hip.position.y=1.02;
-        const walking=!reduced && i!==2;
-        const stride=walking ? Math.sin(elapsed*4.5+i)*.38 : 0;
-        actor.leftThigh.rotation.x=stride; actor.rightThigh.rotation.x=-stride;
-        actor.leftArm.rotation.x=-stride*.7; actor.rightArm.rotation.x=stride*.7;
-        actor.head.rotation.y=i===2 ? -.3 : Math.sin(elapsed*.7)*.08;
-      }
-      // Seated visitor briefly leans back under the pergola after selection.
-      {
-        const actor=visitors[3]; actor.root.position.set(-13.84,-.85,-3.1); actor.root.rotation.y=0;
-        actor.hip.position.y=.75; actor.hip.rotation.x=!reduced && elapsed<restUntil ? -.1*Math.sin((restUntil-elapsed)/T.motion.restSeconds*Math.PI) : 0; actor.leftThigh.rotation.x=actor.rightThigh.rotation.x=-Math.PI/2;
-        actor.leftShin.rotation.x=actor.rightShin.rotation.x=Math.PI/2;
+        const path=paths[i],duration=path.length/T.motion.visitorSpeed,pause=.6,period=duration*2+pause*2;
+        const clock=reduced?duration*.35:(elapsed+i*period*.17)%period;
+        const returning=clock>=duration+pause,active=returning?reverse[i]:path;
+        const fraction=returning?Math.min(1,(clock-duration-pause)/duration):Math.min(1,clock/duration);
+        const distance=active.length*smooth(fraction);active.sample(distance,sample);
+        actor.root.position.x=sample.x;actor.root.position.z=sample.z;
+        const floor=outdoorGround(sample.x,sample.z);
+        actor.root.position.y=initial||reduced||dt>.25?floor:THREE.MathUtils.lerp(actor.root.position.y,floor,1-Math.exp(-dt*14));
+        actor.root.rotation.y=initial||reduced?sample.yaw:turnTowards(actor.root.rotation.y,sample.yaw,Math.min(.1,dt));
+        actor.hip.position.y=1;actor.state=reduced?'WORKING':fraction<1?'WALKING':'TALKING';
+        actor.locomotion.path=active;actor.locomotion.pathDistance=distance;
+        actor.leftForearm.rotation.x=actor.rightForearm.rotation.x=0;
+        if(!reduced)applyLocomotion(actor,elapsed,fraction<1,0,outdoorGround);
+        else {actor.leftThigh.rotation.x=actor.rightThigh.rotation.x=0;actor.leftArm.rotation.x=actor.rightArm.rotation.x=0;}
+        actor.head.rotation.y=reduced?0:Math.sin(elapsed*.7+i)*.06;
       }
       carLights.forEach((light,i)=> { const enabled=activeCar===(i<2?'car-dark':'car-silver'); light.emissiveIntensity=reduced ? (enabled?2:.12) : THREE.MathUtils.lerp(light.emissiveIntensity,enabled?2:.12,1-Math.exp(-delta*T.motion.carFade)); (carWashes[i].material as THREE.MeshBasicMaterial).opacity=light.emissiveIntensity*.27; });
     },
