@@ -11,7 +11,7 @@ export function backdropTexture() {
   const canvas = document.createElement('canvas'); canvas.width = 1024; canvas.height = 768;
   const c = canvas.getContext('2d')!;
   const base = c.createLinearGradient(0, 0, 0, 768);
-  base.addColorStop(0, '#17251f'); base.addColorStop(.55, '#101c1a'); base.addColorStop(1, '#0c1414');
+  base.addColorStop(0, '#171c1b'); base.addColorStop(.55, '#141918'); base.addColorStop(1, '#0c1414');
   c.fillStyle = base; c.fillRect(0, 0, 1024, 768);
   for (let i = 0; i < 30; i++) {
     const x = (i * 337.3) % 1024;
@@ -33,7 +33,19 @@ export function logoPanelTexture(url: string, crop: [number, number, number, num
   const image = new Image();
   image.onload = () => {
     if (signal.aborted) return;
-    const [cx, cy, cw, ch] = crop;
+    let [cx, cy, cw, ch] = crop;
+    if (cx === 0 && cy === 0 && cw === 1 && ch === 1) {
+      const probe = document.createElement('canvas'); probe.width = image.width; probe.height = image.height;
+      const pc = probe.getContext('2d')!; pc.drawImage(image, 0, 0);
+      const pixels = pc.getImageData(0, 0, image.width, image.height).data;
+      let left = image.width, top = image.height, right = 0, bottom = 0;
+      for (let y = 0; y < image.height; y++) for (let x = 0; x < image.width; x++) {
+        if (pixels[(y * image.width + x) * 4 + 3] > 0) {
+          left = Math.min(left, x); right = Math.max(right, x); top = Math.min(top, y); bottom = Math.max(bottom, y);
+        }
+      }
+      if (right > left && bottom > top) { cx = left / image.width; cy = top / image.height; cw = (right - left + 1) / image.width; ch = (bottom - top + 1) / image.height; }
+    }
     const sourceWidth = image.width * cw, sourceHeight = image.height * ch;
     const scale = Math.min(424 / sourceWidth, 424 / sourceHeight);
     const width = sourceWidth * scale, height = sourceHeight * scale;

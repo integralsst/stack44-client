@@ -1,0 +1,76 @@
+[
+  {
+    "name": "desktop",
+    "width": 1440,
+    "height": 900,
+    "opened": [
+      "Bienvenido al campus",
+      "Una pausa en el jardín",
+      "Conoce Stack44",
+      "Llegada al campus",
+      "Bienvenida ejecutiva",
+      "¡Bienvenido a Stack44!",
+      "Bienvenido a Stack44",
+      "Indicadores y control",
+      "Diagnóstico SG-SST",
+      "Plan de trabajo",
+      "Capacitación y mejora",
+      "Tablero SG-SST",
+      "Trabajo colaborativo",
+      "Documentos en movimiento",
+      "Pausa de café"
+    ],
+    "tour": [
+      "¡Bienvenido a Stack44!",
+      "Bienvenido a Stack44",
+      "Indicadores y control",
+      "Diagnóstico SG-SST",
+      "Plan de trabajo",
+      "Capacitación y mejora",
+      "Tablero SG-SST"
+    ],
+    "canvas": true,
+    "overflow": false,
+    "touchScroll": null,
+    "scroll": 800,
+    "login": "/login",
+    "errors": []
+  },
+  {
+    "name": "mobile",
+    "width": 390,
+    "height": 844,
+    "opened": [
+      "Bienvenido al campus",
+      "Una pausa en el jardín",
+      "Conoce Stack44",
+      "Llegada al campus",
+      "Bienvenida ejecutiva",
+      "¡Bienvenido a Stack44!",
+      "Bienvenido a Stack44",
+      "Indicadores y control",
+      "Diagnóstico SG-SST",
+      "Plan de trabajo",
+      "Capacitación y mejora",
+      "Tablero SG-SST",
+      "Trabajo colaborativo",
+      "Documentos en movimiento",
+      "Pausa de café"
+    ],
+    "tour": [
+      "¡Bienvenido a Stack44!",
+      "Bienvenido a Stack44",
+      "Indicadores y control",
+      "Diagnóstico SG-SST",
+      "Plan de trabajo",
+      "Capacitación y mejora",
+      "Tablero SG-SST"
+    ],
+    "canvas": true,
+    "overflow": false,
+    "touchScroll": 421,
+    "scroll": 800,
+    "login": "/login",
+    "errors": []
+  }
+]

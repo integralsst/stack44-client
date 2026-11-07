@@ -1,0 +1,22 @@
+{
+  "visible": {
+    "sinceRenderMs": 382.39999997615814,
+    "actor": "Secretaria",
+    "hipY": 0.86093192730252,
+    "timing": {
+      "setupStarted": 416.10000002384186,
+      "firstRenderMs": 686.3999999761581,
+      "firstActivityMs": 743.2999999523163
+    }
+  },
+  "counts": {
+    "Visitante lobby": 132,
+    "Visitante jardín": 119,
+    "Visitante parqueadero": 104,
+    "Secretaria": 65,
+    "Apolo": 23
+  },
+  "stalled": [],
+  "errors": [],
+  "sampleCount": 133
+}

@@ -1,0 +1,55 @@
+[
+  {
+    "profile": "half-packed",
+    "errors": [],
+    "tables": [
+      "http://127.0.0.1:5174/src/features/landing/mini-office/lighting-data/campus-ltc-f32.bin.gz?import&url",
+      "http://127.0.0.1:5174/src/features/landing/mini-office/lighting-data/campus-ltc-f16.bin.gz?import&url",
+      "http://127.0.0.1:5174/src/features/landing/mini-office/lighting-data/campus-ltc-f16.bin?import&url",
+      "http://127.0.0.1:5174/src/features/landing/mini-office/lighting-data/campus-ltc-f32.bin?import&url",
+      "http://127.0.0.1:5174/src/features/landing/mini-office/lighting-data/campus-ltc-f16.bin.gz"
+    ],
+    "focus": []
+  },
+  {
+    "profile": "float-raw",
+    "errors": [],
+    "tables": [
+      "http://127.0.0.1:5174/src/features/landing/mini-office/lighting-data/campus-ltc-f32.bin.gz?import&url",
+      "http://127.0.0.1:5174/src/features/landing/mini-office/lighting-data/campus-ltc-f16.bin.gz?import&url",
+      "http://127.0.0.1:5174/src/features/landing/mini-office/lighting-data/campus-ltc-f32.bin?import&url",
+      "http://127.0.0.1:5174/src/features/landing/mini-office/lighting-data/campus-ltc-f16.bin?import&url",
+      "http://127.0.0.1:5174/src/features/landing/mini-office/lighting-data/campus-ltc-f32.bin"
+    ],
+    "focus": []
+  },
+  {
+    "profile": "mobile-focus",
+    "errors": [],
+    "tables": [
+      "http://127.0.0.1:5174/src/features/landing/mini-office/lighting-data/campus-ltc-f32.bin.gz?import&url",
+      "http://127.0.0.1:5174/src/features/landing/mini-office/lighting-data/campus-ltc-f16.bin.gz?import&url",
+      "http://127.0.0.1:5174/src/features/landing/mini-office/lighting-data/campus-ltc-f32.bin?import&url",
+      "http://127.0.0.1:5174/src/features/landing/mini-office/lighting-data/campus-ltc-f16.bin?import&url",
+      "http://127.0.0.1:5174/src/features/landing/mini-office/lighting-data/campus-ltc-f32.bin.gz"
+    ],
+    "focus": [
+      {
+        "label": "Secretaria",
+        "x": 194.99999999999994
+      },
+      {
+        "label": "Hera",
+        "x": 195
+      },
+      {
+        "label": "Pérgola",
+        "x": 195
+      },
+      {
+        "label": "Sedán claro",
+        "x": 195.00000000000006
+      }
+    ]
+  }
+]

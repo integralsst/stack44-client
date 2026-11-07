@@ -1,0 +1,44 @@
+{
+  "maxTravelPerFrame": 0.02085924991973702,
+  "worstSlip": {
+    "name": "Visitante parqueadero",
+    "time": 157.76666666666668,
+    "root": [
+      8.277741537429652,
+      -0.895,
+      7.3
+    ],
+    "hipY": 0.9999999999998019,
+    "foot": [
+      8.365599999999173,
+      -0.8950000000000001,
+      7.4722000000003135
+    ],
+    "anchor": [
+      8.365599999999175,
+      -0.895,
+      7.472200000000314
+    ],
+    "phase": 0.5301605183880067
+  },
+  "movingFrames": 78318,
+  "parkMotion": 17853,
+  "maxStanceDriftPerFrame": 4.446439748506845e-15,
+  "maxFloorPenetration": 6.002143226879753e-16,
+  "minCharacterSeparation": 0.9250942932057341,
+  "stops": 131654,
+  "turns": 23129,
+  "cyclesAtEqualDistance": [
+    2.7,
+    2.7,
+    2.7,
+    2.7,
+    2.7,
+    2.7,
+    2.7,
+    2.7,
+    2.7
+  ],
+  "violations": [],
+  "violationCount": 0
+}
