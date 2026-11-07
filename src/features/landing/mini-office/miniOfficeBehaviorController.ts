@@ -24,7 +24,7 @@ function path(points: Point[], progress: number) {
 export class OfficeBehaviorController {
   private jobs = new Map<string, Job>();
   private offsets = new Map<string, number>();
-  private nextRoutinePrint = 65;
+  private nextRoutinePrint = .18;
   private greeted = new Map<string, number>();
   deliveredUntil = 0;
 

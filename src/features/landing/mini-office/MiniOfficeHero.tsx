@@ -31,6 +31,9 @@ export function MiniOfficeHero() {
   useEffect(() => {
     const element = host.current;
     if (!element) return;
+    const setupStarted=performance.now();
+    let firstRenderMs:number|null=null, firstActivityMs:number|null=null;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
@@ -55,6 +58,9 @@ export function MiniOfficeHero() {
     const campus = createCampus(exterior, m, textures, assetController.signal, mobileCamera, lightSurfaces);
     const characters = createCharacters(architecture, m, spaceScale);
     const behavior = new OfficeBehaviorController();
+    if(!reduced.matches) behavior.greet('Cristina',0);
+    updateCharacters(characters,0,reduced.matches,behavior,fixtures);
+    campus.update(0,0,reduced.matches);
     for(const desk of desks) {
       lightSurfaces.contact(architecture,desk.x,.018,desk.z,3.2,2.1);
       lightSurfaces.wash(architecture,desk.x,.023,desk.z+.25,2.8,1.4);
@@ -120,7 +126,7 @@ export function MiniOfficeHero() {
       composer.addPass(new OutputPass());
     }
     renderer.info.autoReset=false;
-    const renderScene = () => { renderer.info.reset(); if (composer) composer.render(); else renderer.render(scene, camera); };
+    const renderScene = () => { renderer.info.reset(); if (composer) composer.render(); else renderer.render(scene, camera); if(firstRenderMs===null) firstRenderMs=performance.now(); };
     // MUY IMPORTANTE: pixelRatio solo afecta la resolución interna del canvas.
     // El tamaño CSS siempre debe coincidir con el host; de lo contrario un
     // Retina 2x dibuja un canvas 2x más grande y recorta la oficina.
@@ -215,7 +221,6 @@ export function MiniOfficeHero() {
     element.addEventListener('pointermove', onMove);
     element.addEventListener('pointerup', onUp);
     element.addEventListener('pointercancel', onUp);
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
     let frame = 0, elapsed = 0, last = performance.now(), renderedStatic = false;
     selectScene.current = (target) => {
       setSelected(target);
@@ -249,6 +254,7 @@ export function MiniOfficeHero() {
         elapsed += delta;
         campus.update(elapsed, delta, reduced.matches);
         updateCharacters(characters, elapsed, reduced.matches, behavior, fixtures);
+        if(firstActivityMs===null && characters.some(c=>c.state==='STANDING_UP'||c.state==='WALKING')) firstActivityMs=performance.now();
         if (!reduced.matches) {
           camera.zoom = THREE.MathUtils.lerp(camera.zoom, desiredZoom, 1 - Math.exp(-delta * T.motion.cameraDamping));
           camera.updateProjectionMatrix();
@@ -285,7 +291,7 @@ export function MiniOfficeHero() {
     if(import.meta.env.DEV && new URLSearchParams(location.search).has('campusQA')) {
       renderer.domElement.addEventListener('campus:inspect',event=>{
         const request=event as CustomEvent<{reply:(value:unknown)=>void}>;
-        request.detail.reply({elapsed,levels:T.levels,batchedMeshes,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,
+        request.detail.reply({elapsed,timing:{setupStarted,firstRenderMs,firstActivityMs},levels:T.levels,batchedMeshes,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,
           quality:{dpr:renderer.getPixelRatio(),bloom:composer?.passes.some(p=>p instanceof UnrealBloomPass&&p.enabled)??false},
           targets:interactions.project(camera,renderer.domElement),zoom:camera.zoom,
           actors:characters.map(c=>({name:c.name,state:c.state,local:c.root.position.toArray(),world:c.root.getWorldPosition(new THREE.Vector3()).toArray(),cup:c.coffeeCup.visible,documents:c.documents.visible})),

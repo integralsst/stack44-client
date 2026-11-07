@@ -6,11 +6,11 @@ import { OfficeBehaviorController } from './miniOfficeBehaviorController';
 const cycle = 120;
 type Event = { start: number; end: number; target: [number, number]; kind: 'meeting' | 'coffee' };
 const events: Record<string, Event> = {
-  Zeus: { start: 12, end: 42, target: [-7.0, -.43], kind: 'meeting' },
-  Hera: { start: 15, end: 43, target: [-9.05, -.43], kind: 'meeting' },
-  Jesús: { start: 52, end: 81, target: [-7.0, -.43], kind: 'meeting' },
-  Cristina: { start: 55, end: 82, target: [-9.05, -.43], kind: 'meeting' },
-  Apolo: { start: 90, end: 118, target: [6.64, -2.3], kind: 'coffee' },
+  Zeus: { start: 42, end: 72, target: [-7.0, -.43], kind: 'meeting' },
+  Hera: { start: 45, end: 75, target: [-9.05, -.43], kind: 'meeting' },
+  Jesús: { start: 81, end: 111, target: [-7.0, -.43], kind: 'meeting' },
+  Cristina: { start: 84, end: 114, target: [-9.05, -.43], kind: 'meeting' },
+  Apolo: { start: 6, end: 36, target: [6.64, -2.3], kind: 'coffee' },
 };
 const ease = (value: number) => {
   const t = THREE.MathUtils.clamp(value, 0, 1);
